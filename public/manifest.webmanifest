@@ -1,0 +1,18 @@
+{
+  "name": "Sanoittaja",
+  "short_name": "Sanoittaja",
+  "description": "Sanoitukset, sointumerkit, transponointi ja nauhoitteet lauluntekijälle",
+  "lang": "fi",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#12121a",
+  "theme_color": "#12121a",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

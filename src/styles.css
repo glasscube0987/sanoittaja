@@ -1,0 +1,358 @@
+:root {
+  --bg: #12121a;
+  --surface: #1c1c28;
+  --surface-2: #262636;
+  --border: #34344a;
+  --text: #e8e8f0;
+  --text-dim: #9a9ab0;
+  --accent: #f5b942;
+  --accent-text: #1a1305;
+  --danger: #e05c5c;
+  --radius: 12px;
+  --mono: 'SF Mono', ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  max-width: 720px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+button:active {
+  filter: brightness(1.2);
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+button.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: transparent;
+}
+
+button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-dim);
+}
+
+input,
+textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+input:focus,
+textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  position: sticky;
+  top: 0;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+}
+
+.topbar h1 {
+  font-size: 20px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screen {
+  padding: 0 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* --- Laululista --- */
+.song-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  padding: 14px 16px;
+}
+
+.song-card .title {
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.song-card .meta {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.empty-note {
+  color: var(--text-dim);
+  text-align: center;
+  padding: 48px 16px;
+  line-height: 1.6;
+}
+
+/* --- Editori --- */
+.title-row {
+  display: flex;
+  gap: 8px;
+}
+
+.title-row input {
+  flex: 1;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.title-row input.key {
+  flex: 0 0 76px;
+  text-align: center;
+}
+
+.transpose-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.transpose-bar .label {
+  color: var(--text-dim);
+  font-size: 14px;
+  flex: 1;
+}
+
+.lyrics {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 8px;
+  overflow-x: auto;
+}
+
+.line {
+  padding: 2px 4px;
+}
+
+.chord-row {
+  position: relative;
+  height: 24px;
+  font-family: var(--mono);
+  font-size: 15px;
+  cursor: pointer;
+  min-width: 100%;
+}
+
+.chord-row .chord {
+  position: absolute;
+  top: 0;
+  color: var(--accent);
+  font-weight: 700;
+  background: none;
+  border: none;
+  padding: 0 2px;
+  min-height: 0;
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 24px;
+  border-radius: 4px;
+}
+
+.chord-row .chord:active {
+  background: var(--surface-2);
+}
+
+.chord-row .hint {
+  position: absolute;
+  inset: 0;
+  color: var(--border);
+  font-size: 11px;
+  line-height: 24px;
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+  letter-spacing: 0;
+}
+
+.line input.text {
+  display: block;
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 2px 2px 6px;
+  border-bottom: 1px dashed transparent;
+}
+
+.line input.text:focus {
+  outline: none;
+  border-bottom-color: var(--border);
+}
+
+.editor-actions,
+.button-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* --- Sointuponnahdus --- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 50;
+}
+
+.sheet {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sheet h2 {
+  font-size: 16px;
+}
+
+.sheet .context {
+  font-family: var(--mono);
+  color: var(--text-dim);
+  font-size: 14px;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.sheet .context b {
+  color: var(--accent);
+}
+
+.chip-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip-row button {
+  min-height: 38px;
+  padding: 6px 12px;
+  font-family: var(--mono);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.field small {
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* --- Nauhoitteet --- */
+.section-title {
+  font-size: 15px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 8px;
+}
+
+.rec-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rec-card .rec-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rec-card input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+}
+
+.rec-card audio {
+  width: 100%;
+}
+
+.rec-live {
+  color: var(--danger);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.status {
+  color: var(--text-dim);
+  font-size: 14px;
+  min-height: 20px;
+}

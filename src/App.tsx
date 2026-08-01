@@ -1,0 +1,74 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import SongEditor from './components/SongEditor';
+import SongList from './components/SongList';
+import { deleteSong as dbDeleteSong, listSongs, saveSong } from './lib/db';
+import type { Song } from './lib/types';
+import { newSong } from './lib/types';
+
+type View = { name: 'list' } | { name: 'editor'; songId: string };
+
+export default function App() {
+  const [songs, setSongs] = useState<Song[] | null>(null);
+  const [view, setView] = useState<View>({ name: 'list' });
+  const saveTimers = useRef(new Map<string, number>());
+
+  useEffect(() => {
+    listSongs().then(setSongs);
+  }, []);
+
+  const updateSong = useCallback((song: Song) => {
+    setSongs((prev) => (prev ? prev.map((s) => (s.id === song.id ? song : s)) : prev));
+    const timers = saveTimers.current;
+    const existing = timers.get(song.id);
+    if (existing) window.clearTimeout(existing);
+    timers.set(
+      song.id,
+      window.setTimeout(() => {
+        timers.delete(song.id);
+        saveSong(song).catch((err) => console.error('Tallennus epäonnistui', err));
+      }, 400),
+    );
+  }, []);
+
+  const createSong = useCallback(() => {
+    const song = newSong();
+    setSongs((prev) => [song, ...(prev ?? [])]);
+    saveSong(song).catch((err) => console.error('Tallennus epäonnistui', err));
+    setView({ name: 'editor', songId: song.id });
+  }, []);
+
+  const deleteSong = useCallback((songId: string) => {
+    setSongs((prev) => (prev ? prev.filter((s) => s.id !== songId) : prev));
+    setView({ name: 'list' });
+    dbDeleteSong(songId).catch((err) => console.error('Poisto epäonnistui', err));
+  }, []);
+
+  const reload = useCallback(() => {
+    listSongs().then(setSongs);
+  }, []);
+
+  if (songs === null) return null;
+
+  if (view.name === 'editor') {
+    const song = songs.find((s) => s.id === view.songId);
+    if (song) {
+      return (
+        <SongEditor
+          song={song}
+          onChange={updateSong}
+          onBack={() => setView({ name: 'list' })}
+          onDelete={() => deleteSong(song.id)}
+        />
+      );
+    }
+  }
+
+  return (
+    <SongList
+      songs={songs}
+      onOpen={(songId) => setView({ name: 'editor', songId })}
+      onCreate={createSong}
+      onLibraryChanged={reload}
+    />
+  );
+}
