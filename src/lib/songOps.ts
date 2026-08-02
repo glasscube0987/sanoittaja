@@ -2,7 +2,8 @@
 import { adjustPositions } from './anchors';
 import type { Accidental } from './chords';
 import { respellChord, transposeChord } from './chords';
-import type { ChordAnchor, LyricLine, Song } from './types';
+import { getSections } from './sections';
+import type { ChordAnchor, LyricLine, SectionMark, Song } from './types';
 import { uid } from './types';
 
 function touch(song: Song): Song {
@@ -76,7 +77,16 @@ export function mergeLineWithPrevious(song: Song, lineId: string): Song {
 
 export function removeLine(song: Song, lineId: string): Song {
   if (song.lines.length <= 1) return song;
-  return touch({ ...song, lines: song.lines.filter((l) => l.id !== lineId) });
+  const idx = song.lines.findIndex((l) => l.id === lineId);
+  if (idx === -1) return song;
+  const lines = song.lines.filter((l) => l.id !== lineId);
+  // Osiomerkintä periytyy seuraavalle riville, jottei koko osio katoa kun sen
+  // ensimmäinen rivi poistetaan.
+  const mark = song.lines[idx].section;
+  if (mark && idx < lines.length && !lines[idx].section) {
+    lines[idx] = { ...lines[idx], section: mark };
+  }
+  return touch({ ...song, lines });
 }
 
 export function addLineAfter(song: Song, lineId: string): Song {
@@ -87,17 +97,77 @@ export function addLineAfter(song: Song, lineId: string): Song {
   return touch({ ...song, lines });
 }
 
-/** Asettaa, korvaa tai (tyhjällä symbolilla) poistaa soinnun kohdassa pos. */
-export function setChord(song: Song, lineId: string, pos: number, symbol: string): Song {
+/**
+ * Kirjoittaa soinnun kohtaan `toPos` ja poistaa sen lähtökohdasta `fromPos`.
+ * Näin sointua voi samalla operaatiolla siirtää, muokata ja (tyhjällä
+ * symbolilla) poistaa. Kohdekohdassa jo oleva sointu korvautuu.
+ */
+export function placeChord(
+  song: Song,
+  lineId: string,
+  fromPos: number,
+  toPos: number,
+  symbol: string,
+): Song {
   return touch({
     ...song,
     lines: song.lines.map((line) => {
       if (line.id !== lineId) return line;
-      const others = line.chords.filter((c) => c.pos !== pos);
+      const pos = Math.max(0, Math.min(line.text.length, toPos));
+      const others = line.chords.filter((c) => c.pos !== fromPos && c.pos !== pos);
       const trimmed = symbol.trim();
-      if (!trimmed) return { ...line, chords: others };
-      return { ...line, chords: sortChords([...others, { id: uid(), pos, symbol: trimmed }]) };
+      if (!trimmed) return { ...line, chords: sortChords(others) };
+      // Siirretty sointu säilyttää id:nsä, jotta React-avain ja mahdollinen
+      // valinta pysyvät samana soinnun liikkuessa.
+      const moved = line.chords.find((c) => c.pos === fromPos);
+      return { ...line, chords: sortChords([...others, { id: moved?.id ?? uid(), pos, symbol: trimmed }]) };
     }),
+  });
+}
+
+/** Asettaa, korvaa tai (tyhjällä symbolilla) poistaa soinnun kohdassa pos. */
+export function setChord(song: Song, lineId: string, pos: number, symbol: string): Song {
+  return placeChord(song, lineId, pos, pos, symbol);
+}
+
+/** Merkitsee rivin osion aluksi tai (null) poistaa merkinnän. */
+export function setLineSection(song: Song, lineId: string, mark: SectionMark | null): Song {
+  return touch({
+    ...song,
+    lines: song.lines.map((line) => {
+      if (line.id !== lineId) return line;
+      if (mark) return { ...line, section: mark };
+      if (!line.section) return line;
+      const next = { ...line };
+      delete next.section;
+      return next;
+    }),
+  });
+}
+
+/**
+ * Siirtää osion rivilohkoineen edellisen tai seuraavan osion ohi.
+ *
+ * Merkitsemätön aloituslohko pysyy aina ensimmäisenä: sen rivit valuisivat
+ * siirron jälkeen edeltävän osion perään, mikä muuttaisi laulun rakennetta.
+ */
+export function moveSection(song: Song, blockId: string, direction: -1 | 1): Song {
+  const blocks = getSections(song);
+  const from = blocks.findIndex((b) => b.id === blockId);
+  const to = from + direction;
+  if (from === -1 || to < 0 || to >= blocks.length) return song;
+  if (!blocks[from].mark || !blocks[to].mark) return song;
+
+  const first = blocks[Math.min(from, to)];
+  const second = blocks[Math.max(from, to)];
+  return touch({
+    ...song,
+    lines: [
+      ...song.lines.slice(0, first.start),
+      ...second.lines,
+      ...first.lines,
+      ...song.lines.slice(second.end),
+    ],
   });
 }
 

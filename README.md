@@ -11,6 +11,13 @@ demoja puhelimella ja vie kaikki pilveen.
 - **Sointumerkit** – napauta sointuriviä minkä tahansa merkin yläpuolelta lisätäksesi
   soinnun juuri siihen kohtaan. Soinnut on ankkuroitu merkkipositioihin ja ne
   **siirtyvät automaattisesti tekstin mukana**, kun sanoja muokataan.
+- **Soinnun hienosäätö** – sointua lisätessä tai jo asetettua napauttaessa sen paikkaa
+  voi siirtää merkki kerrallaan ◀ ▶ -painikkeilla tai nuolinäppäimillä. Esikatselu
+  näyttää soinnun sanoituksen yllä, joten kohdan näkee ennen tallennusta.
+- **Osiot** – merkitse rivi osion aluksi (intro, säkeistö, nousu, kertosäe, C-osa,
+  soolo, outro tai oma nimi) rivin §-painikkeesta. Toistuvat osiot **numeroituvat
+  automaattisesti** (Säkeistö 1, Säkeistö 2), ja kokonaisen osion voi siirtää
+  riveineen ylös tai alas otsikon ▲ ▼ -painikkeilla.
 - **Transponointi** – koko laulu puolisävelaskelin ylös/alas, sekä ♯/♭-kirjoitusasun
   vaihto. Tukee mm. laatuja (`m7`, `sus4`, `dim`…) ja bassosäveliä (`C/G`).
 - **Nauhoitteet** – jokaiseen lauluun voi tallentaa ääniluonnoksia suoraan puhelimen
@@ -63,9 +70,10 @@ Varmuuskopiotiedosto (Lataa/Tuo varmuuskopio) toimii ilman mitään tunnuksia.
 ```
 src/
   lib/
-    types.ts        Tietomalli: Song, LyricLine, ChordAnchor, Recording
+    types.ts        Tietomalli: Song, LyricLine, ChordAnchor, SectionMark, Recording
     chords.ts       Sointusymbolien jäsennys ja transponointi
     anchors.ts      Sointuankkurien siirto tekstimuutoksissa
+    sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
     songOps.ts      Laulun muokkausoperaatiot (puhtaita funktioita)
     db.ts           Paikallinen tallennus (IndexedDB)
     recorder.ts     Ääninauhoitus (MediaRecorder)
@@ -83,7 +91,7 @@ sovelluskauppoihin.
 ## Jatkokehitysideoita
 
 - Kaksisuuntainen synkronointi (muutosten tuonti pilvestä, versiohistoria)
-- Laulun vienti tekstinä / PDF:nä (ChordPro-muoto)
-- Osioiden merkintä (säkeistö / kertosäe) ja uudelleenjärjestely
+- Laulun vienti tekstinä / PDF:nä (ChordPro-muoto, osiot omina lohkoinaan)
+- Osion monistus ja raahaamalla järjestäminen
 - Capo-asetus ja soinnun tarttumaotteet
 - Natiivipaketointi Capacitorilla (App Store / Play)

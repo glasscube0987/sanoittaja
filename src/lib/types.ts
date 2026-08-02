@@ -7,10 +7,21 @@ export interface ChordAnchor {
   symbol: string;
 }
 
+export type SectionKind = 'intro' | 'verse' | 'prechorus' | 'chorus' | 'bridge' | 'solo' | 'outro';
+
+/** Osion alkumerkintä. Osio jatkuu seuraavaan merkintään asti. */
+export interface SectionMark {
+  kind: SectionKind;
+  /** Vapaa nimi, joka korvaa lajin oletusnimen ja numeroinnin. */
+  label?: string;
+}
+
 export interface LyricLine {
   id: string;
   text: string;
   chords: ChordAnchor[];
+  /** Jos asetettu, rivi aloittaa uuden osion. */
+  section?: SectionMark;
 }
 
 export interface Song {

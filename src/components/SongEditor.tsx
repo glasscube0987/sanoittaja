@@ -4,15 +4,19 @@ import {
   addLineAfter,
   editLineText,
   mergeLineWithPrevious,
+  moveSection,
+  placeChord,
   respellSong,
-  setChord,
+  setLineSection,
   splitLine,
   transposeSong,
 } from '../lib/songOps';
+import { getSections, sectionTitle } from '../lib/sections';
 import ChordSheet from './ChordSheet';
 import CloudSheet from './CloudSheet';
 import LineEditor from './LineEditor';
 import RecordingsPanel from './RecordingsPanel';
+import SectionSheet from './SectionSheet';
 
 interface Props {
   song: Song;
@@ -29,8 +33,12 @@ export interface ChordTarget {
 
 export default function SongEditor({ song, onChange, onBack, onDelete }: Props) {
   const [chordTarget, setChordTarget] = useState<ChordTarget | null>(null);
+  const [sectionTargetId, setSectionTargetId] = useState<string | null>(null);
   const [cloudOpen, setCloudOpen] = useState(false);
   const focusLineId = useRef<{ id: string; caret: number } | null>(null);
+
+  const sections = useMemo(() => getSections(song), [song]);
+  const sectionTargetLine = song.lines.find((l) => l.id === sectionTargetId) ?? null;
 
   const usedChords = useMemo(() => {
     const seen: string[] = [];
@@ -100,17 +108,45 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
         </div>
 
         <div className="lyrics">
-          {song.lines.map((line) => (
-            <LineEditor
-              key={line.id}
-              line={line}
-              autoFocus={focusLineId.current?.id === line.id ? focusLineId.current.caret : null}
-              onAutoFocused={() => (focusLineId.current = null)}
-              onTextChange={(text) => onChange(editLineText(song, line.id, text))}
-              onSplit={(at) => handleSplit(line.id, at)}
-              onMergeWithPrevious={() => handleMerge(line.id)}
-              onChordTap={(pos, symbol) => setChordTarget({ lineId: line.id, pos, symbol })}
-            />
+          {sections.map((block, i) => (
+            <section className="section" key={block.id}>
+              {block.mark && (
+                <div className="section-head">
+                  <button className="section-name" onClick={() => setSectionTargetId(block.id)}>
+                    {sectionTitle(block)}
+                  </button>
+                  <button
+                    className="ghost"
+                    aria-label={`Siirrä osiota ${sectionTitle(block)} ylös`}
+                    disabled={i === 0 || !sections[i - 1].mark}
+                    onClick={() => onChange(moveSection(song, block.id, -1))}
+                  >
+                    ▲
+                  </button>
+                  <button
+                    className="ghost"
+                    aria-label={`Siirrä osiota ${sectionTitle(block)} alas`}
+                    disabled={i === sections.length - 1}
+                    onClick={() => onChange(moveSection(song, block.id, 1))}
+                  >
+                    ▼
+                  </button>
+                </div>
+              )}
+              {block.lines.map((line) => (
+                <LineEditor
+                  key={line.id}
+                  line={line}
+                  autoFocus={focusLineId.current?.id === line.id ? focusLineId.current.caret : null}
+                  onAutoFocused={() => (focusLineId.current = null)}
+                  onTextChange={(text) => onChange(editLineText(song, line.id, text))}
+                  onSplit={(at) => handleSplit(line.id, at)}
+                  onMergeWithPrevious={() => handleMerge(line.id)}
+                  onChordTap={(pos, symbol) => setChordTarget({ lineId: line.id, pos, symbol })}
+                  onSectionTap={() => setSectionTargetId(line.id)}
+                />
+              ))}
+            </section>
           ))}
         </div>
 
@@ -136,11 +172,25 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
           target={chordTarget}
           line={song.lines.find((l) => l.id === chordTarget.lineId)!}
           suggestions={usedChords}
-          onSave={(symbol) => {
-            onChange(setChord(song, chordTarget.lineId, chordTarget.pos, symbol));
+          onSave={(symbol, pos) => {
+            onChange(placeChord(song, chordTarget.lineId, chordTarget.pos, pos, symbol));
             setChordTarget(null);
           }}
           onClose={() => setChordTarget(null)}
+        />
+      )}
+      {sectionTargetLine && (
+        <SectionSheet
+          mark={sectionTargetLine.section ?? null}
+          onSave={(mark) => {
+            onChange(setLineSection(song, sectionTargetLine.id, mark));
+            setSectionTargetId(null);
+          }}
+          onRemove={() => {
+            onChange(setLineSection(song, sectionTargetLine.id, null));
+            setSectionTargetId(null);
+          }}
+          onClose={() => setSectionTargetId(null)}
         />
       )}
       {cloudOpen && <CloudSheet song={song} onClose={() => setCloudOpen(false)} />}

@@ -10,6 +10,7 @@ interface Props {
   onSplit: (at: number) => void;
   onMergeWithPrevious: () => void;
   onChordTap: (pos: number, currentSymbol: string) => void;
+  onSectionTap: () => void;
 }
 
 export default function LineEditor({
@@ -20,6 +21,7 @@ export default function LineEditor({
   onSplit,
   onMergeWithPrevious,
   onChordTap,
+  onSectionTap,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
@@ -57,44 +59,54 @@ export default function LineEditor({
 
   return (
     <div className="line">
-      <div
-        className="chord-row"
-        onClick={handleChordRowTap}
-        title="Napauta lisätäksesi soinnun tähän kohtaan"
-        style={{ width: `calc(${Math.max(line.text.length, 8)}ch + 8px)` }}
+      <button
+        className={`section-mark${line.section ? ' set' : ''}`}
+        onClick={onSectionTap}
+        aria-label={line.section ? 'Muokkaa osiota' : 'Aloita osio tästä rivistä'}
+        title={line.section ? 'Muokkaa osiota' : 'Aloita osio tästä rivistä'}
       >
-        <span
-          ref={measureRef}
-          aria-hidden
-          style={{ position: 'absolute', visibility: 'hidden', whiteSpace: 'pre' }}
+        §
+      </button>
+      <div className="line-body">
+        <div
+          className="chord-row"
+          onClick={handleChordRowTap}
+          title="Napauta lisätäksesi soinnun tähän kohtaan"
+          style={{ width: `calc(${Math.max(line.text.length, 8)}ch + 8px)` }}
         >
-          0000000000
-        </span>
-        {line.chords.map((chord) => (
-          <button
-            key={chord.id}
-            className="chord"
-            style={{ left: `calc(${chord.pos}ch + 2px)` }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onChordTap(chord.pos, chord.symbol);
-            }}
+          <span
+            ref={measureRef}
+            aria-hidden
+            style={{ position: 'absolute', visibility: 'hidden', whiteSpace: 'pre' }}
           >
-            {chord.symbol}
-          </button>
-        ))}
+            0000000000
+          </span>
+          {line.chords.map((chord) => (
+            <button
+              key={chord.id}
+              className="chord"
+              style={{ left: `calc(${chord.pos}ch + 2px)` }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChordTap(chord.pos, chord.symbol);
+              }}
+            >
+              {chord.symbol}
+            </button>
+          ))}
+        </div>
+        <input
+          ref={inputRef}
+          className="text"
+          value={line.text}
+          placeholder="…"
+          autoCapitalize="sentences"
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(e) => onTextChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
       </div>
-      <input
-        ref={inputRef}
-        className="text"
-        value={line.text}
-        placeholder="…"
-        autoCapitalize="sentences"
-        autoComplete="off"
-        spellCheck={false}
-        onChange={(e) => onTextChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-      />
     </div>
   );
 }

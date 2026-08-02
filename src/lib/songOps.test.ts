@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { editLineText, mergeLineWithPrevious, setChord, splitLine, transposeSong } from './songOps';
+import {
+  editLineText,
+  mergeLineWithPrevious,
+  placeChord,
+  setChord,
+  splitLine,
+  transposeSong,
+} from './songOps';
 import type { Song } from './types';
 
 function makeSong(): Song {
@@ -58,6 +65,44 @@ describe('setChord', () => {
     expect(song.lines[0].chords.map((c) => c.symbol)).toEqual(['Am', 'F', 'Dm7', 'E7']);
     song = setChord(song, 'l1', 8, '');
     expect(song.lines[0].chords.map((c) => c.symbol)).toEqual(['Am', 'F', 'E7']);
+  });
+});
+
+describe('placeChord', () => {
+  it('siirtää soinnun uuteen kohtaan jättämättä kopiota', () => {
+    const song = placeChord(makeSong(), 'l1', 4, 6, 'F');
+    expect(song.lines[0].chords.map((c) => [c.pos, c.symbol])).toEqual([
+      [0, 'Am'],
+      [6, 'F'],
+      [13, 'E7'],
+    ]);
+  });
+
+  it('säilyttää soinnun id:n siirrossa', () => {
+    const song = placeChord(makeSong(), 'l1', 4, 6, 'F');
+    expect(song.lines[0].chords.find((c) => c.pos === 6)?.id).toBe('c2');
+  });
+
+  it('korvaa kohdekohdassa olevan soinnun', () => {
+    const song = placeChord(makeSong(), 'l1', 0, 4, 'Am');
+    expect(song.lines[0].chords.map((c) => [c.pos, c.symbol])).toEqual([
+      [4, 'Am'],
+      [13, 'E7'],
+    ]);
+  });
+
+  it('rajaa kohdan rivin pituuteen', () => {
+    const song = placeChord(makeSong(), 'l1', 0, 999, 'Am');
+    expect(song.lines[0].chords.find((c) => c.symbol === 'Am')?.pos).toBe(16);
+    expect(placeChord(makeSong(), 'l1', 4, -5, 'F').lines[0].chords[0]).toMatchObject({
+      pos: 0,
+      symbol: 'F',
+    });
+  });
+
+  it('poistaa soinnun tyhjällä symbolilla myös siirrettäessä', () => {
+    const song = placeChord(makeSong(), 'l1', 4, 6, '  ');
+    expect(song.lines[0].chords.map((c) => c.symbol)).toEqual(['Am', 'E7']);
   });
 });
 
