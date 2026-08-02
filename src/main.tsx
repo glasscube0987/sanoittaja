@@ -1,10 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { applyIosZoomFix } from './lib/iosZoom';
 import { completeDropboxAuthIfReturning } from './lib/sync/dropbox';
 import './styles.css';
 
 async function boot() {
+  applyIosZoomFix();
   try {
     await completeDropboxAuthIfReturning();
   } catch (err) {
