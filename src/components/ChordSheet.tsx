@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { LyricLine } from '../lib/types';
 import type { ChordTarget } from './SongEditor';
 
@@ -18,6 +18,18 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
   const chips = suggestions.length > 0 ? suggestions : DEFAULT_SUGGESTIONS;
   const contextRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLSpanElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  /*
+   * Kohdistetaan lomakkeeseen, ei symbolikenttään. Tekstikenttään kohdistaminen
+   * avaisi puhelimen näppäimistön ja saisi iOS:n zoomaamaan koko näkymän
+   * sisään – eikä iOS palauta zoomia kentästä poistuttaessa, joten näkymä jää
+   * suurennetuksi vielä ponnahduksen sulkemisen jälkeen. Nuolinäppäimet
+   * toimivat silti, koska käsittelijä on lomakkeella.
+   */
+  useEffect(() => {
+    formRef.current?.focus({ preventScroll: true });
+  }, []);
 
   /*
    * Esikatselu ei mahdu näytölle pitkillä riveillä, joten se vieritetään niin
@@ -56,6 +68,8 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
     <div className="overlay" onClick={onClose}>
       <form
         className="sheet"
+        ref={formRef}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
         onSubmit={(e) => {
@@ -90,7 +104,6 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
           value={symbol}
           onChange={(e) => setSymbol(e.target.value)}
           placeholder="esim. Am7, C#/G#, Bb"
-          autoFocus
           autoCapitalize="off"
           autoComplete="off"
           spellCheck={false}

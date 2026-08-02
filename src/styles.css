@@ -79,6 +79,12 @@ button.ghost {
 input,
 textarea {
   font: inherit;
+  /*
+   * iOS zoomaa koko näkymän sisään, jos kohdistetun kentän fonttikoko jää alle
+   * 16px:n, eikä palauta zoomia kentästä poistuttaessa. Koko lukitaan tähän
+   * rajaan sen sijaan että luotettaisiin periytymiseen.
+   */
+  font-size: max(16px, 1rem);
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -358,6 +364,12 @@ textarea:focus {
 .sheet > * {
   min-width: 0;
   max-width: 100%;
+}
+
+/* Ponnahdukseen kohdistetaan ohjelmallisesti näppäinkomentoja varten, joten
+   se ei ole näppäimistöllä kierrettävä kohde eikä tarvitse fokusreunusta. */
+.sheet:focus {
+  outline: none;
 }
 
 .sheet h2 {
