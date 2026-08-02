@@ -35,6 +35,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Browser tests
+        run: npm run test:e2e
+
       - name: Configure Pages
         uses: actions/configure-pages@v6
 

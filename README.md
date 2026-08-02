@@ -40,9 +40,15 @@ natiivisovellus ja toimii myös offline.
 npm install
 npm run dev        # kehityspalvelin
 npm test           # yksikkötestit (vitest)
+npm run test:e2e   # selaintestit (playwright, chromium + webkit)
 npm run build      # tyyppitarkistus + tuotantobuild -> dist/
 npm run preview    # tuotantobuildin esikatselu
 ```
+
+Selaintestit tarvitsevat selainbinäärit kerran: `npx playwright install chromium webkit`.
+Ne käynnistävät itse tuotantobuildin esikatselupalvelimen, joten erillistä
+palvelinta ei tarvitse käynnistää käsin. Pelkän Chromiumin ajaa
+`npm run test:e2e:chromium`.
 
 ## Julkaisu
 
@@ -81,10 +87,15 @@ src/
                     varmuuskopiotiedosto
   components/       React-käyttöliittymä (lista, editori, sointuvalitsin,
                     nauhoitteet, pilvivalikko, asetukset)
+e2e/                Selaintestit (Playwright): asettelu, osiot, soinnut, zoom
 ```
 
 Ydinlogiikka (soinnut, ankkurit, muokkausoperaatiot) on erotettu käyttöliittymästä ja
-katettu yksikkötestein (`npm test`). Sama logiikka on siirrettävissä sellaisenaan
+katettu yksikkötestein (`npm test`). Asettelu ja käyttöliittymä katetaan erikseen
+selaintestein puhelimen kokoisella näytöllä (`npm run test:e2e`), koska osa vioista
+– sointujen kohdistus, sivun leveys – näkyy vasta oikeassa selaimessa ja voi erota
+moottorien välillä. Siksi mukana on Chromiumin lisäksi WebKit, sama moottoriperhe
+kuin Safarissa. Sama logiikka on siirrettävissä sellaisenaan
 React Native / Capacitor -natiivikuoreen, jos sovellus halutaan myöhemmin
 sovelluskauppoihin.
 
