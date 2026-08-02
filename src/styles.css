@@ -23,6 +23,14 @@ body {
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-text-size-adjust: 100%;
+  /*
+   * Sivu ei saa koskaan levitä näyttöä leveämmäksi: pitkä sointurivi kuuluu
+   * vierittää .lyrics-laatikon sisällä, ei koko sivua. Ilman tätä leveä sisältö
+   * kasvattaa asetteluikkunaa ja selain zoomaa koko näkymän ulos.
+   * clip eikä hidden, jotta yläpalkin sticky-kiinnitys säilyy.
+   */
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 #root {
@@ -31,6 +39,7 @@ body {
   min-height: 100dvh;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
     env(safe-area-inset-left);
+  overflow-x: clip;
 }
 
 button {
@@ -110,6 +119,16 @@ textarea:focus {
   gap: 12px;
 }
 
+/*
+ * Näkymän lohkot pysyvät palstan levyisinä myös kun niiden sisältö on leveämpi.
+ * Erityisesti .lyrics: se vierittää itse, mutta jos selain mitoittaa sen
+ * sisällön mukaan, ylileveys valuu koko sivulle.
+ */
+.screen > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* --- Laululista --- */
 .song-card {
   display: block;
@@ -184,8 +203,6 @@ textarea:focus {
   align-items: center;
   gap: 4px;
   padding: 2px 4px 4px;
-  position: sticky;
-  left: 0;
 }
 
 .section-head .section-name {
@@ -236,8 +253,6 @@ textarea:focus {
   font-family: var(--mono);
   font-size: 13px;
   color: var(--border);
-  position: sticky;
-  left: 0;
 }
 
 .line .section-mark.set {
