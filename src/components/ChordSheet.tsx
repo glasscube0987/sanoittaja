@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { LyricLine } from '../lib/types';
 import type { ChordTarget } from './SongEditor';
 
@@ -16,6 +16,26 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
   const [symbol, setSymbol] = useState(target.symbol);
   const [pos, setPos] = useState(target.pos);
   const chips = suggestions.length > 0 ? suggestions : DEFAULT_SUGGESTIONS;
+  const contextRef = useRef<HTMLDivElement>(null);
+  const markRef = useRef<HTMLSpanElement>(null);
+
+  /*
+   * Esikatselu ei mahdu näytölle pitkillä riveillä, joten se vieritetään niin
+   * että sointumerkki pysyy näkyvissä myös siirrettäessä.
+   */
+  useLayoutEffect(() => {
+    const box = contextRef.current;
+    const mark = markRef.current;
+    if (!box || !mark) return;
+    const margin = 24;
+    const left = mark.offsetLeft;
+    const right = left + mark.offsetWidth;
+    if (left - margin < box.scrollLeft) {
+      box.scrollLeft = Math.max(0, left - margin);
+    } else if (right + margin > box.scrollLeft + box.clientWidth) {
+      box.scrollLeft = right + margin - box.clientWidth;
+    }
+  }, [pos, symbol]);
 
   function nudge(step: number) {
     setPos((p) => Math.max(0, Math.min(line.text.length, p + step)));
@@ -45,10 +65,10 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
       >
         <h2>{target.symbol ? 'Muokkaa sointua' : 'Lisää sointu'}</h2>
 
-        <div className="context">
+        <div className="context" ref={contextRef}>
           <div className="mark">
             {' '.repeat(pos)}
-            {symbol.trim() || '▼'}
+            <span ref={markRef}>{symbol.trim() || '▼'}</span>
           </div>
           <div className="lyric">{line.text || ' '}</div>
         </div>

@@ -317,6 +317,10 @@ textarea:focus {
   align-items: flex-end;
   justify-content: center;
   z-index: 50;
+  /* Korkea ponnahdus (näppäimistö auki) vieritetään pystyyn; vaakasuuntaan ei
+     koskaan, jottei mikään sisältö työnnä näkymää näytön reunan yli. */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .sheet {
@@ -331,16 +335,28 @@ textarea:focus {
   gap: 12px;
 }
 
+/*
+ * Ponnahduksen lapset eivät saa levitä sisältönsä mukaan. Leveä yksirivinen
+ * esikatselu venyttäisi muuten laatikon näytön ulkopuolelle selaimissa, jotka
+ * mitoittavat flex-lapsen poikittaisakselilla max-content-leveyteen.
+ */
+.sheet > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .sheet h2 {
   font-size: 16px;
 }
 
 .sheet .context {
+  position: relative;
   font-family: var(--mono);
   color: var(--text-dim);
   font-size: 14px;
   white-space: pre;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   background: var(--bg);
   border-radius: var(--radius);
   padding: 8px 10px;
@@ -365,6 +381,7 @@ textarea:focus {
 
 .nudge-row .nudge-info {
   flex: 1;
+  min-width: 0;
   text-align: center;
   color: var(--text-dim);
   font-size: 13px;
