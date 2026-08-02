@@ -36,9 +36,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
+    // --host sidotaan eksplisiittisesti: pelkkä localhost-nimi voi ratketa
+    // ensin IPv6:een, jolloin odotettu 127.0.0.1 ei vastaa lainkaan.
+    command: `npm run build && npm run preview -- --port ${PORT} --strictPort --host 127.0.0.1`,
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: !process.env.CI,
+    stdout: 'pipe',
+    stderr: 'pipe',
     timeout: 120_000,
   },
 });
