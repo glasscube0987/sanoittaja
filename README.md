@@ -11,6 +11,11 @@ demoja puhelimella ja vie kaikki pilveen.
 - **Sointumerkit** – napauta sointuriviä minkä tahansa merkin yläpuolelta lisätäksesi
   soinnun juuri siihen kohtaan. Soinnut on ankkuroitu merkkipositioihin ja ne
   **siirtyvät automaattisesti tekstin mukana**, kun sanoja muokataan.
+- **Tahtirivit** – rivin voi muuttaa tahtiriviksi rivin §-painikkeesta, jolloin
+  soinnut merkitään tahteina: `| Am | F | C | G |`. Yhteen tahtiin mahtuu useampi
+  sointu (`Am F`) tai muu merkintä (`%`), ja tahdit tasataan saman levyisiksi niin
+  että tahtiviivat ovat allekkain. Transponointi käsittelee jokaisen tahdin soinnun
+  erikseen.
 - **Välisoitot** – sanattomalle riville voi merkitä useita sointuja, joten introt,
   soolot ja väliosat mahtuvat mukaan. Tyhjällä rivillä näkyy himmeä sarakeruudukko,
   ja sointuja voi asettaa myös viimeisen sanan jälkeen kierrosointua varten.
@@ -96,7 +101,7 @@ src/
     anchors.ts      Sointuankkurien siirto tekstimuutoksissa
     i18n.ts         Käännökset (en/fi), kielen tunnistus ja React-konteksti
     live.ts         Live-tilan vieritysaskel ja asetukset
-    render.ts       Sointurivin ladonta tekstiksi (tulostus ja live-tila)
+    render.ts       Sointu- ja tahtirivin ladonta tekstiksi (tulostus, live-tila)
     sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
     songOps.ts      Laulun muokkausoperaatiot (puhtaita funktioita)
     db.ts           Paikallinen tallennus (IndexedDB)
@@ -120,7 +125,7 @@ sovelluskauppoihin.
 ## Jatkokehitysideoita
 
 - Kaksisuuntainen synkronointi (muutosten tuonti pilvestä, versiohistoria)
-- Laulun vienti tekstinä / PDF:nä (ChordPro-muoto, osiot omina lohkoinaan)
+- Laulun vienti ChordPro-muodossa
 - Osion monistus ja raahaamalla järjestäminen
 - Capo-asetus ja soinnun tarttumaotteet
 - Natiivipaketointi Capacitorilla (App Store / Play)

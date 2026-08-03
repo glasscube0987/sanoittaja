@@ -22,6 +22,21 @@ export function chordLineText(line: LyricLine): string {
   return out;
 }
 
+/** Tahdin vähimmäisleveys, jotta tyhjäkin tahti näkyy tahtina. */
+const MIN_BAR_WIDTH = 2;
+
+/**
+ * Tahtirivi tekstinä: `| Am  | F   | C   | G   |`.
+ *
+ * Tahdit tasataan rivin leveimmän mukaan, jotta tahtiviivat asettuvat
+ * allekkain ja tahtien kesto on luettavissa silmäyksellä.
+ */
+export function barLineText(bars: string[]): string {
+  if (bars.length === 0) return '';
+  const width = Math.max(MIN_BAR_WIDTH, ...bars.map((bar) => bar.trim().length));
+  return `| ${bars.map((bar) => bar.trim().padEnd(width)).join(' | ')} |`;
+}
+
 /** Onko rivillä mitään näytettävää – tyhjä rivi erottaa osioita. */
 export function isBlankLine(line: LyricLine): boolean {
   return line.text.trim() === '' && line.chords.length === 0;

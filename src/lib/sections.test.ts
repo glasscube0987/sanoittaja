@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Key, Params } from './i18n';
 import { translate } from './i18n';
 import { getSections, sectionTitle as title } from './sections';
-import { moveSection, removeLine, setLineSection } from './songOps';
+import { mergeLineWithPrevious, moveSection, removeLine, setLineBars, setLineSection } from './songOps';
 import type { LyricLine, SectionMark, Song } from './types';
 
 /** Testit ajetaan englanniksi, jotta odotetut nimet ovat yksiselitteisiä. */
@@ -92,6 +92,38 @@ describe('setLineSection', () => {
     song = setLineSection(song, 'a2', null);
     expect(song.lines.find((l) => l.id === 'a2')).not.toHaveProperty('section');
     expect(getSections(song)).toHaveLength(3);
+  });
+});
+
+describe('setLineBars', () => {
+  it('muuttaa rivin tahtiriviksi ja tyhjentää sanat', () => {
+    const lahto = makeSong([line('a', 'sanoja', { kind: 'solo' })]);
+    const song = setLineBars(lahto, 'a', ['Am', 'F']);
+    expect(song.lines[0]).toMatchObject({ text: '', chords: [], bars: ['Am', 'F'] });
+  });
+
+  it('säilyttää osiomerkinnän, jotta välisoiton voi siirtää osiona', () => {
+    const song = setLineBars(makeSong([line('a', '', { kind: 'solo' })]), 'a', ['Am']);
+    expect(song.lines[0].section).toEqual({ kind: 'solo' });
+  });
+
+  it('palauttaa rivin sanoitusriviksi', () => {
+    let song = setLineBars(makeSong([line('a', '')]), 'a', ['Am']);
+    song = setLineBars(song, 'a', null);
+    expect(song.lines[0]).not.toHaveProperty('bars');
+  });
+});
+
+describe('mergeLineWithPrevious tahtirivin kanssa', () => {
+  it('ei yhdistä sanoitusriviä tahtiriviin', () => {
+    // Yhdistäminen tuottaisi rivin, jolla on sekä tahdit että sanat, eikä
+    // sellaista voi piirtää kummallakaan tavalla.
+    let song = makeSong([line('a', ''), line('b', 'sanoja')]);
+    song = setLineBars(song, 'a', ['Am', 'F']);
+    const merged = mergeLineWithPrevious(song, 'b');
+    expect(merged.lines).toHaveLength(2);
+    expect(merged.lines[0].bars).toEqual(['Am', 'F']);
+    expect(merged.lines[1].text).toBe('sanoja');
   });
 });
 

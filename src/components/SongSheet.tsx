@@ -1,5 +1,5 @@
 import { useI18n } from '../lib/i18n';
-import { chordLineText } from '../lib/render';
+import { barLineText, chordLineText } from '../lib/render';
 import { getSections, sectionTitle } from '../lib/sections';
 import type { Song } from '../lib/types';
 
@@ -28,6 +28,13 @@ export default function SongSheet({ song, className }: Props) {
         <section className="sheet-section" key={block.id}>
           {block.mark && <h2>{sectionTitle(block, t)}</h2>}
           {block.lines.map((line) => {
+            if (line.bars) {
+              return (
+                <div className="sheet-line" key={line.id}>
+                  <pre className="sheet-bars">{barLineText(line.bars)}</pre>
+                </div>
+              );
+            }
             const chords = chordLineText(line);
             return (
               <div className="sheet-line" key={line.id}>

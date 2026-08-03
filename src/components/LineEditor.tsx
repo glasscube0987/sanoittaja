@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { chordSpan, columnGuide } from '../lib/anchors';
 import { useT } from '../lib/i18n';
+import { barLineText } from '../lib/render';
 import type { LyricLine } from '../lib/types';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
   onMergeWithPrevious: () => void;
   onChordTap: (pos: number, currentSymbol: string) => void;
   onSectionTap: () => void;
+  onBarsTap: () => void;
 }
 
 export default function LineEditor({
@@ -24,6 +26,7 @@ export default function LineEditor({
   onMergeWithPrevious,
   onChordTap,
   onSectionTap,
+  onBarsTap,
 }: Props) {
   const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -72,6 +75,14 @@ export default function LineEditor({
         §
       </button>
       <div className="line-body">
+        {line.bars ? (
+          // Tahtirivillä ei ole sanoja eikä sijoitettuja sointuja, joten se on
+          // yksi napautettava rivi eikä sointurivin ja tekstikentän pari.
+          <button className="bar-row" onClick={onBarsTap} title={t('line.editBars')}>
+            {barLineText(line.bars)}
+          </button>
+        ) : (
+          <>
         <div
           className="chord-row"
           onClick={handleChordRowTap}
@@ -116,6 +127,8 @@ export default function LineEditor({
           onChange={(e) => onTextChange(e.target.value)}
           onKeyDown={handleKeyDown}
         />
+          </>
+        )}
       </div>
     </div>
   );

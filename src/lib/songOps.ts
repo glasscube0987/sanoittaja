@@ -1,7 +1,7 @@
 /** Laulun muokkausoperaatiot – puhtaita funktioita, jotka palauttavat uuden laulun. */
 import { adjustPositions, chordSpan } from './anchors';
 import type { Accidental } from './chords';
-import { respellChord, transposeChord } from './chords';
+import { respellChord, transposeBar, transposeChord } from './chords';
 import { getSections } from './sections';
 import type { ChordAnchor, LyricLine, SectionMark, Song } from './types';
 import { uid } from './types';
@@ -62,6 +62,9 @@ export function mergeLineWithPrevious(song: Song, lineId: string): Song {
   if (idx <= 0) return song;
   const prev = song.lines[idx - 1];
   const line = song.lines[idx];
+  // Tahtirivillä ei ole sanoja: yhdistäminen tuottaisi rivin, jolla on sekä
+  // tahdit että teksti, eikä sellaista voi piirtää kummallakaan tavalla.
+  if (prev.bars || line.bars) return song;
   const merged: LyricLine = {
     ...prev,
     text: prev.text + line.text,
@@ -130,6 +133,28 @@ export function setChord(song: Song, lineId: string, pos: number, symbol: string
   return placeChord(song, lineId, pos, pos, symbol);
 }
 
+export const DEFAULT_BARS = ['', '', '', ''];
+
+/**
+ * Muuttaa rivin tahtiriviksi tai (null) takaisin sanoitusriviksi.
+ *
+ * Tahtirivillä ei ole sanoja eikä ankkuroituja sointuja, joten muunnos
+ * tyhjentää molemmat. Osiomerkintä säilyy, jotta välisoiton voi merkitä
+ * osioksi ja siirtää muiden osioiden mukana.
+ */
+export function setLineBars(song: Song, lineId: string, bars: string[] | null): Song {
+  return touch({
+    ...song,
+    lines: song.lines.map((line) => {
+      if (line.id !== lineId) return line;
+      if (bars) return { ...line, text: '', chords: [], bars };
+      const next = { ...line };
+      delete next.bars;
+      return next;
+    }),
+  });
+}
+
 /** Merkitsee rivin osion aluksi tai (null) poistaa merkinnän. */
 export function setLineSection(song: Song, lineId: string, mark: SectionMark | null): Song {
   return touch({
@@ -179,6 +204,7 @@ export function transposeSong(song: Song, semitones: number, prefer?: Accidental
     lines: song.lines.map((line) => ({
       ...line,
       chords: line.chords.map((c) => ({ ...c, symbol: transposeChord(c.symbol, semitones, prefer) })),
+      ...(line.bars ? { bars: line.bars.map((b) => transposeBar(b, semitones, prefer)) } : {}),
     })),
   });
 }
@@ -191,6 +217,7 @@ export function respellSong(song: Song, prefer: Accidental): Song {
     lines: song.lines.map((line) => ({
       ...line,
       chords: line.chords.map((c) => ({ ...c, symbol: respellChord(c.symbol, prefer) })),
+      ...(line.bars ? { bars: line.bars.map((b) => transposeBar(b, 0, prefer)) } : {}),
     })),
   });
 }

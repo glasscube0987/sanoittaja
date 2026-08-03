@@ -1,0 +1,119 @@
+import { expect, test, type Locator, type Page } from '@playwright/test';
+import { avaaLaulu, laulu } from './apu';
+
+/** Laulu, jonka ensimmäinen rivi on valmis tahtiriviksi muunnettavaksi. */
+function laulunPohja() {
+  return laulu({
+    lines: [
+      { id: 'v1', text: '', section: { kind: 'solo' }, chords: [] },
+      { id: 'l1', text: 'sanoitettu rivi', section: { kind: 'verse' }, chords: [] },
+    ],
+  });
+}
+
+/**
+ * Teksti sellaisenaan: `toHaveText` normalisoi välit, ja juuri välit kertovat
+ * tahtien tasauksen.
+ */
+const teksti = (locator: Locator) => locator.evaluate((el) => el.textContent);
+
+/** Muuntaa ensimmäisen rivin tahtiriviksi §-painikkeen kautta. */
+async function teeTahtirivi(page: Page) {
+  await page.locator('.line').first().getByLabel('Line settings').click();
+  await page.getByRole('button', { name: 'Chord bars', exact: true }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
+  // Muunnos avaa tahtinäkymän suoraan, jotta tahdit voi täyttää heti.
+  await expect(page.locator('.sheet')).toBeVisible();
+}
+
+/** Kirjoittaa valittuun tahtiin ja siirtyy seuraavaan. */
+async function kirjoitaTahti(page: Page, sisalto: string) {
+  await page.locator('.sheet input').fill(sisalto);
+  await page.keyboard.press('ArrowRight');
+}
+
+test('rivin voi muuntaa tahtiriviksi §-painikkeesta', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  const rivi = page.locator('.line').first();
+
+  // Ennen muunnosta rivi on tavallinen sanoitusrivi.
+  await expect(rivi.locator('.chord-row')).toHaveCount(1);
+  await expect(rivi.locator('.bar-row')).toHaveCount(0);
+
+  await teeTahtirivi(page);
+  await page.getByRole('button', { name: 'Cancel' }).click();
+
+  await expect(rivi.locator('.bar-row')).toHaveCount(1);
+  await expect(rivi.locator('.chord-row')).toHaveCount(0);
+  await expect(rivi.locator('input.text')).toHaveCount(0);
+});
+
+test('tahteihin kirjoitetut soinnut näkyvät rivillä tahtiviivoin', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeTahtirivi(page);
+
+  await kirjoitaTahti(page, 'Am');
+  await kirjoitaTahti(page, 'F');
+  await kirjoitaTahti(page, 'C');
+  await page.locator('.sheet input').fill('G');
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  expect(await teksti(page.locator('.line').first().locator('.bar-row'))).toBe('| Am | F  | C  | G  |');
+});
+
+test('tahtiin mahtuu useampi sointu', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeTahtirivi(page);
+
+  // Oletuksena tahteja on neljä; täytetään kaksi ja jätetään kaksi tyhjäksi.
+  await kirjoitaTahti(page, 'Am F');
+  await page.locator('.sheet input').fill('C');
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  expect(await teksti(page.locator('.line').first().locator('.bar-row'))).toBe(
+    '| Am F | C    |      |      |',
+  );
+});
+
+test('tahteja voi lisätä ja poistaa', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeTahtirivi(page);
+
+  await expect(page.locator('.nudge-info')).toContainText('bar 1/4');
+  await page.getByRole('button', { name: '+ Bar' }).click();
+  await expect(page.locator('.nudge-info')).toContainText('bar 2/5');
+  await page.getByRole('button', { name: '− Bar' }).click();
+  // Poisto vie valinnan seuraavaan tahtiin, ei alkuun.
+  await expect(page.locator('.nudge-info')).toContainText('bar 2/4');
+});
+
+test('transponointi siirtää myös tahtien soinnut', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeTahtirivi(page);
+  await kirjoitaTahti(page, 'Am F');
+  await page.locator('.sheet input').fill('C');
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  await page.getByLabel('Up a semitone').click();
+  await page.getByLabel('Up a semitone').click();
+
+  // Molemmat saman tahdin soinnut nousevat, ei vain ensimmäinen.
+  expect(await teksti(page.locator('.line').first().locator('.bar-row'))).toBe(
+    '| Bm G | D    |      |      |',
+  );
+});
+
+test('tahtirivi näkyy tulostusnäkymässä ja live-tilassa', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeTahtirivi(page);
+  await kirjoitaTahti(page, 'Am');
+  await page.locator('.sheet input').fill('F');
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  await page.getByRole('button', { name: 'Live', exact: true }).click();
+  expect(await teksti(page.locator('.live-view .sheet-bars').first())).toBe('| Am | F  |    |    |');
+  await page.getByLabel('Exit live mode').click();
+
+  await page.emulateMedia({ media: 'print' });
+  expect(await teksti(page.locator('.song-sheet .sheet-bars').first())).toBe('| Am | F  |    |    |');
+});

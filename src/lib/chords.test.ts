@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseChord, respellChord, transposeChord } from './chords';
+import { parseChord, respellChord, transposeBar, transposeChord } from './chords';
 
 describe('parseChord', () => {
   it('jäsentää perussoinnut', () => {
@@ -61,5 +61,37 @@ describe('respellChord', () => {
     expect(respellChord('C#m', 'flat')).toBe('Dbm');
     expect(respellChord('Dbm', 'sharp')).toBe('C#m');
     expect(respellChord('C', 'flat')).toBe('C');
+  });
+});
+
+describe('transposeBar', () => {
+  it('transponoi tahdin jokaisen soinnun erikseen', () => {
+    // Koko sisältöä ei voi antaa transposeChordille: se jäsentäisi "Am F"
+    // juureksi A ja laaduksi "m F", jolloin F jäisi transponoimatta.
+    expect(transposeChord('Am F', 2)).toBe('Bm F');
+    expect(transposeBar('Am F', 2)).toBe('Bm G');
+  });
+
+  it('säilyttää välit sellaisinaan', () => {
+    expect(transposeBar('Am   F', 2)).toBe('Bm   G');
+    expect(transposeBar('  Am F  ', 2)).toBe('  Bm G  ');
+  });
+
+  it('jättää muut merkinnät koskematta', () => {
+    expect(transposeBar('%', 5)).toBe('%');
+    expect(transposeBar('Am % N.C.', 2)).toBe('Bm % N.C.');
+  });
+
+  it('transponoi yksittäisen soinnun kuten ennenkin', () => {
+    expect(transposeBar('F#m7', 1)).toBe('Gm7');
+    expect(transposeBar('C/G', 2)).toBe('D/A');
+  });
+
+  it('kelpaa myös kirjoitusasun vaihtoon', () => {
+    expect(transposeBar('C#m F#', 0, 'flat')).toBe('Dbm Gb');
+  });
+
+  it('sietää tyhjän tahdin', () => {
+    expect(transposeBar('', 2)).toBe('');
   });
 });

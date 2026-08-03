@@ -22,6 +22,12 @@ export interface LyricLine {
   chords: ChordAnchor[];
   /** Jos asetettu, rivi aloittaa uuden osion. */
   section?: SectionMark;
+  /**
+   * Jos asetettu, rivi on tahtirivi: soinnut luetaan tahteina eikä sanoihin
+   * ankkuroituna, eikä rivillä ole sanoja. Yksi alkio on yhden tahdin sisältö
+   * vapaana tekstinä, esim. "Am", "Am F" tai "%".
+   */
+  bars?: string[];
 }
 
 export interface Song {

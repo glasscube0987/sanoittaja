@@ -25,7 +25,7 @@ test('siirto laulun reunan yli on estetty', async ({ page }) => {
 
 test('rivin voi merkitä osioksi ja osio syntyy oikeaan kohtaan', async ({ page }) => {
   await avaaLaulu(page);
-  await page.locator('.line').nth(1).getByLabel('Start a section on this line').click();
+  await page.locator('.line').nth(1).getByLabel('Line settings').click();
   await page.getByRole('button', { name: 'Bridge', exact: true }).click();
   await page.getByRole('button', { name: 'Save' }).click();
 

@@ -139,4 +139,13 @@ describe('transposeSong', () => {
     expect(song.lines[0].chords.map((c) => c.symbol)).toEqual(['Bm', 'G', 'F#7']);
     expect(song.lines[1].chords[0].symbol).toBe('D');
   });
+
+  it('transponoi myös tahtirivit', () => {
+    const lahto = makeSong();
+    const withBars: Song = {
+      ...lahto,
+      lines: [{ id: 'v1', text: '', chords: [], bars: ['Am F', '%', 'C'] }, ...lahto.lines],
+    };
+    expect(transposeSong(withBars, 2).lines[0].bars).toEqual(['Bm G', '%', 'D']);
+  });
 });

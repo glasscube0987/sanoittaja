@@ -323,6 +323,34 @@ textarea:focus {
   pointer-events: none;
 }
 
+/* Tahtirivi: yksi napautettava rivi sointurivin ja tekstikentän sijaan. */
+.line .bar-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--border);
+  border-radius: 0;
+  padding: 4px 2px 8px;
+  min-height: 0;
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.sheet .bar-preview .bar {
+  color: var(--text-dim);
+}
+
+.sheet .bar-preview .bar.current {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .line input.text {
   display: block;
   width: 100%;
@@ -483,7 +511,8 @@ textarea:focus {
   margin: 0;
 }
 
-.song-sheet .sheet-chords {
+.song-sheet .sheet-chords,
+.song-sheet .sheet-bars {
   color: var(--accent);
   font-weight: 700;
 }
@@ -616,6 +645,7 @@ textarea:focus {
 
   /* Soinnut mustana: väri ei erotu mustavalkotulosteessa, lihavointi erottuu. */
   .song-sheet .sheet-chords,
+  .song-sheet .sheet-bars,
   .song-sheet .sheet-section h2 {
     color: #000;
   }

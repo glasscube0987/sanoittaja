@@ -67,7 +67,9 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
             <div className="meta">
               {song.songKey ? `${song.songKey} · ` : ''}
               {t('list.meta', {
-                lines: song.lines.filter((l) => l.text.trim()).length,
+                // Tahtirivit lasketaan mukaan, jottei pelkistä tahdeista koostuva
+                // laulu näytä tyhjältä.
+                lines: song.lines.filter((l) => l.text.trim() || l.bars?.length).length,
                 date: formatDate(song.updatedAt, lang),
               })}
             </div>

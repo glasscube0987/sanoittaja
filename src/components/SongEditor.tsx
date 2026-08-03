@@ -2,11 +2,13 @@ import { useMemo, useRef, useState } from 'react';
 import type { Song } from '../lib/types';
 import {
   addLineAfter,
+  DEFAULT_BARS,
   editLineText,
   mergeLineWithPrevious,
   moveSection,
   placeChord,
   respellSong,
+  setLineBars,
   setLineSection,
   splitLine,
   transposeSong,
@@ -17,8 +19,9 @@ import ChordSheet from './ChordSheet';
 import CloudSheet from './CloudSheet';
 import LineEditor from './LineEditor';
 import LiveView from './LiveView';
+import BarSheet from './BarSheet';
+import LineSheet from './LineSheet';
 import RecordingsPanel from './RecordingsPanel';
-import SectionSheet from './SectionSheet';
 import SongSheet from './SongSheet';
 
 interface Props {
@@ -37,17 +40,23 @@ export interface ChordTarget {
 export default function SongEditor({ song, onChange, onBack, onDelete }: Props) {
   const { t } = useI18n();
   const [chordTarget, setChordTarget] = useState<ChordTarget | null>(null);
-  const [sectionTargetId, setSectionTargetId] = useState<string | null>(null);
+  const [lineTargetId, setLineTargetId] = useState<string | null>(null);
+  const [barsTargetId, setBarsTargetId] = useState<string | null>(null);
   const [cloudOpen, setCloudOpen] = useState(false);
   const [liveOpen, setLiveOpen] = useState(false);
   const focusLineId = useRef<{ id: string; caret: number } | null>(null);
 
   const sections = useMemo(() => getSections(song), [song]);
-  const sectionTargetLine = song.lines.find((l) => l.id === sectionTargetId) ?? null;
+  const lineTarget = song.lines.find((l) => l.id === lineTargetId) ?? null;
+  const barsTarget = song.lines.find((l) => l.id === barsTargetId) ?? null;
 
   const usedChords = useMemo(() => {
     const seen: string[] = [];
     for (const line of song.lines) {
+      // Tahtien soinnut mukaan, jotta pikavalinnat tuntevat myös välisoitot.
+      for (const symbol of line.bars?.flatMap((bar) => bar.trim().split(/\s+/)) ?? []) {
+        if (symbol && !seen.includes(symbol)) seen.push(symbol);
+      }
       for (const chord of line.chords) {
         if (!seen.includes(chord.symbol)) seen.push(chord.symbol);
       }
@@ -122,7 +131,7 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
             <section className="section" key={block.id}>
               {block.mark && (
                 <div className="section-head">
-                  <button className="section-name" onClick={() => setSectionTargetId(block.id)}>
+                  <button className="section-name" onClick={() => setLineTargetId(block.id)}>
                     {sectionTitle(block, t)}
                   </button>
                   <button
@@ -153,7 +162,8 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
                   onSplit={(at) => handleSplit(line.id, at)}
                   onMergeWithPrevious={() => handleMerge(line.id)}
                   onChordTap={(pos, symbol) => setChordTarget({ lineId: line.id, pos, symbol })}
-                  onSectionTap={() => setSectionTargetId(line.id)}
+                  onSectionTap={() => setLineTargetId(line.id)}
+                  onBarsTap={() => setBarsTargetId(line.id)}
                 />
               ))}
             </section>
@@ -193,18 +203,28 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
           onClose={() => setChordTarget(null)}
         />
       )}
-      {sectionTargetLine && (
-        <SectionSheet
-          mark={sectionTargetLine.section ?? null}
-          onSave={(mark) => {
-            onChange(setLineSection(song, sectionTargetLine.id, mark));
-            setSectionTargetId(null);
+      {lineTarget && (
+        <LineSheet
+          line={lineTarget}
+          onSave={({ section, bars }) => {
+            // Tahtien sisältö säilyy, jos rivi on jo tahtirivi.
+            const withBars = setLineBars(song, lineTarget.id, bars ? (lineTarget.bars ?? DEFAULT_BARS) : null);
+            onChange(setLineSection(withBars, lineTarget.id, section));
+            setLineTargetId(null);
+            if (bars && !lineTarget.bars) setBarsTargetId(lineTarget.id);
           }}
-          onRemove={() => {
-            onChange(setLineSection(song, sectionTargetLine.id, null));
-            setSectionTargetId(null);
+          onClose={() => setLineTargetId(null)}
+        />
+      )}
+      {barsTarget?.bars && (
+        <BarSheet
+          bars={barsTarget.bars}
+          suggestions={usedChords}
+          onSave={(bars) => {
+            onChange(setLineBars(song, barsTarget.id, bars));
+            setBarsTargetId(null);
           }}
-          onClose={() => setSectionTargetId(null)}
+          onClose={() => setBarsTargetId(null)}
         />
       )}
       {cloudOpen && <CloudSheet song={song} onClose={() => setCloudOpen(false)} />}

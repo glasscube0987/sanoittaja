@@ -69,3 +69,16 @@ export function transposeChord(symbol: string, semitones: number, prefer?: Accid
 export function respellChord(symbol: string, prefer: Accidental): string {
   return transposeChord(symbol, 0, prefer);
 }
+
+/**
+ * Transponoi tahdin sisällön sana kerrallaan.
+ *
+ * Tahtiin mahtuu useampi sointu ("Am F") ja muitakin merkintöjä ("%", "N.C.").
+ * Koko sisältöä ei voi antaa `transposeChord`ille, koska laatuosa hyväksyy
+ * välilyönnit: "Am F" jäsentyisi juureksi A ja laaduksi "m F", jolloin
+ * jälkimmäinen sointu jäisi transponoimatta. Välit säilyvät sellaisinaan, ja
+ * tunnistamaton merkintä palautuu koskemattomana.
+ */
+export function transposeBar(bar: string, semitones: number, prefer?: Accidental): string {
+  return bar.replace(/\S+/g, (token) => transposeChord(token, semitones, prefer));
+}
