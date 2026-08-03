@@ -75,8 +75,17 @@ export function shouldAutoBackup({ enabled, connected, changedAt, lastAt, now }:
 
 export type AutoBackupResult = 'skipped' | 'done';
 
+/** Kesken oleva kopio; estää ajastinta ja näkyvyystapahtumaa päällekkäin. */
+let kesken: Promise<AutoBackupResult> | null = null;
+
 /** Ottaa taustakopion jos sen aika on. Virheet eivät saa häiritä kirjoittamista. */
-export async function maybeAutoBackup(now: number = Date.now()): Promise<AutoBackupResult> {
+export function maybeAutoBackup(now: number = Date.now()): Promise<AutoBackupResult> {
+  if (kesken) return kesken;
+  kesken = runAutoBackup(now).finally(() => (kesken = null));
+  return kesken;
+}
+
+async function runAutoBackup(now: number): Promise<AutoBackupResult> {
   const state: AutoBackupState = {
     enabled: autoBackupEnabled(),
     connected: dropboxProvider.isConfigured() && dropboxProvider.isConnected(),
