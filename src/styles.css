@@ -458,6 +458,92 @@ textarea:focus {
   line-height: 1.5;
 }
 
+/* --- Nuottilehti: tulostus ja live-tila --- */
+.song-sheet {
+  display: none;
+}
+
+.song-sheet pre {
+  font-family: var(--mono);
+  font-size: inherit;
+  white-space: pre;
+  margin: 0;
+}
+
+.song-sheet .sheet-chords {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.song-sheet .sheet-section {
+  /* Osio pyritään pitämään yhdellä sivulla, jottei kertosäe katkea kesken. */
+  break-inside: avoid;
+  margin-bottom: 1em;
+}
+
+.song-sheet .sheet-section h2 {
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 0.2em;
+}
+
+.song-sheet .sheet-line {
+  margin-bottom: 0.15em;
+}
+
+.song-sheet .sheet-head {
+  margin-bottom: 1em;
+}
+
+.song-sheet .sheet-key {
+  color: var(--text-dim);
+}
+
+@media print {
+  /*
+   * Tulostetaan vain nuottilehti. Kaikki piiloon ja lehti takaisin näkyviin:
+   * näin editorin rakenteen muuttaminen ei riko tulostusta.
+   */
+  body * {
+    visibility: hidden;
+  }
+
+  .song-sheet,
+  .song-sheet * {
+    visibility: visible;
+  }
+
+  html,
+  body,
+  #root {
+    background: #fff;
+    color: #000;
+  }
+
+  .song-sheet {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+    color: #000;
+    font-size: 11pt;
+  }
+
+  /* Soinnut mustana: väri ei erotu mustavalkotulosteessa, lihavointi erottuu. */
+  .song-sheet .sheet-chords,
+  .song-sheet .sheet-section h2 {
+    color: #000;
+  }
+
+  .song-sheet .sheet-key {
+    color: #444;
+  }
+}
+
 /* --- Nauhoitteet --- */
 .section-title {
   font-size: 15px;

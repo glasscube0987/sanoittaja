@@ -49,6 +49,7 @@ const en = {
   'editor.moveSectionUp': 'Move section {name} up',
   'editor.moveSectionDown': 'Move section {name} down',
   'editor.addLine': '+ Line',
+  'editor.exportPdf': 'Export PDF',
   'editor.deleteSong': 'Delete song',
   'editor.confirmDeleteSong': 'Delete the song “{title}” and its recordings?',
 
@@ -145,6 +146,7 @@ const fi: Record<Key, string> = {
   'editor.moveSectionUp': 'Siirrä osiota {name} ylös',
   'editor.moveSectionDown': 'Siirrä osiota {name} alas',
   'editor.addLine': '+ Rivi',
+  'editor.exportPdf': 'Vie PDF',
   'editor.deleteSong': 'Poista laulu',
   'editor.confirmDeleteSong': 'Poistetaanko laulu ”{title}” ja sen nauhoitteet?',
 

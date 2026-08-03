@@ -18,6 +18,7 @@ import CloudSheet from './CloudSheet';
 import LineEditor from './LineEditor';
 import RecordingsPanel from './RecordingsPanel';
 import SectionSheet from './SectionSheet';
+import SongSheet from './SongSheet';
 
 interface Props {
   song: Song;
@@ -156,6 +157,8 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
           <button onClick={() => onChange(addLineAfter(song, song.lines[song.lines.length - 1].id))}>
             {t('editor.addLine')}
           </button>
+          {/* Tulostusvalikosta valitaan "Tallenna PDF:nä"; erillistä kirjastoa ei tarvita. */}
+          <button onClick={() => window.print()}>{t('editor.exportPdf')}</button>
           <button
             className="danger"
             onClick={() => {
@@ -168,6 +171,7 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
         </div>
 
         <RecordingsPanel songId={song.id} />
+        <SongSheet song={song} />
       </main>
 
       {chordTarget && (
