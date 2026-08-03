@@ -77,6 +77,11 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
           {t('editor.back')}
         </button>
         <h1>{song.title || t('app.untitled')}</h1>
+        {/* Yläpalkki on sticky, joten live-tila on käytettävissä heti biisin
+            avatessa ilman että näkymää tarvitsee rullata alas. */}
+        <button className="live-open" onClick={() => setLiveOpen(true)}>
+          {t('editor.live')}
+        </button>
         <button className="ghost" onClick={() => setCloudOpen(true)} aria-label={t('editor.cloud')}>
           ☁︎
         </button>
@@ -158,9 +163,6 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
         <div className="editor-actions">
           <button onClick={() => onChange(addLineAfter(song, song.lines[song.lines.length - 1].id))}>
             {t('editor.addLine')}
-          </button>
-          <button className="primary" onClick={() => setLiveOpen(true)}>
-            {t('editor.live')}
           </button>
           {/* Tulostusvalikosta valitaan "Tallenna PDF:nä"; erillistä kirjastoa ei tarvita. */}
           <button onClick={() => window.print()}>{t('editor.exportPdf')}</button>

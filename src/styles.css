@@ -113,9 +113,22 @@ textarea:focus {
 .topbar h1 {
   font-size: 20px;
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Kapea mutta korostettu, jottei se vie tilaa laulun nimeltä yläpalkissa. */
+.topbar .live-open {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  min-height: 36px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  border-color: var(--accent);
+  background: transparent;
 }
 
 .screen {

@@ -21,6 +21,24 @@ async function avaaLive(page: Page) {
 
 const sijainti = (page: Page) => page.locator('.live-scroll').evaluate((el) => el.scrollTop);
 
+test('live-painike on näkyvissä heti eikä katoa rullatessa', async ({ page }) => {
+  await avaaLaulu(page, pitkaLaulu());
+  const nappi = page.getByRole('button', { name: 'Live', exact: true });
+
+  const nakyvissa = () =>
+    nappi.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return r.top >= 0 && r.bottom <= window.innerHeight && r.width > 0;
+    });
+
+  // Biisin avatessa ilman rullausta.
+  expect(await nakyvissa()).toBe(true);
+
+  // Ja yhä pitkän laulun keskellä, koska yläpalkki on kiinnitetty.
+  await page.evaluate(() => window.scrollTo(0, 900));
+  expect(await nakyvissa()).toBe(true);
+});
+
 test('live-tila näyttää laulun ja alkaa paikaltaan', async ({ page }) => {
   await avaaLive(page);
   await expect(page.locator('.live-view .song-sheet')).toBeVisible();
