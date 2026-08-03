@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { formatDate, useI18n } from '../lib/i18n';
 import type { Song } from '../lib/types';
 import { downloadBlob, exportLibrary, importLibrary } from '../lib/sync/exportFile';
 import SettingsSheet from './SettingsSheet';
@@ -10,34 +11,34 @@ interface Props {
   onLibraryChanged: () => void;
 }
 
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString('fi-FI', { day: 'numeric', month: 'numeric', year: 'numeric' });
-}
-
 export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: Props) {
+  const { t, lang } = useI18n();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [status, setStatus] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
 
+  const errorText = (err: unknown) =>
+    t('common.error', { message: err instanceof Error ? err.message : String(err) });
+
   async function handleExport() {
     try {
-      setStatus('Kootaan varmuuskopiota…');
+      setStatus(t('list.preparingBackup'));
       const blob = await exportLibrary();
       downloadBlob(blob, `sanoittaja-varmuuskopio-${new Date().toISOString().slice(0, 10)}.json`);
-      setStatus('Varmuuskopio ladattu.');
+      setStatus(t('list.backupDownloaded'));
     } catch (err) {
-      setStatus('Virhe: ' + (err instanceof Error ? err.message : String(err)));
+      setStatus(errorText(err));
     }
   }
 
   async function handleImportFile(file: File) {
     try {
-      setStatus('Tuodaan…');
+      setStatus(t('list.importing'));
       const result = await importLibrary(file);
       onLibraryChanged();
-      setStatus(`Tuotu ${result.songs} laulua ja ${result.recordings} nauhoitetta.`);
+      setStatus(t('list.imported', { songs: result.songs, recordings: result.recordings }));
     } catch (err) {
-      setStatus('Virhe: ' + (err instanceof Error ? err.message : String(err)));
+      setStatus(errorText(err));
     }
   }
 
@@ -45,33 +46,36 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
     <>
       <header className="topbar">
         <h1>Sanoittaja</h1>
-        <button className="ghost" onClick={() => setSettingsOpen(true)} aria-label="Asetukset">
+        <button className="ghost" onClick={() => setSettingsOpen(true)} aria-label={t('list.settings')}>
           ⚙︎
         </button>
         <button className="primary" onClick={onCreate}>
-          + Uusi laulu
+          {t('list.newSong')}
         </button>
       </header>
       <main className="screen">
         {songs.length === 0 && (
           <p className="empty-note">
-            Ei vielä lauluja.
+            {t('list.emptyTitle')}
             <br />
-            Aloita painamalla ”Uusi laulu” – sanat, soinnut ja nauhoitteet tallentuvat puhelimeesi.
+            {t('list.emptyHint')}
           </p>
         )}
         {songs.map((song) => (
           <button key={song.id} className="song-card" onClick={() => onOpen(song.id)}>
-            <div className="title">{song.title || 'Nimetön'}</div>
+            <div className="title">{song.title || t('app.untitled')}</div>
             <div className="meta">
               {song.songKey ? `${song.songKey} · ` : ''}
-              {song.lines.filter((l) => l.text.trim()).length} riviä · muokattu {formatDate(song.updatedAt)}
+              {t('list.meta', {
+                lines: song.lines.filter((l) => l.text.trim()).length,
+                date: formatDate(song.updatedAt, lang),
+              })}
             </div>
           </button>
         ))}
         <div className="button-row">
-          <button onClick={handleExport}>Lataa varmuuskopio</button>
-          <button onClick={() => fileInput.current?.click()}>Tuo varmuuskopio</button>
+          <button onClick={handleExport}>{t('list.downloadBackup')}</button>
+          <button onClick={() => fileInput.current?.click()}>{t('list.importBackup')}</button>
         </div>
         <div className="status">{status}</div>
         <input

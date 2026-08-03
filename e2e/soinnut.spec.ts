@@ -47,18 +47,18 @@ test('sointua siirretään nuolinäppäimillä ja esikatselu seuraa mukana', asy
   await page.locator('.line').first().locator('.chord', { hasText: 'F' }).click();
 
   const info = page.locator('.nudge-info');
-  await expect(info).toContainText('merkki 4/16');
+  await expect(info).toContainText('column 4/16');
 
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
-  await expect(info).toContainText('merkki 6/16');
+  await expect(info).toContainText('column 6/16');
   // textContent suoraan, koska toHaveText normalisoi välit – ja juuri välien
   // määrä kertoo tässä soinnun sijainnin.
   const merkkirivi = await page.locator('.sheet .context .mark').evaluate((el) => el.textContent);
   expect(merkkirivi).toBe('      F');
 
   await page.keyboard.press('ArrowLeft');
-  await expect(info).toContainText('merkki 5/16');
+  await expect(info).toContainText('column 5/16');
 });
 
 test('siirto pysähtyy rivin alkuun ja loppuun', async ({ page }) => {
@@ -66,10 +66,10 @@ test('siirto pysähtyy rivin alkuun ja loppuun', async ({ page }) => {
   await page.locator('.line').first().locator('.chord', { hasText: 'F' }).click();
 
   for (let i = 0; i < 10; i++) await page.keyboard.press('ArrowLeft');
-  await expect(page.locator('.nudge-info')).toContainText('merkki 0/16');
+  await expect(page.locator('.nudge-info')).toContainText('column 0/16');
 
   for (let i = 0; i < 25; i++) await page.keyboard.press('ArrowRight');
-  await expect(page.locator('.nudge-info')).toContainText('merkki 16/16');
+  await expect(page.locator('.nudge-info')).toContainText('column 16/16');
 });
 
 test('siirretty sointu tallentuu uuteen kohtaan ilman kaksoiskappaletta', async ({ page }) => {
@@ -77,7 +77,7 @@ test('siirretty sointu tallentuu uuteen kohtaan ilman kaksoiskappaletta', async 
   const rivi = page.locator('.line').first();
   await rivi.locator('.chord', { hasText: 'F' }).click();
   await page.keyboard.press('ArrowRight');
-  await page.getByRole('button', { name: 'Tallenna' }).click();
+  await page.getByRole('button', { name: 'Save' }).click();
 
   await expect(page.locator('.sheet')).toHaveCount(0);
   await expect(rivi.locator('.chord')).toHaveText(['Am', 'F']);

@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { getSections, sectionTitle } from './sections';
+import type { Key, Params } from './i18n';
+import { translate } from './i18n';
+import { getSections, sectionTitle as title } from './sections';
 import { moveSection, removeLine, setLineSection } from './songOps';
 import type { LyricLine, SectionMark, Song } from './types';
+
+/** Testit ajetaan englanniksi, jotta odotetut nimet ovat yksiselitteisiä. */
+const t = (key: Key, params?: Params) => translate('en', key, params);
+const sectionTitle = (block: Parameters<typeof title>[0]) => title(block, t);
 
 function line(id: string, text: string, section?: SectionMark): LyricLine {
   return section ? { id, text, chords: [], section } : { id, text, chords: [] };
@@ -41,7 +47,7 @@ describe('getSections', () => {
 
   it('numeroi vain toistuvat lajit', () => {
     const blocks = getSections(structured());
-    expect(blocks.map(sectionTitle)).toEqual(['Säkeistö 1', 'Kertosäe', 'Säkeistö 2']);
+    expect(blocks.map(sectionTitle)).toEqual(['Verse 1', 'Chorus', 'Verse 2']);
   });
 
   it('käyttää omaa nimeä numeroinnin sijaan', () => {
@@ -50,7 +56,7 @@ describe('getSections', () => {
       line('b', 'y', { kind: 'verse', label: 'Loppuhuipennus' }),
       line('c', 'z', { kind: 'verse' }),
     ]);
-    expect(getSections(song).map(sectionTitle)).toEqual(['Säkeistö 1', 'Loppuhuipennus', 'Säkeistö 2']);
+    expect(getSections(song).map(sectionTitle)).toEqual(['Verse 1', 'Loppuhuipennus', 'Verse 2']);
   });
 });
 
@@ -58,7 +64,7 @@ describe('moveSection', () => {
   it('siirtää osion rivit yhtenä lohkona', () => {
     const song = moveSection(structured(), 'b1', -1);
     expect(song.lines.map((l) => l.id)).toEqual(['b1', 'a1', 'a2', 'c1']);
-    expect(getSections(song).map(sectionTitle)).toEqual(['Kertosäe', 'Säkeistö 1', 'Säkeistö 2']);
+    expect(getSections(song).map(sectionTitle)).toEqual(['Chorus', 'Verse 1', 'Verse 2']);
   });
 
   it('siirto alas on siirron ylös käänteisoperaatio', () => {
@@ -82,7 +88,7 @@ describe('moveSection', () => {
 describe('setLineSection', () => {
   it('lisää ja poistaa merkinnän', () => {
     let song = setLineSection(structured(), 'a2', { kind: 'bridge' });
-    expect(getSections(song).map(sectionTitle)).toEqual(['Säkeistö 1', 'C-osa', 'Kertosäe', 'Säkeistö 2']);
+    expect(getSections(song).map(sectionTitle)).toEqual(['Verse 1', 'Bridge', 'Chorus', 'Verse 2']);
     song = setLineSection(song, 'a2', null);
     expect(song.lines.find((l) => l.id === 'a2')).not.toHaveProperty('section');
     expect(getSections(song)).toHaveLength(3);
@@ -93,7 +99,7 @@ describe('removeLine', () => {
   it('siirtää osiomerkinnän seuraavalle riville', () => {
     const song = removeLine(structured(), 'a1');
     expect(song.lines[0]).toMatchObject({ id: 'a2', section: { kind: 'verse' } });
-    expect(getSections(song).map(sectionTitle)).toEqual(['Säkeistö 1', 'Kertosäe', 'Säkeistö 2']);
+    expect(getSections(song).map(sectionTitle)).toEqual(['Verse 1', 'Chorus', 'Verse 2']);
   });
 
   it('ei ylikirjoita seuraavan rivin omaa merkintää', () => {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { SECTION_KINDS, SECTION_NAMES } from '../lib/sections';
+import { useT } from '../lib/i18n';
+import { SECTION_KINDS, sectionName } from '../lib/sections';
 import type { SectionKind, SectionMark } from '../lib/types';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function SectionSheet({ mark, onSave, onRemove, onClose }: Props) {
+  const t = useT();
   const [kind, setKind] = useState<SectionKind>(mark?.kind ?? 'verse');
   const [label, setLabel] = useState(mark?.label ?? '');
 
@@ -25,7 +27,7 @@ export default function SectionSheet({ mark, onSave, onRemove, onClose }: Props)
           onSave(trimmed ? { kind, label: trimmed } : { kind });
         }}
       >
-        <h2>{mark ? 'Muokkaa osiota' : 'Aloita osio tästä'}</h2>
+        <h2>{t(mark ? 'section.edit' : 'section.start')}</h2>
 
         <div className="chip-row">
           {SECTION_KINDS.map((k) => (
@@ -35,34 +37,34 @@ export default function SectionSheet({ mark, onSave, onRemove, onClose }: Props)
               className={k === kind ? 'primary' : ''}
               onClick={() => setKind(k)}
             >
-              {SECTION_NAMES[k]}
+              {sectionName(k, t)}
             </button>
           ))}
         </div>
 
         <div className="field">
-          <label htmlFor="section-label">Oma nimi</label>
+          <label htmlFor="section-label">{t('section.customName')}</label>
           <input
             id="section-label"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            placeholder={SECTION_NAMES[kind]}
+            placeholder={sectionName(kind, t)}
             autoComplete="off"
           />
-          <small>Tyhjänä osiot numeroidaan automaattisesti, esim. Säkeistö 1 ja Säkeistö 2.</small>
+          <small>{t('section.numberingHint')}</small>
         </div>
 
         <div className="button-row">
           <button type="submit" className="primary">
-            Tallenna
+            {t('common.save')}
           </button>
           {mark && (
             <button type="button" className="danger" onClick={onRemove}>
-              Poista merkintä
+              {t('section.removeMarker')}
             </button>
           )}
           <button type="button" className="ghost" onClick={onClose}>
-            Peruuta
+            {t('common.cancel')}
           </button>
         </div>
       </form>

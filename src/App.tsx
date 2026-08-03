@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SongEditor from './components/SongEditor';
 import SongList from './components/SongList';
 import { deleteSong as dbDeleteSong, listSongs, saveSong } from './lib/db';
+import type { Key, Lang, Params } from './lib/i18n';
+import { LangContext, loadLang, storeLang, translate } from './lib/i18n';
 import type { Song } from './lib/types';
 import { newSong } from './lib/types';
 
@@ -10,7 +12,24 @@ type View = { name: 'list' } | { name: 'editor'; songId: string };
 export default function App() {
   const [songs, setSongs] = useState<Song[] | null>(null);
   const [view, setView] = useState<View>({ name: 'list' });
+  const [lang, setLangState] = useState<Lang>(loadLang);
   const saveTimers = useRef(new Map<string, number>());
+
+  const i18n = useMemo(
+    () => ({
+      lang,
+      t: (key: Key, params?: Params) => translate(lang, key, params),
+      setLang: (next: Lang) => {
+        storeLang(next);
+        setLangState(next);
+      },
+    }),
+    [lang],
+  );
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   useEffect(() => {
     listSongs().then(setSongs);
@@ -49,26 +68,25 @@ export default function App() {
 
   if (songs === null) return null;
 
-  if (view.name === 'editor') {
-    const song = songs.find((s) => s.id === view.songId);
-    if (song) {
-      return (
-        <SongEditor
-          song={song}
-          onChange={updateSong}
-          onBack={() => setView({ name: 'list' })}
-          onDelete={() => deleteSong(song.id)}
-        />
-      );
-    }
-  }
+  const editing = view.name === 'editor' ? songs.find((s) => s.id === view.songId) : undefined;
 
   return (
-    <SongList
-      songs={songs}
-      onOpen={(songId) => setView({ name: 'editor', songId })}
-      onCreate={createSong}
-      onLibraryChanged={reload}
-    />
+    <LangContext.Provider value={i18n}>
+      {editing ? (
+        <SongEditor
+          song={editing}
+          onChange={updateSong}
+          onBack={() => setView({ name: 'list' })}
+          onDelete={() => deleteSong(editing.id)}
+        />
+      ) : (
+        <SongList
+          songs={songs}
+          onOpen={(songId) => setView({ name: 'editor', songId })}
+          onCreate={createSong}
+          onLibraryChanged={reload}
+        />
+      )}
+    </LangContext.Provider>
   );
 }

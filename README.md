@@ -27,6 +27,9 @@ demoja puhelimella ja vie kaikki pilveen.
   tai **Google Driveen** (OAuth). Lisäksi koko kirjaston **varmuuskopio yhtenä
   JSON-tiedostona** ilman mitään pilvitunnuksia – tiedoston voi jakaa puhelimen
   jakovalikosta mihin tahansa palveluun.
+- **Kielet** – käyttöliittymä englanniksi ja suomeksi. Kieli tunnistetaan selaimesta
+  (oletus englanti) ja sen voi vaihtaa asetuksista. Osiot tallentuvat kielineutraalina
+  lajina, joten kielen voi vaihtaa milloin tahansa ilman että laulut muuttuvat.
 - **Offline-first PWA** – asentuu puhelimen kotinäytölle, toimii ilman verkkoa;
   kaikki data on ensisijaisesti laitteella.
 
@@ -79,6 +82,7 @@ src/
     types.ts        Tietomalli: Song, LyricLine, ChordAnchor, SectionMark, Recording
     chords.ts       Sointusymbolien jäsennys ja transponointi
     anchors.ts      Sointuankkurien siirto tekstimuutoksissa
+    i18n.ts         Käännökset (en/fi), kielen tunnistus ja React-konteksti
     sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
     songOps.ts      Laulun muokkausoperaatiot (puhtaita funktioita)
     db.ts           Paikallinen tallennus (IndexedDB)

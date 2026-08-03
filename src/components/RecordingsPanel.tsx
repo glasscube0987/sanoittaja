@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { deleteRecording, listRecordings, saveRecording } from '../lib/db';
+import { formatDateTime, useI18n, type T } from '../lib/i18n';
 import { formatDuration, startRecording, type ActiveRecording } from '../lib/recorder';
 import type { Recording } from '../lib/types';
 import { uid } from '../lib/types';
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function RecordingsPanel({ songId }: Props) {
+  const { t, lang } = useI18n();
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [active, setActive] = useState<ActiveRecording | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -29,12 +31,7 @@ export default function RecordingsPanel({ songId }: Props) {
       const rec: Recording = {
         id: uid(),
         songId,
-        name: `Nauhoite ${new Date().toLocaleString('fi-FI', {
-          day: 'numeric',
-          month: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })}`,
+        name: t('rec.defaultName', { date: formatDateTime(Date.now(), lang) }),
         mimeType,
         durationMs,
         createdAt: Date.now(),
@@ -53,9 +50,7 @@ export default function RecordingsPanel({ songId }: Props) {
       setElapsed(0);
       timer.current = window.setInterval(() => setElapsed(Date.now() - startedAt), 500);
     } catch (err) {
-      setStatus(
-        'Mikrofonia ei saatu käyttöön: ' + (err instanceof Error ? err.message : String(err)),
-      );
+      setStatus(t('rec.micFailed', { message: err instanceof Error ? err.message : String(err) }));
     }
   }
 
@@ -66,24 +61,30 @@ export default function RecordingsPanel({ songId }: Props) {
   }
 
   async function remove(rec: Recording) {
-    if (!confirm(`Poistetaanko nauhoite ”${rec.name}”?`)) return;
+    if (!confirm(t('rec.confirmDelete', { name: rec.name }))) return;
     setRecordings((prev) => prev.filter((r) => r.id !== rec.id));
     await deleteRecording(rec.id);
   }
 
   return (
     <section>
-      <h2 className="section-title">Nauhoitteet</h2>
+      <h2 className="section-title">{t('rec.title')}</h2>
       <div className="screen" style={{ padding: '8px 0 0' }}>
         <div className="button-row">
           <button className={active ? 'danger' : 'primary'} onClick={toggleRecording}>
-            {active ? '■ Pysäytä' : '● Nauhoita'}
+            {t(active ? 'rec.stop' : 'rec.record')}
           </button>
           {active && <span className="rec-live">REC {formatDuration(elapsed)}</span>}
         </div>
         <div className="status">{status}</div>
         {recordings.map((rec) => (
-          <RecordingCard key={rec.id} rec={rec} onRename={(name) => rename(rec, name)} onDelete={() => remove(rec)} />
+          <RecordingCard
+            key={rec.id}
+            rec={rec}
+            t={t}
+            onRename={(name) => rename(rec, name)}
+            onDelete={() => remove(rec)}
+          />
         ))}
       </div>
     </section>
@@ -92,10 +93,12 @@ export default function RecordingsPanel({ songId }: Props) {
 
 function RecordingCard({
   rec,
+  t,
   onRename,
   onDelete,
 }: {
   rec: Recording;
+  t: T;
   onRename: (name: string) => void;
   onDelete: () => void;
 }) {
@@ -112,7 +115,7 @@ function RecordingCard({
       <div className="rec-head">
         <input value={rec.name} onChange={(e) => onRename(e.target.value)} />
         <span className="status">{formatDuration(rec.durationMs)}</span>
-        <button className="ghost" onClick={onDelete} aria-label="Poista nauhoite">
+        <button className="ghost" onClick={onDelete} aria-label={t('rec.deleteLabel')}>
           🗑
         </button>
       </div>

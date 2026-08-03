@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useT } from '../lib/i18n';
 import type { LyricLine } from '../lib/types';
 
 interface Props {
@@ -23,6 +24,7 @@ export default function LineEditor({
   onChordTap,
   onSectionTap,
 }: Props) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
 
@@ -62,8 +64,8 @@ export default function LineEditor({
       <button
         className={`section-mark${line.section ? ' set' : ''}`}
         onClick={onSectionTap}
-        aria-label={line.section ? 'Muokkaa osiota' : 'Aloita osio tästä rivistä'}
-        title={line.section ? 'Muokkaa osiota' : 'Aloita osio tästä rivistä'}
+        aria-label={t(line.section ? 'line.editSection' : 'line.startSection')}
+        title={t(line.section ? 'line.editSection' : 'line.startSection')}
       >
         §
       </button>
@@ -71,7 +73,7 @@ export default function LineEditor({
         <div
           className="chord-row"
           onClick={handleChordRowTap}
-          title="Napauta lisätäksesi soinnun tähän kohtaan"
+          title={t('line.addChordHere')}
           style={{ width: `calc(${Math.max(line.text.length, 8)}ch + 8px)` }}
         >
           <span

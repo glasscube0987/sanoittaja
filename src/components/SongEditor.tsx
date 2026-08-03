@@ -11,6 +11,7 @@ import {
   splitLine,
   transposeSong,
 } from '../lib/songOps';
+import { useI18n } from '../lib/i18n';
 import { getSections, sectionTitle } from '../lib/sections';
 import ChordSheet from './ChordSheet';
 import CloudSheet from './CloudSheet';
@@ -32,6 +33,7 @@ export interface ChordTarget {
 }
 
 export default function SongEditor({ song, onChange, onBack, onDelete }: Props) {
+  const { t } = useI18n();
   const [chordTarget, setChordTarget] = useState<ChordTarget | null>(null);
   const [sectionTargetId, setSectionTargetId] = useState<string | null>(null);
   const [cloudOpen, setCloudOpen] = useState(false);
@@ -68,11 +70,11 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
   return (
     <>
       <header className="topbar">
-        <button className="ghost" onClick={onBack} aria-label="Takaisin">
-          ‹ Laulut
+        <button className="ghost" onClick={onBack} aria-label={t('editor.backLabel')}>
+          {t('editor.back')}
         </button>
-        <h1>{song.title || 'Nimetön'}</h1>
-        <button className="ghost" onClick={() => setCloudOpen(true)} aria-label="Pilvi">
+        <h1>{song.title || t('app.untitled')}</h1>
+        <button className="ghost" onClick={() => setCloudOpen(true)} aria-label={t('editor.cloud')}>
           ☁︎
         </button>
       </header>
@@ -80,29 +82,29 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
         <div className="title-row">
           <input
             value={song.title}
-            placeholder="Laulun nimi"
+            placeholder={t('editor.titlePlaceholder')}
             onChange={(e) => onChange({ ...song, title: e.target.value, updatedAt: Date.now() })}
           />
           <input
             className="key"
             value={song.songKey}
-            placeholder="Sävel."
+            placeholder={t('editor.keyPlaceholder')}
             onChange={(e) => onChange({ ...song, songKey: e.target.value, updatedAt: Date.now() })}
           />
         </div>
 
         <div className="transpose-bar">
-          <span className="label">Transponoi</span>
-          <button onClick={() => onChange(transposeSong(song, -1))} aria-label="Puolisävelaskel alas">
+          <span className="label">{t('editor.transpose')}</span>
+          <button onClick={() => onChange(transposeSong(song, -1))} aria-label={t('editor.semitoneDown')}>
             − ½
           </button>
-          <button onClick={() => onChange(transposeSong(song, 1))} aria-label="Puolisävelaskel ylös">
+          <button onClick={() => onChange(transposeSong(song, 1))} aria-label={t('editor.semitoneUp')}>
             + ½
           </button>
-          <button onClick={() => onChange(respellSong(song, 'flat'))} title="Kirjoita alennusmerkein">
+          <button onClick={() => onChange(respellSong(song, 'flat'))} title={t('editor.useFlats')}>
             ♭
           </button>
-          <button onClick={() => onChange(respellSong(song, 'sharp'))} title="Kirjoita ylennysmerkein">
+          <button onClick={() => onChange(respellSong(song, 'sharp'))} title={t('editor.useSharps')}>
             ♯
           </button>
         </div>
@@ -113,11 +115,11 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
               {block.mark && (
                 <div className="section-head">
                   <button className="section-name" onClick={() => setSectionTargetId(block.id)}>
-                    {sectionTitle(block)}
+                    {sectionTitle(block, t)}
                   </button>
                   <button
                     className="ghost"
-                    aria-label={`Siirrä osiota ${sectionTitle(block)} ylös`}
+                    aria-label={t('editor.moveSectionUp', { name: sectionTitle(block, t) })}
                     disabled={i === 0 || !sections[i - 1].mark}
                     onClick={() => onChange(moveSection(song, block.id, -1))}
                   >
@@ -125,7 +127,7 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
                   </button>
                   <button
                     className="ghost"
-                    aria-label={`Siirrä osiota ${sectionTitle(block)} alas`}
+                    aria-label={t('editor.moveSectionDown', { name: sectionTitle(block, t) })}
                     disabled={i === sections.length - 1}
                     onClick={() => onChange(moveSection(song, block.id, 1))}
                   >
@@ -152,15 +154,16 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
 
         <div className="editor-actions">
           <button onClick={() => onChange(addLineAfter(song, song.lines[song.lines.length - 1].id))}>
-            + Rivi
+            {t('editor.addLine')}
           </button>
           <button
             className="danger"
             onClick={() => {
-              if (confirm(`Poistetaanko laulu ”${song.title || 'Nimetön'}” ja sen nauhoitteet?`)) onDelete();
+              const title = song.title || t('app.untitled');
+              if (confirm(t('editor.confirmDeleteSong', { title }))) onDelete();
             }}
           >
-            Poista laulu
+            {t('editor.deleteSong')}
           </button>
         </div>
 

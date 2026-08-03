@@ -77,6 +77,6 @@ test('yläpalkki pysyy kiinni vieritettäessä', async ({ page }) => {
 
 test('osiorakenne renderöityy samoin kaikilla moottoreilla', async ({ page }) => {
   await avaaLaulu(page);
-  await expect.poll(() => osiot(page)).toEqual(['Säkeistö 1', 'Kertosäe', 'Säkeistö 2']);
+  await expect.poll(() => osiot(page)).toEqual(['Verse 1', 'Chorus', 'Verse 2']);
   expect(await vaakaYlivuoto(page)).toBeLessThanOrEqual(0);
 });

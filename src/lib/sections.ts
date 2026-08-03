@@ -3,19 +3,37 @@
  * sitä seuraavat merkitsemättömät rivit kuuluvat samaan osioon. Rivit pysyvät
  * yhtenä listana, joten rivioperaatiot toimivat osioista riippumatta.
  */
+import type { Key, T } from './i18n';
 import type { LyricLine, SectionKind, SectionMark, Song } from './types';
 
-export const SECTION_NAMES: Record<SectionKind, string> = {
-  intro: 'Intro',
-  verse: 'Säkeistö',
-  prechorus: 'Nousu',
-  chorus: 'Kertosäe',
-  bridge: 'C-osa',
-  solo: 'Soolo',
-  outro: 'Outro',
+/** Valikon järjestys: laulun kulku alusta loppuun. */
+export const SECTION_KINDS: SectionKind[] = [
+  'intro',
+  'verse',
+  'prechorus',
+  'chorus',
+  'bridge',
+  'solo',
+  'outro',
+];
+
+/*
+ * Osion laji säilytetään datassa kielineutraalina ja nimi haetaan vasta
+ * piirrettäessä, jotta tallennetut laulut eivät sido kieltä.
+ */
+export const SECTION_KEYS: Record<SectionKind, Key> = {
+  intro: 'section.intro',
+  verse: 'section.verse',
+  prechorus: 'section.prechorus',
+  chorus: 'section.chorus',
+  bridge: 'section.bridge',
+  solo: 'section.solo',
+  outro: 'section.outro',
 };
 
-export const SECTION_KINDS = Object.keys(SECTION_NAMES) as SectionKind[];
+export function sectionName(kind: SectionKind, t: T): string {
+  return t(SECTION_KEYS[kind]);
+}
 
 export interface SectionBlock {
   /** Lohkon tunnus on sen ensimmäisen rivin id. */
@@ -71,9 +89,9 @@ export function getSections(song: Song): SectionBlock[] {
   return blocks;
 }
 
-export function sectionTitle(block: SectionBlock): string {
+export function sectionTitle(block: SectionBlock, t: T): string {
   if (!block.mark) return '';
   if (block.mark.label) return block.mark.label;
-  const name = SECTION_NAMES[block.mark.kind];
+  const name = sectionName(block.mark.kind, t);
   return block.ordinal ? `${name} ${block.ordinal}` : name;
 }

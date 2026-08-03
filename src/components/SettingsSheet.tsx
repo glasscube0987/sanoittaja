@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { LANG_NAMES, LANGS, useI18n } from '../lib/i18n';
 import { getDropboxClientId, setDropboxClientId } from '../lib/sync/dropbox';
 import { getGdriveClientId, setGdriveClientId } from '../lib/sync/gdrive';
 
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function SettingsSheet({ onClose }: Props) {
+  const { t, lang, setLang } = useI18n();
   const [dropboxId, setDropboxId] = useState(getDropboxClientId());
   const [gdriveId, setGdriveId] = useState(getGdriveClientId());
 
@@ -19,9 +21,27 @@ export default function SettingsSheet({ onClose }: Props) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <h2>Pilviasetukset</h2>
+        <h2>{t('settings.title')}</h2>
+
         <div className="field">
-          <label htmlFor="dropbox-id">Dropbox app key</label>
+          <label>{t('settings.language')}</label>
+          {/* Kieli vaihtuu heti valittaessa, jotta muutoksen näkee ennen tallennusta. */}
+          <div className="chip-row">
+            {LANGS.map((option) => (
+              <button
+                type="button"
+                key={option}
+                className={option === lang ? 'primary' : ''}
+                onClick={() => setLang(option)}
+              >
+                {LANG_NAMES[option]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="field">
+          <label htmlFor="dropbox-id">{t('settings.dropboxKey')}</label>
           <input
             id="dropbox-id"
             value={dropboxId}
@@ -30,13 +50,11 @@ export default function SettingsSheet({ onClose }: Props) {
             autoComplete="off"
             spellCheck={false}
           />
-          <small>
-            Luo ilmainen sovellus osoitteessa dropbox.com/developers/apps (scoped access, App folder,
-            oikeus files.content.write) ja lisää tämän sovelluksen osoite Redirect URI -listaan.
-          </small>
+          <small>{t('settings.dropboxHelp')}</small>
         </div>
+
         <div className="field">
-          <label htmlFor="gdrive-id">Google OAuth client id</label>
+          <label htmlFor="gdrive-id">{t('settings.gdriveKey')}</label>
           <input
             id="gdrive-id"
             value={gdriveId}
@@ -45,17 +63,15 @@ export default function SettingsSheet({ onClose }: Props) {
             autoComplete="off"
             spellCheck={false}
           />
-          <small>
-            Luo OAuth client id (Web application) osoitteessa console.cloud.google.com, ota Drive API
-            käyttöön ja lisää tämän sovelluksen osoite sallittuihin JavaScript-lähteisiin.
-          </small>
+          <small>{t('settings.gdriveHelp')}</small>
         </div>
+
         <div className="button-row">
           <button className="primary" onClick={save}>
-            Tallenna
+            {t('common.save')}
           </button>
           <button className="ghost" onClick={onClose}>
-            Peruuta
+            {t('common.cancel')}
           </button>
         </div>
       </div>

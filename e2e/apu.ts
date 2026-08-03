@@ -40,8 +40,12 @@ export function laulu(overrides: Partial<Song> = {}): Song {
  * Kirjoittaa laulun suoraan IndexedDB:hen ja avaa sen editoriin. Kannan
  * rakenne on sama kuin src/lib/db.ts luo, jotta sovellus lukee sen sellaisenaan.
  */
-export async function avaaLaulu(page: Page, song: Song = laulu()): Promise<void> {
+/** Kylvää laulun kantaan ja jää laululistaan. */
+export async function avaaLista(page: Page, song: Song = laulu()): Promise<void> {
   await page.goto('/');
+  // Kieli lukitaan englanniksi, jottei testien odotettu teksti riipu selaimen
+  // kieliasetuksesta.
+  await page.evaluate(() => localStorage.setItem('sanoittaja.lang', 'en'));
   await page.evaluate(
     (s) =>
       new Promise<void>((resolve, reject) => {
@@ -64,6 +68,12 @@ export async function avaaLaulu(page: Page, song: Song = laulu()): Promise<void>
     song as unknown as Record<string, unknown>,
   );
   await page.reload();
+  await page.waitForSelector('.song-card');
+}
+
+/** Kylvää laulun ja avaa sen editoriin. */
+export async function avaaLaulu(page: Page, song: Song = laulu()): Promise<void> {
+  await avaaLista(page, song);
   await page.locator('.song-card').first().click();
   await page.waitForSelector('.lyrics .section');
 }

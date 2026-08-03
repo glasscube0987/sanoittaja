@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useT } from '../lib/i18n';
 import type { LyricLine } from '../lib/types';
 import type { ChordTarget } from './SongEditor';
 
@@ -13,6 +14,7 @@ interface Props {
 const DEFAULT_SUGGESTIONS = ['C', 'G', 'Am', 'F', 'D', 'Em', 'E', 'A', 'Dm', 'B7'];
 
 export default function ChordSheet({ target, line, suggestions, onSave, onClose }: Props) {
+  const t = useT();
   const [symbol, setSymbol] = useState(target.symbol);
   const [pos, setPos] = useState(target.pos);
   const chips = suggestions.length > 0 ? suggestions : DEFAULT_SUGGESTIONS;
@@ -77,7 +79,7 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
           onSave(symbol, pos);
         }}
       >
-        <h2>{target.symbol ? 'Muokkaa sointua' : 'Lisää sointu'}</h2>
+        <h2>{t(target.symbol ? 'chord.edit' : 'chord.add')}</h2>
 
         <div className="context" ref={contextRef}>
           <div className="mark">
@@ -88,14 +90,14 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
         </div>
 
         <div className="nudge-row">
-          <button type="button" onClick={() => nudge(-1)} aria-label="Siirrä merkki vasemmalle">
+          <button type="button" onClick={() => nudge(-1)} aria-label={t('chord.moveLeft')}>
             ◀
           </button>
           <span className="nudge-info">
-            merkki {pos}/{line.text.length}
-            <small>nuolinäppäimet siirtävät</small>
+            {t('chord.position', { pos, max: line.text.length })}
+            <small>{t('chord.arrowHint')}</small>
           </span>
-          <button type="button" onClick={() => nudge(1)} aria-label="Siirrä merkki oikealle">
+          <button type="button" onClick={() => nudge(1)} aria-label={t('chord.moveRight')}>
             ▶
           </button>
         </div>
@@ -103,7 +105,7 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
         <input
           value={symbol}
           onChange={(e) => setSymbol(e.target.value)}
-          placeholder="esim. Am7, C#/G#, Bb"
+          placeholder={t('chord.placeholder')}
           autoCapitalize="off"
           autoComplete="off"
           spellCheck={false}
@@ -117,15 +119,15 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
         </div>
         <div className="button-row">
           <button type="submit" className="primary">
-            Tallenna
+            {t('common.save')}
           </button>
           {target.symbol && (
             <button type="button" className="danger" onClick={() => onSave('', pos)}>
-              Poista
+              {t('common.delete')}
             </button>
           )}
           <button type="button" className="ghost" onClick={onClose}>
-            Peruuta
+            {t('common.cancel')}
           </button>
         </div>
       </form>
