@@ -24,7 +24,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-text-size-adjust: 100%;
   /*
-   * Sivu ei saa koskaan levitä näyttöä leveämmäksi: pitkä sointurivi kuuluu
+   * Sivu ei saa koskaan levitä näyttöä leveämmäksi: pitkä rivi kuuluu
    * vierittää .lyrics-laatikon sisällä, ei koko sivua. Ilman tätä leveä sisältö
    * kasvattaa asetteluikkunaa ja selain zoomaa koko näkymän ulos.
    * clip eikä hidden, jotta yläpalkin sticky-kiinnitys säilyy.
@@ -323,7 +323,7 @@ textarea:focus {
   pointer-events: none;
 }
 
-/* Tahtirivi: yksi napautettava rivi sointurivin ja tekstikentän sijaan. */
+/* Sointurivi: yksi napautettava rivi sointumerkkien ja tekstikentän sijaan. */
 .line .bar-row {
   display: block;
   width: 100%;

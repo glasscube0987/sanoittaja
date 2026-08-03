@@ -11,7 +11,7 @@ interface Props {
 const DEFAULT_SUGGESTIONS = ['C', 'G', 'Am', 'F', 'D', 'Em', 'E', 'A', 'Dm', 'B7'];
 
 /**
- * Tahtirivin muokkaus: valittu tahti kerrallaan, samalla vuorovaikutuksella
+ * Sointurivin muokkaus: valittu tahti kerrallaan, samalla vuorovaikutuksella
  * kuin sointuponnahduksessa. Tahtiin voi kirjoittaa useamman soinnun ("Am F")
  * tai muun merkinnän ("%"), joten kenttä on vapaata tekstiä.
  */

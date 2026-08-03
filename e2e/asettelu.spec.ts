@@ -19,7 +19,7 @@ function pitkaLaulu() {
 }
 
 /*
- * Pitkä sointurivi on moninkertaisesti näyttöä leveämpi ja kuuluu vierittää
+ * Pitkä rivi on moninkertaisesti näyttöä leveämpi ja kuuluu vierittää
  * .lyrics-laatikon sisällä. Jos leveys karkaa sivulle, selain kasvattaa
  * asetteluikkunaa ja koko näkymä zoomautuu ulos.
  */

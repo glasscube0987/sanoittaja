@@ -207,7 +207,7 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
         <LineSheet
           line={lineTarget}
           onSave={({ section, bars }) => {
-            // Tahtien sisältö säilyy, jos rivi on jo tahtirivi.
+            // Tahtien sisältö säilyy, jos rivi on jo sointurivi.
             const withBars = setLineBars(song, lineTarget.id, bars ? (lineTarget.bars ?? DEFAULT_BARS) : null);
             onChange(setLineSection(withBars, lineTarget.id, section));
             setLineTargetId(null);

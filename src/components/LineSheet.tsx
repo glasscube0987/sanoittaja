@@ -6,7 +6,7 @@ import type { LyricLine, SectionKind, SectionMark } from '../lib/types';
 export interface LineSettings {
   /** null = rivi ei aloita osiota. */
   section: SectionMark | null;
-  /** true = rivi on tahtirivi. */
+  /** true = rivi on sointurivi. */
   bars: boolean;
 }
 
@@ -18,7 +18,7 @@ interface Props {
 
 /**
  * Rivin asetukset yhdessä paikassa: aloittaako rivi osion ja onko se
- * sanoitus- vai tahtirivi. Molemmat ovat rivin ominaisuuksia, ja välisoitto
+ * sanoitus- vai sointurivi. Molemmat ovat rivin ominaisuuksia, ja välisoitto
  * merkitään käytännössä aina molemmiksi kerralla.
  */
 export default function LineSheet({ line, onSave, onClose }: Props) {

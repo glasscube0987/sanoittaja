@@ -26,7 +26,7 @@ export function chordLineText(line: LyricLine): string {
 const MIN_BAR_WIDTH = 2;
 
 /**
- * Tahtirivi tekstinä: `| Am  | F   | C   | G   |`.
+ * Sointurivi tekstinä: `| Am  | F   | C   | G   |`.
  *
  * Tahdit tasataan rivin leveimmän mukaan, jotta tahtiviivat asettuvat
  * allekkain ja tahtien kesto on luettavissa silmäyksellä.

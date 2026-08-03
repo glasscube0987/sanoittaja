@@ -62,7 +62,7 @@ export function mergeLineWithPrevious(song: Song, lineId: string): Song {
   if (idx <= 0) return song;
   const prev = song.lines[idx - 1];
   const line = song.lines[idx];
-  // Tahtirivillä ei ole sanoja: yhdistäminen tuottaisi rivin, jolla on sekä
+  // Sointurivillä ei ole sanoja: yhdistäminen tuottaisi rivin, jolla on sekä
   // tahdit että teksti, eikä sellaista voi piirtää kummallakaan tavalla.
   if (prev.bars || line.bars) return song;
   const merged: LyricLine = {
@@ -136,9 +136,9 @@ export function setChord(song: Song, lineId: string, pos: number, symbol: string
 export const DEFAULT_BARS = ['', '', '', ''];
 
 /**
- * Muuttaa rivin tahtiriviksi tai (null) takaisin sanoitusriviksi.
+ * Muuttaa rivin sointuriviksi tai (null) takaisin sanoitusriviksi.
  *
- * Tahtirivillä ei ole sanoja eikä ankkuroituja sointuja, joten muunnos
+ * Sointurivillä ei ole sanoja eikä ankkuroituja sointuja, joten muunnos
  * tyhjentää molemmat. Osiomerkintä säilyy, jotta välisoiton voi merkitä
  * osioksi ja siirtää muiden osioiden mukana.
  */

@@ -3,7 +3,7 @@ import { avaaLaulu, laulu, PITKA_RIVI } from './apu';
 
 /**
  * Soinnun sijainti lasketaan ch-yksiköllä, joka on elementin oman fontin
- * merkkileveys. Jos sointurivin ja sanoitusrivin fonttikoko eroaa, virhe kasvaa
+ * merkkileveys. Jos sointumerkkien ja sanoitusrivin fonttikoko eroaa, virhe kasvaa
  * rivin edetessä – merkin 70 kohdalla se oli aiemmin yli neljä merkkiä.
  */
 test('soinnut pysyvät oikean merkin kohdalla myös pitkällä rivillä', async ({ page }) => {

@@ -96,7 +96,7 @@ describe('setLineSection', () => {
 });
 
 describe('setLineBars', () => {
-  it('muuttaa rivin tahtiriviksi ja tyhjentää sanat', () => {
+  it('muuttaa rivin sointuriviksi ja tyhjentää sanat', () => {
     const lahto = makeSong([line('a', 'sanoja', { kind: 'solo' })]);
     const song = setLineBars(lahto, 'a', ['Am', 'F']);
     expect(song.lines[0]).toMatchObject({ text: '', chords: [], bars: ['Am', 'F'] });
@@ -114,8 +114,8 @@ describe('setLineBars', () => {
   });
 });
 
-describe('mergeLineWithPrevious tahtirivin kanssa', () => {
-  it('ei yhdistä sanoitusriviä tahtiriviin', () => {
+describe('mergeLineWithPrevious sointurivin kanssa', () => {
+  it('ei yhdistä sanoitusriviä sointuriviin', () => {
     // Yhdistäminen tuottaisi rivin, jolla on sekä tahdit että sanat, eikä
     // sellaista voi piirtää kummallakaan tavalla.
     let song = makeSong([line('a', ''), line('b', 'sanoja')]);

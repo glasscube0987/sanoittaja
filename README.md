@@ -8,10 +8,10 @@ demoja puhelimella ja vie kaikki pilveen.
 
 - **Sanoituseditori** – rivipohjainen editori; Enter jakaa rivin, askelpalautin rivin
   alussa yhdistää edelliseen.
-- **Sointumerkit** – napauta sointuriviä minkä tahansa merkin yläpuolelta lisätäksesi
-  soinnun juuri siihen kohtaan. Soinnut on ankkuroitu merkkipositioihin ja ne
-  **siirtyvät automaattisesti tekstin mukana**, kun sanoja muokataan.
-- **Tahtirivit** – rivin voi muuttaa tahtiriviksi rivin §-painikkeesta, jolloin
+- **Sointumerkit** – napauta sanoitusrivin yläpuolelta minkä tahansa merkin kohdalta
+  lisätäksesi soinnun juuri siihen kohtaan. Soinnut on ankkuroitu merkkipositioihin ja
+  ne **siirtyvät automaattisesti tekstin mukana**, kun sanoja muokataan.
+- **Sointurivit** – rivin voi muuttaa sointuriviksi rivin §-painikkeesta, jolloin
   soinnut merkitään tahteina: `| Am | F | C | G |`. Yhteen tahtiin mahtuu useampi
   sointu (`Am F`) tai muu merkintä (`%`), ja tahdit tasataan saman levyisiksi niin
   että tahtiviivat ovat allekkain. Transponointi käsittelee jokaisen tahdin soinnun
@@ -101,7 +101,7 @@ src/
     anchors.ts      Sointuankkurien siirto tekstimuutoksissa
     i18n.ts         Käännökset (en/fi), kielen tunnistus ja React-konteksti
     live.ts         Live-tilan vieritysaskel ja asetukset
-    render.ts       Sointu- ja tahtirivin ladonta tekstiksi (tulostus, live-tila)
+    render.ts       Sointumerkkien ja sointurivien ladonta tekstiksi (tulostus, live)
     sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
     songOps.ts      Laulun muokkausoperaatiot (puhtaita funktioita)
     db.ts           Paikallinen tallennus (IndexedDB)

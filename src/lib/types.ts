@@ -23,7 +23,7 @@ export interface LyricLine {
   /** Jos asetettu, rivi aloittaa uuden osion. */
   section?: SectionMark;
   /**
-   * Jos asetettu, rivi on tahtirivi: soinnut luetaan tahteina eikä sanoihin
+   * Jos asetettu, rivi on sointurivi: soinnut luetaan tahteina eikä sanoihin
    * ankkuroituna, eikä rivillä ole sanoja. Yksi alkio on yhden tahdin sisältö
    * vapaana tekstinä, esim. "Am", "Am F" tai "%".
    */

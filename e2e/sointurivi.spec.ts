@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { avaaLaulu, laulu } from './apu';
 
-/** Laulu, jonka ensimmäinen rivi on valmis tahtiriviksi muunnettavaksi. */
+/** Laulu, jonka ensimmäinen rivi on valmis sointuriviksi muunnettavaksi. */
 function laulunPohja() {
   return laulu({
     lines: [
@@ -17,8 +17,8 @@ function laulunPohja() {
  */
 const teksti = (locator: Locator) => locator.evaluate((el) => el.textContent);
 
-/** Muuntaa ensimmäisen rivin tahtiriviksi §-painikkeen kautta. */
-async function teeTahtirivi(page: Page) {
+/** Muuntaa ensimmäisen rivin sointuriviksi §-painikkeen kautta. */
+async function teeSointurivi(page: Page) {
   await page.locator('.line').first().getByLabel('Line settings').click();
   await page.getByRole('button', { name: 'Chord bars', exact: true }).click();
   await page.getByRole('button', { name: 'Save' }).click();
@@ -32,7 +32,7 @@ async function kirjoitaTahti(page: Page, sisalto: string) {
   await page.keyboard.press('ArrowRight');
 }
 
-test('rivin voi muuntaa tahtiriviksi §-painikkeesta', async ({ page }) => {
+test('rivin voi muuntaa sointuriviksi §-painikkeesta', async ({ page }) => {
   await avaaLaulu(page, laulunPohja());
   const rivi = page.locator('.line').first();
 
@@ -40,7 +40,7 @@ test('rivin voi muuntaa tahtiriviksi §-painikkeesta', async ({ page }) => {
   await expect(rivi.locator('.chord-row')).toHaveCount(1);
   await expect(rivi.locator('.bar-row')).toHaveCount(0);
 
-  await teeTahtirivi(page);
+  await teeSointurivi(page);
   await page.getByRole('button', { name: 'Cancel' }).click();
 
   await expect(rivi.locator('.bar-row')).toHaveCount(1);
@@ -50,7 +50,7 @@ test('rivin voi muuntaa tahtiriviksi §-painikkeesta', async ({ page }) => {
 
 test('tahteihin kirjoitetut soinnut näkyvät rivillä tahtiviivoin', async ({ page }) => {
   await avaaLaulu(page, laulunPohja());
-  await teeTahtirivi(page);
+  await teeSointurivi(page);
 
   await kirjoitaTahti(page, 'Am');
   await kirjoitaTahti(page, 'F');
@@ -63,7 +63,7 @@ test('tahteihin kirjoitetut soinnut näkyvät rivillä tahtiviivoin', async ({ p
 
 test('tahtiin mahtuu useampi sointu', async ({ page }) => {
   await avaaLaulu(page, laulunPohja());
-  await teeTahtirivi(page);
+  await teeSointurivi(page);
 
   // Oletuksena tahteja on neljä; täytetään kaksi ja jätetään kaksi tyhjäksi.
   await kirjoitaTahti(page, 'Am F');
@@ -77,7 +77,7 @@ test('tahtiin mahtuu useampi sointu', async ({ page }) => {
 
 test('tahteja voi lisätä ja poistaa', async ({ page }) => {
   await avaaLaulu(page, laulunPohja());
-  await teeTahtirivi(page);
+  await teeSointurivi(page);
 
   await expect(page.locator('.nudge-info')).toContainText('bar 1/4');
   await page.getByRole('button', { name: '+ Bar' }).click();
@@ -89,7 +89,7 @@ test('tahteja voi lisätä ja poistaa', async ({ page }) => {
 
 test('transponointi siirtää myös tahtien soinnut', async ({ page }) => {
   await avaaLaulu(page, laulunPohja());
-  await teeTahtirivi(page);
+  await teeSointurivi(page);
   await kirjoitaTahti(page, 'Am F');
   await page.locator('.sheet input').fill('C');
   await page.getByRole('button', { name: 'Save' }).click();
@@ -103,9 +103,9 @@ test('transponointi siirtää myös tahtien soinnut', async ({ page }) => {
   );
 });
 
-test('tahtirivi näkyy tulostusnäkymässä ja live-tilassa', async ({ page }) => {
+test('sointurivi näkyy tulostusnäkymässä ja live-tilassa', async ({ page }) => {
   await avaaLaulu(page, laulunPohja());
-  await teeTahtirivi(page);
+  await teeSointurivi(page);
   await kirjoitaTahti(page, 'Am');
   await page.locator('.sheet input').fill('F');
   await page.getByRole('button', { name: 'Save' }).click();

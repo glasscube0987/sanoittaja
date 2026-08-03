@@ -140,7 +140,7 @@ describe('transposeSong', () => {
     expect(song.lines[1].chords[0].symbol).toBe('D');
   });
 
-  it('transponoi myös tahtirivit', () => {
+  it('transponoi myös sointurivit', () => {
     const lahto = makeSong();
     const withBars: Song = {
       ...lahto,
