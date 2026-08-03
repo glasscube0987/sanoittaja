@@ -48,6 +48,10 @@ demoja puhelimella ja vie kaikki pilveen.
   päivätty (`sanoittaja-varmuuskopio-2026-08-03.json`), joten pilveen kertyy
   historiaa päivä kerrallaan, ja ”Palauta” lukee sen sellaisenaan takaisin.
   Tiedostot menevät kunkin käyttäjän *omaan* pilvitiliin, eivät kehittäjän.
+- **Automaattinen varmuuskopio** – kun Dropboxiin on kerran kirjauduttu, kirjasto
+  kopioidaan taustalla muutaman kerran päivässä aina kun jotain on muuttunut;
+  mitään ei tarvitse muistaa painaa. Kirjautuminen säilyy refresh tokenilla, ja
+  toiminnon voi kytkeä pois asetuksista.
 - **Live-tila** – esiintymisnäkymä, joka vierittää laulua valitulla nopeudella,
   jolloin kädet pysyvät soittimessa. Tekstikoko ja nopeus säädettävissä, ruudun
   napautus pysäyttää ja jatkaa, ja näyttö pidetään hereillä (Wake Lock). Nopeus ja
@@ -148,7 +152,7 @@ src/
     db.ts           Paikallinen tallennus (IndexedDB)
     recorder.ts     Ääninauhoitus (MediaRecorder)
     sync/           Pilvikerros: provider-rajapinta, Dropbox, Google Drive,
-                    varmuuskopiotiedosto
+                    varmuuskopiotiedosto, automaattinen taustakopio
   components/       React-käyttöliittymä (lista, editori, sointuvalitsin,
                     nauhoitteet, pilvivalikko, asetukset)
 e2e/                Selaintestit (Playwright): asettelu, osiot, soinnut, zoom

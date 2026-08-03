@@ -83,6 +83,51 @@ export function osiot(page: Page): Promise<string[]> {
   return page.$$eval('.section-name', (els) => els.map((e) => (e.textContent ?? '').trim()));
 }
 
+export interface DropboxVienti {
+  arg: string;
+  body: string;
+}
+
+/**
+ * Katkaisee Dropbox-latauksen sivun sisällä ja tallentaa mitä lähetettiin.
+ *
+ * `page.route` ei sieppaa tätä pyyntöä WebKitissä, jolloin testi osuisi
+ * oikeaan Dropboxiin. Fetchin korvaaminen toimii samoin joka moottorilla.
+ * Kutsuttava ennen ensimmäistä sivunlatausta.
+ */
+export async function pysaytaDropbox(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __dropbox: DropboxVienti[] };
+    w.__dropbox = [];
+    const alkuperainen = window.fetch.bind(window);
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (!url.startsWith('https://content.dropboxapi.com/')) return alkuperainen(input, init);
+      const headers = (init?.headers ?? {}) as Record<string, string>;
+      const body = init?.body;
+      w.__dropbox.push({
+        arg: headers['Dropbox-API-Arg'] ?? '',
+        body: body instanceof Blob ? await body.text() : String(body ?? ''),
+      });
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    };
+  });
+}
+
+/** Mitä Dropboxiin on lähetetty tämän sivunlatauksen aikana. */
+export function dropboxViennit(page: Page): Promise<DropboxVienti[]> {
+  return page.evaluate(() => (window as unknown as { __dropbox?: DropboxVienti[] }).__dropbox ?? []);
+}
+
+/** Voimassa oleva Dropbox-kirjautuminen ilman oikeaa OAuth-kulkua. */
+export async function kirjauduDropboxiin(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    localStorage.setItem('sanoittaja.dropbox.clientId', 'testi-avain');
+    localStorage.setItem('sanoittaja.dropbox.token', 'testi-token');
+    localStorage.setItem('sanoittaja.dropbox.refresh', 'testi-refresh');
+  });
+}
+
 /** Kuinka monta pikseliä leveämpi dokumentti on kuin näyttö. */
 export function vaakaYlivuoto(page: Page): Promise<number> {
   return page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

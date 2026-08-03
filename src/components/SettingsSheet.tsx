@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { LANG_NAMES, LANGS, useI18n } from '../lib/i18n';
+import { autoBackupEnabled, setAutoBackupEnabled } from '../lib/sync/autoBackup';
 import { getDropboxClientId, setDropboxClientId } from '../lib/sync/dropbox';
 import { getGdriveClientId, setGdriveClientId } from '../lib/sync/gdrive';
 
@@ -11,10 +12,12 @@ export default function SettingsSheet({ onClose }: Props) {
   const { t, lang, setLang } = useI18n();
   const [dropboxId, setDropboxId] = useState(getDropboxClientId());
   const [gdriveId, setGdriveId] = useState(getGdriveClientId());
+  const [autoBackup, setAutoBackup] = useState(autoBackupEnabled());
 
   function save() {
     setDropboxClientId(dropboxId);
     setGdriveClientId(gdriveId);
+    setAutoBackupEnabled(autoBackup);
     onClose();
   }
 
@@ -51,6 +54,18 @@ export default function SettingsSheet({ onClose }: Props) {
             spellCheck={false}
           />
           <small>{t('settings.dropboxHelp')}</small>
+        </div>
+
+        <div className="field">
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={autoBackup}
+              onChange={(e) => setAutoBackup(e.target.checked)}
+            />
+            {t('settings.autoBackup')}
+          </label>
+          <small>{t('settings.autoBackupHelp')}</small>
         </div>
 
         <div className="field">

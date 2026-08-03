@@ -520,6 +520,21 @@ textarea:focus {
   line-height: 1.5;
 }
 
+/* Valintaruutu ja sen teksti samalle riville; kosketusalueeksi koko teksti. */
+.field label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.field label.check input {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
 /* --- Nuottilehti: tulostus ja live-tila --- */
 .song-sheet {
   display: none;

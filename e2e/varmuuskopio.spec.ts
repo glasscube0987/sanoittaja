@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { avaaLista } from './apu';
+import { avaaLista, dropboxViennit, kirjauduDropboxiin, pysaytaDropbox } from './apu';
 
 const AVAIN = 'sanoittaja.lastBackup';
 
@@ -64,49 +64,61 @@ test('pilvivienti kertoo puuttuvasta client id:stä eikä yritä verkkoon', asyn
 });
 
 test('pilveen viety paketti on sama palautuva varmuuskopio', async ({ page }) => {
+  await pysaytaDropbox(page);
   await avaaLista(page);
-  await page.evaluate(() => {
-    localStorage.setItem('sanoittaja.dropbox.clientId', 'testi-avain');
-    localStorage.setItem('sanoittaja.dropbox.token', 'testi-token');
-  });
-
-  // Dropbox katkaistaan rajapinnan reunalta: testi tarkistaa mitä lähetettiin,
-  // ei sitä että Dropbox toimii.
-  let arg = '';
-  let runko = '';
-  await page.route('https://content.dropboxapi.com/**', async (route) => {
-    arg = route.request().headers()['dropbox-api-arg'] ?? '';
-    runko = route.request().postData() ?? '';
-    await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
-  });
+  await kirjauduDropboxiin(page);
 
   await page.getByRole('button', { name: 'To cloud' }).click();
   await page.getByRole('button', { name: 'Back up to Dropbox' }).click();
   await expect(page.locator('.sheet .status').last()).toContainText('Backed up to Dropbox');
 
-  expect(JSON.parse(arg).path).toMatch(/^\/sanoittaja-varmuuskopio-\d{4}-\d{2}-\d{2}\.json$/);
+  const [vienti] = await dropboxViennit(page);
+  expect(JSON.parse(vienti.arg).path).toMatch(/^\/sanoittaja-varmuuskopio-\d{4}-\d{2}-\d{2}\.json$/);
   // Ratkaiseva kohta: aiemmin pilveen meni paljas Song, jonka tuonti hylkäsi.
-  const paketti = JSON.parse(runko);
+  const paketti = JSON.parse(vienti.body);
   expect(paketti.app).toBe('sanoittaja');
   expect(paketti.songs.map((s: { title: string }) => s.title)).toEqual(['Kuu valaisee']);
 });
 
-test('pilvivienti nollaa varmuuskopiomuistutuksen', async ({ page }) => {
+test('kirjasto varmuuskopioituu pilveen taustalla ilman käyttäjän toimia', async ({ page }) => {
+  await pysaytaDropbox(page);
   await avaaLista(page);
-  await page.evaluate(
-    (k) => {
-      localStorage.setItem(k, String(Date.now() - 20 * 86_400_000));
-      localStorage.setItem('sanoittaja.dropbox.clientId', 'testi-avain');
-      localStorage.setItem('sanoittaja.dropbox.token', 'testi-token');
-    },
-    AVAIN,
-  );
+  await kirjauduDropboxiin(page);
+  await page.evaluate(() => localStorage.setItem('sanoittaja.libraryChanged', String(Date.now())));
+
+  // Ei yhtään napautusta: pelkkä sovelluksen käynnistys riittää.
+  await page.reload();
+  await expect.poll(() => dropboxViennit(page).then((v) => v.length)).toBe(1);
+
+  const [vienti] = await dropboxViennit(page);
+  expect(JSON.parse(vienti.body).songs.map((s: { title: string }) => s.title)).toEqual(['Kuu valaisee']);
+  // Huomautus seuraa taustakopiota ilman uudelleenlatausta.
+  await expect(page.locator('.backup-note')).toContainText('Backed up today');
+});
+
+test('taustakopio ei toistu ennen kuin väli on kulunut', async ({ page }) => {
+  await pysaytaDropbox(page);
+  await avaaLista(page);
+  await kirjauduDropboxiin(page);
+  await page.evaluate(() => {
+    localStorage.setItem('sanoittaja.libraryChanged', String(Date.now() - 3 * 3_600_000));
+    localStorage.setItem('sanoittaja.autoBackup.at', String(Date.now() - 3_600_000));
+  });
+
+  await page.reload();
+  await page.waitForSelector('.song-card');
+  await expect(page.locator('.backup-note')).toBeVisible();
+  expect(await dropboxViennit(page)).toEqual([]);
+});
+
+test('pilvivienti nollaa varmuuskopiomuistutuksen', async ({ page }) => {
+  await pysaytaDropbox(page);
+  await avaaLista(page);
+  await kirjauduDropboxiin(page);
+  await page.evaluate((k) => localStorage.setItem(k, String(Date.now() - 20 * 86_400_000)), AVAIN);
   await page.reload();
   await expect(page.locator('.backup-note')).toHaveClass(/stale/);
 
-  await page.route('https://content.dropboxapi.com/**', (route) =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: '{}' }),
-  );
   await page.getByRole('button', { name: 'To cloud' }).click();
   await page.getByRole('button', { name: 'Back up to Dropbox' }).click();
   await expect(page.locator('.sheet .status').last()).toContainText('Backed up to Dropbox');

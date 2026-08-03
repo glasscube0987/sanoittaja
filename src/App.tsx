@@ -6,6 +6,7 @@ import type { HistoryEntry } from './lib/history';
 import { pushHistory } from './lib/history';
 import type { Key, Lang, Params } from './lib/i18n';
 import { LangContext, loadLang, storeLang, translate } from './lib/i18n';
+import { AUTO_BACKUP_CHECK_MS, markLibraryChanged, maybeAutoBackup } from './lib/sync/autoBackup';
 import type { Song } from './lib/types';
 import { newSong } from './lib/types';
 
@@ -39,6 +40,22 @@ export default function App() {
     listSongs().then(setSongs);
   }, []);
 
+  // Taustakopio pilveen: tarkistetaan käynnistyessä ja tasaisin välein, sekä
+  // kun sovellus palaa näkyviin – silloin se on varmasti hereillä.
+  useEffect(() => {
+    const check = () => {
+      maybeAutoBackup().catch((err) => console.warn('Automaattinen varmuuskopio epäonnistui', err));
+    };
+    check();
+    const timer = window.setInterval(check, AUTO_BACKUP_CHECK_MS);
+    const onVisible = () => document.visibilityState === 'visible' && check();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+
   // Peruutus koskee aina yhtä laulua kerrallaan, joten pino tyhjenee kun toinen avataan.
   const editingId = view.name === 'editor' ? view.songId : null;
   useEffect(() => {
@@ -53,6 +70,7 @@ export default function App() {
       song.id,
       window.setTimeout(() => {
         timers.delete(song.id);
+        markLibraryChanged();
         saveSong(song).catch((err) => console.error('Tallennus epäonnistui', err));
       }, 400),
     );
@@ -70,6 +88,7 @@ export default function App() {
   const createSong = useCallback(() => {
     const song = newSong();
     setSongs((prev) => [song, ...(prev ?? [])]);
+    markLibraryChanged();
     saveSong(song).catch((err) => console.error('Tallennus epäonnistui', err));
     setView({ name: 'editor', songId: song.id });
   }, []);
@@ -77,10 +96,12 @@ export default function App() {
   const deleteSong = useCallback((songId: string) => {
     setSongs((prev) => (prev ? prev.filter((s) => s.id !== songId) : prev));
     setView({ name: 'list' });
+    markLibraryChanged();
     dbDeleteSong(songId).catch((err) => console.error('Poisto epäonnistui', err));
   }, []);
 
   const reload = useCallback(() => {
+    markLibraryChanged();
     listSongs().then(setSongs);
   }, []);
 

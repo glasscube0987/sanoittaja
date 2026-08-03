@@ -87,8 +87,16 @@ export function lastBackupAt(): number | null {
   return Number.isFinite(at) ? at : null;
 }
 
+/**
+ * Tapahtuma varmuuskopion ottamisesta. Taustakopio tapahtuu ilman käyttäjän
+ * napautusta, joten listan huomautus ei muuten päivittyisi ennen seuraavaa
+ * uudelleenlatausta.
+ */
+export const BACKUP_EVENT = 'sanoittaja:backup';
+
 export function markBackupTaken(at: number = Date.now()): void {
   localStorage.setItem(LAST_BACKUP_KEY, String(at));
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(BACKUP_EVENT));
 }
 
 /** Kokonaisia vuorokausia edellisestä varmuuskopiosta, tai null jos ei koskaan. */

@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatDate, useI18n } from '../lib/i18n';
 import type { Song } from '../lib/types';
 import {
+  BACKUP_EVENT,
   backupFileName,
   backupIsStale,
   daysSinceBackup,
@@ -28,6 +29,13 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
   const [status, setStatus] = useState('');
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Myös taustalla otettu kopio päivittää huomautuksen.
+  useEffect(() => {
+    const onBackup = () => setBackupDays(daysSinceBackup());
+    window.addEventListener(BACKUP_EVENT, onBackup);
+    return () => window.removeEventListener(BACKUP_EVENT, onBackup);
+  }, []);
 
   const errorText = (err: unknown) =>
     t('common.error', { message: err instanceof Error ? err.message : String(err) });

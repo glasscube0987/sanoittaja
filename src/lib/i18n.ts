@@ -125,6 +125,9 @@ const en = {
   'settings.dropboxKey': 'Dropbox app key',
   'settings.dropboxHelp':
     'Create a free app at dropbox.com/developers/apps: Scoped access → App folder, then on the Permissions tab tick files.content.write and files.content.read and press Submit. On Settings, add this app’s address to the Redirect URIs exactly as it appears in the address bar, trailing slash included. The App key is not a secret.',
+  'settings.autoBackup': 'Back up to Dropbox automatically',
+  'settings.autoBackupHelp':
+    'Once signed in to Dropbox, the library is backed up in the background a few times a day whenever something has changed. Dropbox only — the Google sign-in expires with the session.',
   'settings.gdriveKey': 'Google OAuth client id',
   'settings.gdriveHelp':
     'Create an OAuth client id (Web application) at console.cloud.google.com, enable the Drive API and add this app’s address to the allowed JavaScript origins.',
@@ -254,6 +257,9 @@ const fi: Record<Key, string> = {
   'settings.dropboxKey': 'Dropbox app key',
   'settings.dropboxHelp':
     'Luo ilmainen sovellus osoitteessa dropbox.com/developers/apps: Scoped access → App folder, ja rastita Permissions-välilehdellä files.content.write ja files.content.read ja paina Submit. Lisää Settings-välilehdellä tämän sovelluksen osoite Redirect URI -listaan täsmälleen sellaisena kuin se on osoiterivillä, päättävä kauttaviiva mukaan lukien. App key ei ole salaisuus.',
+  'settings.autoBackup': 'Varmuuskopioi Dropboxiin automaattisesti',
+  'settings.autoBackupHelp':
+    'Kun Dropboxiin on kirjauduttu, kirjasto varmuuskopioidaan taustalla muutaman kerran päivässä aina kun jotain on muuttunut. Vain Dropbox — Google-kirjautuminen vanhenee istunnon mukana.',
   'settings.gdriveKey': 'Google OAuth client id',
   'settings.gdriveHelp':
     'Luo OAuth client id (Web application) osoitteessa console.cloud.google.com, ota Drive API käyttöön ja lisää tämän sovelluksen osoite sallittuihin JavaScript-lähteisiin.',
