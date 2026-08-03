@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { LANG_NAMES, LANGS, useI18n } from '../lib/i18n';
 import { autoBackupEnabled, setAutoBackupEnabled } from '../lib/sync/autoBackup';
-import { getDropboxClientId, setDropboxClientId } from '../lib/sync/dropbox';
+import { DEFAULT_CLIENT_ID, getDropboxClientIdOverride, setDropboxClientId } from '../lib/sync/dropbox';
 import { getGdriveClientId, setGdriveClientId } from '../lib/sync/gdrive';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 
 export default function SettingsSheet({ onClose }: Props) {
   const { t, lang, setLang } = useI18n();
-  const [dropboxId, setDropboxId] = useState(getDropboxClientId());
+  const [dropboxId, setDropboxId] = useState(getDropboxClientIdOverride());
   const [gdriveId, setGdriveId] = useState(getGdriveClientId());
   const [autoBackup, setAutoBackup] = useState(autoBackupEnabled());
 
@@ -48,6 +48,7 @@ export default function SettingsSheet({ onClose }: Props) {
           <input
             id="dropbox-id"
             value={dropboxId}
+            placeholder={DEFAULT_CLIENT_ID}
             onChange={(e) => setDropboxId(e.target.value)}
             autoCapitalize="off"
             autoComplete="off"

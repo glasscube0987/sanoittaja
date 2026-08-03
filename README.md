@@ -97,12 +97,16 @@ ja PWA-asennus toimivat puhelimessa.
 
 ### Pilvipalveluiden käyttöönotto
 
-Pilveen varmuuskopiointi tarvitsee omat (ilmaiset) sovellustunnukset, jotka
-syötetään äpin asetuksissa (⚙︎ / ”Pilviasetukset”). Varmuuskopiotiedosto
-(”Varmuuskopioi” / ”Palauta”) toimii ilman mitään tunnuksia, joten tämä on
-valinnaista.
+**Dropbox on valmiiksi käytössä:** sovelluksella on oma Dropbox-sovelluksensa,
+joten käyttäjän tarvitsee vain kirjautua. Data menee silti kunkin käyttäjän
+*omalle* Dropbox-tilille kansioon `Apps/Sanoittaja/`. Google Drive tarvitsee
+edelleen oman OAuth client id:n asetuksissa (⚙︎ / ”Pilviasetukset”), ja
+varmuuskopiotiedosto (”Varmuuskopioi” / ”Palauta”) toimii ilman mitään tunnuksia.
 
-#### Dropbox
+#### Dropbox omalla sovelluksella
+
+Tämä on tarpeen vain jos julkaiset oman version tai haluat oman App keysi.
+Asetuskentän täyttäminen ohittaa sisäänrakennetun tunnuksen.
 
 1. Kirjaudu <https://www.dropbox.com/developers/apps> ja valitse **Create app**.
 2. **Choose an API**: Scoped access. **Type of access**: **App folder** – tällöin
@@ -119,7 +123,8 @@ valinnaista.
 6. Kopioi **App key** ja syötä se äpin pilviasetuksiin.
 
 App key ei ole salaisuus: PKCE-kulussa se on tarkoitettu julkiseksi eikä
-*App secret* -kenttää käytetä lainkaan. Data menee **kunkin käyttäjän omalle**
+*App secret* -kenttää käytetä lainkaan. Siksi sovelluksen oma App key on
+lähdekoodissa (`src/lib/sync/dropbox.ts`). Data menee **kunkin käyttäjän omalle**
 Dropbox-tilille kansioon `Apps/<nimi>/`, ei kehittäjän tilille; kehittäjä näkee
 App Consolessa vain liitettyjen tilien lukumäärän. Kehitystilan sovellus sallii
 rajallisen määrän tilejä ennen tuotantostatuksen hakemista.

@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { AUTO_BACKUP_INTERVAL_MS, shouldAutoBackup } from './autoBackup';
-import { EXPIRY_MARGIN_MS, expiryFromResponse } from './dropbox';
+import {
+  authorizeUrl,
+  DEFAULT_CLIENT_ID,
+  EXPIRY_MARGIN_MS,
+  expiryFromResponse,
+  getDropboxClientId,
+  getDropboxClientIdOverride,
+  setDropboxClientId,
+} from './dropbox';
 
 const NOW = Date.UTC(2026, 7, 3, 12, 0, 0);
 const HOUR = 3_600_000;
@@ -56,6 +64,49 @@ describe('shouldAutoBackup', () => {
     const juuriKopioitu = tila({ lastAt: NOW - HOUR, changedAt: NOW - 60_000 });
     expect(shouldAutoBackup(juuriKopioitu)).toBe(false);
     expect(shouldAutoBackup({ ...juuriKopioitu, now: NOW - HOUR + AUTO_BACKUP_INTERVAL_MS })).toBe(true);
+  });
+});
+
+describe('Dropbox-tunnus', () => {
+  it('käyttää sovelluksen omaa tunnusta ilman asetuksia', () => {
+    // Käyttöönotto ei saa vaatia omaa Dropbox-sovellusta: pelkkä kirjautuminen riittää.
+    expect(getDropboxClientId()).toBe(DEFAULT_CLIENT_ID);
+    expect(getDropboxClientIdOverride()).toBe('');
+  });
+
+  it('antaa oman tunnuksen ohittaa oletuksen', () => {
+    setDropboxClientId('  oma-avain  ');
+    expect(getDropboxClientId()).toBe('oma-avain');
+    expect(getDropboxClientIdOverride()).toBe('oma-avain');
+  });
+
+  it('palaa oletukseen kun kenttä tyhjennetään', () => {
+    setDropboxClientId('oma-avain');
+    setDropboxClientId('');
+    expect(getDropboxClientId()).toBe(DEFAULT_CLIENT_ID);
+  });
+});
+
+describe('authorizeUrl', () => {
+  const url = new URL(authorizeUrl('avain', 'https://esimerkki.fi/app/', 'haaste'));
+
+  it('pyytää pitkäikäisen kirjautumisen', () => {
+    // Ilman tätä token vanhenee neljässä tunnissa eikä uusiudu: taustakopio kuolisi.
+    expect(url.searchParams.get('token_access_type')).toBe('offline');
+  });
+
+  it('käyttää PKCE:tä ilman salaisuutta', () => {
+    expect(url.searchParams.get('response_type')).toBe('code');
+    expect(url.searchParams.get('code_challenge')).toBe('haaste');
+    expect(url.searchParams.get('code_challenge_method')).toBe('S256');
+    expect(url.toString()).not.toContain('secret');
+  });
+
+  it('välittää tunnuksen ja paluuosoitteen sellaisenaan', () => {
+    expect(url.origin + url.pathname).toBe('https://www.dropbox.com/oauth2/authorize');
+    expect(url.searchParams.get('client_id')).toBe('avain');
+    // Dropbox vaatii merkintarkan osuman rekisteröityyn Redirect URI:in.
+    expect(url.searchParams.get('redirect_uri')).toBe('https://esimerkki.fi/app/');
   });
 });
 

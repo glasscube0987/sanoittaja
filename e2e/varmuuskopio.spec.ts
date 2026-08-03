@@ -56,11 +56,30 @@ test('varmuuskopio ladataan kun jakamista ei tueta', async ({ page }) => {
   expect(tiedosto.suggestedFilename()).toMatch(/^sanoittaja-varmuuskopio-\d{4}-\d{2}-\d{2}\.json$/);
 });
 
-test('pilvivienti kertoo puuttuvasta client id:stä eikä yritä verkkoon', async ({ page }) => {
+test('kirjautuminen onnistuu ilman omia tunnuksia', async ({ page }) => {
   await avaaLista(page);
+  // Sovelluksen oma osoite talteen ennen kirjautumista: sen jälkeen sivu on
+  // matkalla muualle eikä page.url() enää kerro mistä lähdettiin.
+  const sovellus = new URL(page.url()).origin + '/';
+
+  // Kirjautuminen vie pois sovelluksesta; pysäytetään se ja katsotaan minne oltiin menossa.
+  let osoite = '';
+  await page.route('https://www.dropbox.com/**', async (route) => {
+    osoite = route.request().url();
+    await route.abort();
+  });
+
   await page.getByRole('button', { name: 'To cloud' }).click();
   await page.getByRole('button', { name: 'Sign in to Dropbox' }).click();
-  await expect(page.locator('.sheet .status').last()).toContainText('add a client id');
+
+  await expect.poll(() => osoite).not.toBe('');
+  const url = new URL(osoite);
+  // Asetuksiin ei ole koskettu: sovelluksen oma tunnus riittää.
+  expect(url.searchParams.get('client_id')).toBe('gvl73tnz8a7by9s');
+  expect(url.searchParams.get('token_access_type')).toBe('offline');
+  expect(url.searchParams.get('code_challenge_method')).toBe('S256');
+  // Paluuosoite on täsmälleen se, joka Dropboxiin on rekisteröitävä.
+  expect(url.searchParams.get('redirect_uri')).toBe(sovellus);
 });
 
 test('pilveen viety paketti on sama palautuva varmuuskopio', async ({ page }) => {

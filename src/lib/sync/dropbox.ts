@@ -10,6 +10,13 @@
  */
 import type { CloudProvider } from './provider';
 
+/**
+ * Sovelluksen oma Dropbox-sovellus. PKCE-kulussa client id on tarkoitettu
+ * julkiseksi eikä sillä yksin pääse mihinkään: käyttäjä hyväksyy kirjautumisen
+ * itse, ja tokenit jäävät hänen laitteelleen. App secretiä ei käytetä.
+ */
+export const DEFAULT_CLIENT_ID = 'gvl73tnz8a7by9s';
+
 const CLIENT_ID_KEY = 'sanoittaja.dropbox.clientId';
 const TOKEN_KEY = 'sanoittaja.dropbox.token';
 const REFRESH_KEY = 'sanoittaja.dropbox.refresh';
@@ -72,8 +79,30 @@ function randomVerifier(): string {
   return Array.from(bytes, (b) => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'[b % 62]).join('');
 }
 
+/** Asetuksissa syötetty client id, tai sovelluksen oma jos kenttä on tyhjä. */
 export function getDropboxClientId(): string {
+  return localStorage.getItem(CLIENT_ID_KEY)?.trim() || DEFAULT_CLIENT_ID;
+}
+
+/** Mitä asetuskentässä näytetään: vain käyttäjän oma arvo, ei oletusta. */
+export function getDropboxClientIdOverride(): string {
   return localStorage.getItem(CLIENT_ID_KEY) ?? '';
+}
+
+/**
+ * Kirjautumisosoite. Erillisenä funktiona, jotta parametrit — erityisesti
+ * pitkäikäisyys ja PKCE — voidaan varmistaa testillä ilman selainta.
+ */
+export function authorizeUrl(clientId: string, redirect: string, challenge: string): string {
+  const url = new URL('https://www.dropbox.com/oauth2/authorize');
+  url.searchParams.set('client_id', clientId);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('redirect_uri', redirect);
+  url.searchParams.set('code_challenge', challenge);
+  url.searchParams.set('code_challenge_method', 'S256');
+  // Ilman tätä kirjautuminen kestää vain neljä tuntia.
+  url.searchParams.set('token_access_type', 'offline');
+  return url.toString();
 }
 
 export function setDropboxClientId(id: string): void {
@@ -151,6 +180,7 @@ export const dropboxProvider: CloudProvider = {
   id: 'dropbox',
   label: 'Dropbox',
 
+  // Oletustunnus on aina olemassa, joten käyttöönotto ei vaadi asetuksia.
   isConfigured: () => getDropboxClientId().length > 0,
   // Refresh token riittää: access token uusitaan lennossa.
   isConnected: () => !!localStorage.getItem(REFRESH_KEY) || !!localStorage.getItem(TOKEN_KEY),
@@ -159,15 +189,7 @@ export const dropboxProvider: CloudProvider = {
     const verifier = randomVerifier();
     sessionStorage.setItem(VERIFIER_KEY, verifier);
     const challenge = await sha256Base64Url(verifier);
-    const url = new URL('https://www.dropbox.com/oauth2/authorize');
-    url.searchParams.set('client_id', getDropboxClientId());
-    url.searchParams.set('response_type', 'code');
-    url.searchParams.set('redirect_uri', redirectUri());
-    url.searchParams.set('code_challenge', challenge);
-    url.searchParams.set('code_challenge_method', 'S256');
-    // Ilman tätä kirjautuminen kestää vain neljä tuntia.
-    url.searchParams.set('token_access_type', 'offline');
-    window.location.assign(url.toString());
+    window.location.assign(authorizeUrl(getDropboxClientId(), redirectUri(), challenge));
   },
 
   disconnect() {
