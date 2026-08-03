@@ -13,6 +13,7 @@ import {
   shareBlob,
 } from '../lib/sync/exportFile';
 import CloudSheet from './CloudSheet';
+import Icon from './Icon';
 import SettingsSheet from './SettingsSheet';
 
 interface Props {
@@ -79,8 +80,12 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
     <>
       <header className="topbar">
         <h1>Sanoittaja</h1>
-        <button className="ghost" onClick={() => setSettingsOpen(true)} aria-label={t('list.settings')}>
-          ⚙︎
+        <button
+          className="icon-button"
+          onClick={() => setSettingsOpen(true)}
+          aria-label={t('list.settings')}
+        >
+          <Icon name="settings" />
         </button>
         <button className="primary" onClick={onCreate}>
           {t('list.newSong')}
@@ -96,16 +101,19 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
         )}
         {songs.map((song) => (
           <button key={song.id} className="song-card" onClick={() => onOpen(song.id)}>
-            <div className="title">{song.title || t('app.untitled')}</div>
-            <div className="meta">
-              {song.songKey ? `${song.songKey} · ` : ''}
-              {t('list.meta', {
-                // Sointurivit lasketaan mukaan, jottei pelkistä tahdeista koostuva
-                // laulu näytä tyhjältä.
-                lines: song.lines.filter((l) => l.text.trim() || l.bars?.length).length,
-                date: formatDate(song.updatedAt, lang),
-              })}
-            </div>
+            <span className="song-card-text">
+              <span className="title">{song.title || t('app.untitled')}</span>
+              <span className="meta">
+                {song.songKey ? `${song.songKey} · ` : ''}
+                {t('list.meta', {
+                  // Sointurivit lasketaan mukaan, jottei pelkistä tahdeista koostuva
+                  // laulu näytä tyhjältä.
+                  lines: song.lines.filter((l) => l.text.trim() || l.bars?.length).length,
+                  date: formatDate(song.updatedAt, lang),
+                })}
+              </span>
+            </span>
+            <Icon name="chevronRight" size={18} />
           </button>
         ))}
         {/* Varmuuskopio koskee koko kirjastoa, joten myös pilvivienti kuuluu

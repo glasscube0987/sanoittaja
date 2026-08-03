@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useT } from '../lib/i18n';
+import Icon from './Icon';
 
 interface Props {
   bars: string[];
@@ -79,14 +80,14 @@ export default function BarSheet({ bars: initial, suggestions, onSave, onClose }
 
         <div className="nudge-row">
           <button type="button" onClick={() => move(-1)} aria-label={t('chord.moveLeft')}>
-            ◀
+            <Icon name="chevronLeft" size={20} />
           </button>
           <span className="nudge-info">
             {t('bars.position', { index: index + 1, count: bars.length })}
             <small>{t('bars.hint')}</small>
           </span>
           <button type="button" onClick={() => move(1)} aria-label={t('chord.moveRight')}>
-            ▶
+            <Icon name="chevronRight" size={20} />
           </button>
         </div>
 

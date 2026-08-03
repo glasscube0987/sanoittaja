@@ -18,6 +18,7 @@ import {
 import { useI18n } from '../lib/i18n';
 import { getSections, sectionTitle } from '../lib/sections';
 import ChordSheet from './ChordSheet';
+import Icon from './Icon';
 import LineEditor from './LineEditor';
 import LiveView from './LiveView';
 import BarSheet from './BarSheet';
@@ -86,13 +87,18 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
   return (
     <>
       <header className="topbar">
-        <button className="ghost" onClick={onBack} aria-label={t('editor.backLabel')}>
-          {t('editor.back')}
+        <button className="icon-button" onClick={onBack} aria-label={t('editor.backLabel')}>
+          <Icon name="back" />
         </button>
         <h1>{song.title || t('app.untitled')}</h1>
         {/* Peruutus on turhaa jos sen luo pitää rullata: vahinko huomataan heti. */}
-        <button className="ghost" onClick={onUndo} disabled={!canUndo} aria-label={t('editor.undo')}>
-          ↶
+        <button
+          className="icon-button"
+          onClick={onUndo}
+          disabled={!canUndo}
+          aria-label={t('editor.undo')}
+        >
+          <Icon name="undo" />
         </button>
         {/* Yläpalkki on sticky, joten live-tila on käytettävissä heti biisin
             avatessa ilman että näkymää tarvitsee rullata alas. */}
@@ -152,20 +158,20 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
                     {sectionTitle(block, t)}
                   </button>
                   <button
-                    className="ghost"
+                    className="icon-button small"
                     aria-label={t('editor.moveSectionUp', { name: sectionTitle(block, t) })}
                     disabled={i === 0 || !sections[i - 1].mark}
                     onClick={() => onChange(moveSection(song, block.id, -1))}
                   >
-                    ▲
+                    <Icon name="chevronUp" size={18} />
                   </button>
                   <button
-                    className="ghost"
+                    className="icon-button small"
                     aria-label={t('editor.moveSectionDown', { name: sectionTitle(block, t) })}
                     disabled={i === sections.length - 1}
                     onClick={() => onChange(moveSection(song, block.id, 1))}
                   >
-                    ▼
+                    <Icon name="chevronDown" size={18} />
                   </button>
                 </div>
               )}

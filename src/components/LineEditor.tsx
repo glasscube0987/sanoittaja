@@ -3,6 +3,7 @@ import { chordSpan, columnGuide } from '../lib/anchors';
 import { useT } from '../lib/i18n';
 import { barLineText } from '../lib/render';
 import type { LyricLine } from '../lib/types';
+import Icon from './Icon';
 
 interface Props {
   line: LyricLine;
@@ -72,7 +73,7 @@ export default function LineEditor({
         aria-label={t(line.section ? 'line.editSection' : 'line.startSection')}
         title={t(line.section ? 'line.editSection' : 'line.startSection')}
       >
-        §
+        <Icon name="lineSettings" size={16} />
       </button>
       <div className="line-body">
         {line.bars ? (

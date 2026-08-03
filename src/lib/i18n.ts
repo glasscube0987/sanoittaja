@@ -41,7 +41,6 @@ const en = {
   'list.importing': 'Importing…',
   'list.imported': 'Imported {songs} songs and {recordings} recordings.',
 
-  'editor.back': '‹',
   'editor.backLabel': 'Songs',
   'editor.undo': 'Undo',
   'editor.titlePlaceholder': 'Song title',
@@ -172,7 +171,6 @@ const fi: Record<Key, string> = {
   'list.importing': 'Tuodaan…',
   'list.imported': 'Tuotu {songs} laulua ja {recordings} nauhoitetta.',
 
-  'editor.back': '‹',
   'editor.backLabel': 'Laulut',
   'editor.undo': 'Kumoa',
   'editor.titlePlaceholder': 'Laulun nimi',

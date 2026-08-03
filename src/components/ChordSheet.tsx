@@ -3,6 +3,7 @@ import { chordSpan, columnGuide } from '../lib/anchors';
 import { useT } from '../lib/i18n';
 import type { LyricLine } from '../lib/types';
 import type { ChordTarget } from './SongEditor';
+import Icon from './Icon';
 
 interface Props {
   target: ChordTarget;
@@ -94,14 +95,14 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
 
         <div className="nudge-row">
           <button type="button" onClick={() => nudge(-1)} aria-label={t('chord.moveLeft')}>
-            ◀
+            <Icon name="chevronLeft" size={20} />
           </button>
           <span className="nudge-info">
             {t('chord.position', { pos, max: span })}
             <small>{t('chord.arrowHint')}</small>
           </span>
           <button type="button" onClick={() => nudge(1)} aria-label={t('chord.moveRight')}>
-            ▶
+            <Icon name="chevronRight" size={20} />
           </button>
         </div>
 

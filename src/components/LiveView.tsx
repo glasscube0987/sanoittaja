@@ -13,6 +13,7 @@ import {
   storeLiveSettings,
 } from '../lib/live';
 import type { Song } from '../lib/types';
+import Icon from './Icon';
 import SongSheet from './SongSheet';
 
 interface Props {
@@ -151,7 +152,7 @@ export default function LiveView({ song, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={toggle} className="primary" aria-label={t(running ? 'live.pause' : 'live.play')}>
-          {running ? '❙❙' : '▶'}
+          <Icon name={running ? 'pause' : 'play'} size={20} />
         </button>
         <button
           onClick={() => adjust(setSpeed, -SPEED_STEP, SPEED_MIN, SPEED_MAX)}
