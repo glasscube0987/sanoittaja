@@ -21,6 +21,23 @@ async function avaaLive(page: Page) {
 
 const sijainti = (page: Page) => page.locator('.live-scroll').evaluate((el) => el.scrollTop);
 
+/*
+ * Live-näkymä on position: fixed, joten se ohittaa #root-elementin
+ * turva-aluetäytön. iPhonella laulun otsikko jäi kameran alle piiloon.
+ * Turva-alue emuloidaan oikeasti, ei tarkisteta pelkkää CSS-tekstiä.
+ */
+test('otsikko jää iPhonen kameran alapuolelle', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'turva-alueen emulointi on Chromium-kohtainen');
+  await avaaLive(page);
+
+  const YLAREUNA = 59;
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: YLAREUNA } });
+
+  const otsikko = await page.locator('.live-view h1').boundingBox();
+  expect(otsikko!.y).toBeGreaterThanOrEqual(YLAREUNA);
+});
+
 test('live-painike on näkyvissä heti eikä katoa rullatessa', async ({ page }) => {
   await avaaLaulu(page, pitkaLaulu());
   const nappi = page.getByRole('button', { name: 'Live', exact: true });

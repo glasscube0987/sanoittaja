@@ -559,7 +559,13 @@ textarea:focus {
   overflow-y: auto;
   overflow-x: auto;
   overscroll-behavior: contain;
-  padding: 16px calc(16px + env(safe-area-inset-right)) 0 calc(16px + env(safe-area-inset-left));
+  /*
+   * Yläreunan turva-alue on laskettava tässä: .live-view on position: fixed,
+   * joten se ohittaa #root-elementin turva-aluetäytön, ja iPhonen kamera peittäisi
+   * muuten laulun otsikon.
+   */
+  padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 0
+    calc(16px + env(safe-area-inset-left));
   /* Vieritys tapahtuu ohjelmallisesti, joten pehmennys ei saa jäädä perässä. */
   scroll-behavior: auto;
 }
