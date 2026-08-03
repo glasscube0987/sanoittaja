@@ -146,3 +146,30 @@ test('pilvivienti nollaa varmuuskopiomuistutuksen', async ({ page }) => {
   await expect(page.locator('.backup-note')).toContainText('Backed up today');
   await expect(page.locator('.backup-note')).not.toHaveClass(/stale/);
 });
+
+test('käsin otettu pilvikopio ei laukaise taustakopiota heti perään', async ({ page }) => {
+  await pysaytaDropbox(page);
+  await avaaLista(page);
+  await kirjauduDropboxiin(page);
+
+  await page.getByRole('button', { name: 'To cloud' }).click();
+  await page.getByRole('button', { name: 'Back up to Dropbox' }).click();
+  await expect(page.locator('.sheet .status').last()).toContainText('Backed up to Dropbox');
+  await page.getByRole('button', { name: 'Close' }).click();
+
+  // Muokkaus merkitsee kirjaston muuttuneeksi; taustakopion vuoro on vasta
+  // välin päästä, ei heti äsken tehdyn kopion perään.
+  await page.locator('.song-card').first().click();
+  await page.locator('.line input.text').first().fill('kuu valaisee yöni');
+  await page.getByRole('button', { name: 'Songs' }).click();
+  // Tallennus on viivästetty; ilman odotusta merkintää ei olisi vielä tehty
+  // eikä testi kertoisi mitään.
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('sanoittaja.libraryChanged')))
+    .not.toBeNull();
+
+  await page.reload();
+  await page.waitForSelector('.song-card');
+
+  expect(await dropboxViennit(page)).toEqual([]);
+});

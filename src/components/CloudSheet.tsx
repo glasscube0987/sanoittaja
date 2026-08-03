@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useT } from '../lib/i18n';
 import { dropboxProvider } from '../lib/sync/dropbox';
 import { gdriveProvider } from '../lib/sync/gdrive';
+import { markCloudBackupTaken } from '../lib/sync/autoBackup';
 import { backupFileName, exportLibrary, markBackupTaken } from '../lib/sync/exportFile';
 import type { CloudProvider } from '../lib/sync/provider';
 import SettingsSheet from './SettingsSheet';
@@ -34,8 +35,10 @@ export default function CloudSheet({ onClose, onBackedUp }: Props) {
       const name = backupFileName();
       await provider.uploadBackup(await exportLibrary(), name);
       // Pilveen viety paketti on sama palautuva varmuuskopio kuin tiedostoon
-      // tallennettu, joten se nollaa myös muistutuksen.
+      // tallennettu, joten se nollaa myös muistutuksen. Taustakopion aikaleima
+      // päivittyy samalla, jottei automatiikka toistaisi juuri tehtyä työtä.
       markBackupTaken();
+      if (provider.id === 'dropbox') markCloudBackupTaken();
       onBackedUp();
       setStatus(t('cloud.done', { file: name, provider: provider.label }));
     } catch (err) {
