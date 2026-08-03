@@ -16,6 +16,7 @@ import { getSections, sectionTitle } from '../lib/sections';
 import ChordSheet from './ChordSheet';
 import CloudSheet from './CloudSheet';
 import LineEditor from './LineEditor';
+import LiveView from './LiveView';
 import RecordingsPanel from './RecordingsPanel';
 import SectionSheet from './SectionSheet';
 import SongSheet from './SongSheet';
@@ -38,6 +39,7 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
   const [chordTarget, setChordTarget] = useState<ChordTarget | null>(null);
   const [sectionTargetId, setSectionTargetId] = useState<string | null>(null);
   const [cloudOpen, setCloudOpen] = useState(false);
+  const [liveOpen, setLiveOpen] = useState(false);
   const focusLineId = useRef<{ id: string; caret: number } | null>(null);
 
   const sections = useMemo(() => getSections(song), [song]);
@@ -157,6 +159,9 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
           <button onClick={() => onChange(addLineAfter(song, song.lines[song.lines.length - 1].id))}>
             {t('editor.addLine')}
           </button>
+          <button className="primary" onClick={() => setLiveOpen(true)}>
+            {t('editor.live')}
+          </button>
           {/* Tulostusvalikosta valitaan "Tallenna PDF:nä"; erillistä kirjastoa ei tarvita. */}
           <button onClick={() => window.print()}>{t('editor.exportPdf')}</button>
           <button
@@ -201,6 +206,7 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
         />
       )}
       {cloudOpen && <CloudSheet song={song} onClose={() => setCloudOpen(false)} />}
+      {liveOpen && <LiveView song={song} onClose={() => setLiveOpen(false)} />}
     </>
   );
 }

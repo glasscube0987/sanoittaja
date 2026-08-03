@@ -30,6 +30,10 @@ demoja puhelimella ja vie kaikki pilveen.
   tai **Google Driveen** (OAuth). Lisäksi koko kirjaston **varmuuskopio yhtenä
   JSON-tiedostona** ilman mitään pilvitunnuksia – tiedoston voi jakaa puhelimen
   jakovalikosta mihin tahansa palveluun.
+- **Live-tila** – esiintymisnäkymä, joka vierittää laulua valitulla nopeudella,
+  jolloin kädet pysyvät soittimessa. Tekstikoko ja nopeus säädettävissä, ruudun
+  napautus pysäyttää ja jatkaa, ja näyttö pidetään hereillä (Wake Lock). Nopeus ja
+  tekstikoko muistetaan seuraavalle kerralle.
 - **PDF-vienti** – ”Vie PDF” avaa järjestelmän tulostusvalikon, josta laulun voi
   tallentaa PDF:nä tai tulostaa. Tuloste on puhdas nuottilehti: soinnut sanojen yllä
   tasalevyisellä fontilla, osiot otsikoituna ja osiot pyritään pitämään yhdellä
@@ -91,6 +95,7 @@ src/
     chords.ts       Sointusymbolien jäsennys ja transponointi
     anchors.ts      Sointuankkurien siirto tekstimuutoksissa
     i18n.ts         Käännökset (en/fi), kielen tunnistus ja React-konteksti
+    live.ts         Live-tilan vieritysaskel ja asetukset
     render.ts       Sointurivin ladonta tekstiksi (tulostus ja live-tila)
     sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
     songOps.ts      Laulun muokkausoperaatiot (puhtaita funktioita)

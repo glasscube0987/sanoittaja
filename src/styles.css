@@ -501,6 +501,74 @@ textarea:focus {
   color: var(--text-dim);
 }
 
+/* --- Live-tila --- */
+.live-view {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.live-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+  padding: 16px calc(16px + env(safe-area-inset-right)) 0 calc(16px + env(safe-area-inset-left));
+  /* Vieritys tapahtuu ohjelmallisesti, joten pehmennys ei saa jäädä perässä. */
+  scroll-behavior: auto;
+}
+
+.live-view .song-sheet {
+  display: block;
+  font-size: inherit;
+}
+
+.live-view .song-sheet h1 {
+  font-size: 1.3em;
+}
+
+/* Loppuun ruudullinen tilaa, jotta viimeinenkin rivi nousee luettavalle korkeudelle. */
+.live-tail {
+  height: 70vh;
+}
+
+.live-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom))
+    calc(8px + env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border-top: 1px solid var(--border);
+  transition: opacity 0.25s;
+}
+
+.live-controls.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.live-controls button {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  min-height: 44px;
+}
+
+.live-controls .live-speed {
+  flex: 1;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 @media print {
   /*
    * Tulostetaan vain nuottilehti. Kaikki piiloon ja lehti takaisin näkyviin:
