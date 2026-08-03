@@ -1,18 +1,18 @@
 import { useState } from 'react';
-import { listRecordings } from '../lib/db';
 import { useT } from '../lib/i18n';
 import { dropboxProvider } from '../lib/sync/dropbox';
 import { gdriveProvider } from '../lib/sync/gdrive';
+import { backupFileName, exportLibrary, markBackupTaken } from '../lib/sync/exportFile';
 import type { CloudProvider } from '../lib/sync/provider';
-import type { Song } from '../lib/types';
 import SettingsSheet from './SettingsSheet';
 
 interface Props {
-  song: Song;
   onClose: () => void;
+  /** Kutsutaan onnistuneen viennin jälkeen, jotta listan huomautus päivittyy. */
+  onBackedUp: () => void;
 }
 
-export default function CloudSheet({ song, onClose }: Props) {
+export default function CloudSheet({ onClose, onBackedUp }: Props) {
   const t = useT();
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
@@ -24,15 +24,20 @@ export default function CloudSheet({ song, onClose }: Props) {
       return;
     }
     setBusy(true);
-    setStatus(t('cloud.exporting', { provider: provider.label }));
     try {
       if (provider.id === 'dropbox' && !provider.isConnected()) {
+        setStatus(t('cloud.signingIn', { provider: provider.label }));
         await provider.connect(); // uudelleenohjaa pois sovelluksesta
         return;
       }
-      const recordings = await listRecordings(song.id);
-      const result = await provider.uploadSong(song, recordings);
-      setStatus(t('cloud.done', { files: result.files, provider: provider.label }));
+      setStatus(t('cloud.exporting', { provider: provider.label }));
+      const name = backupFileName();
+      await provider.uploadBackup(await exportLibrary(), name);
+      // Pilveen viety paketti on sama palautuva varmuuskopio kuin tiedostoon
+      // tallennettu, joten se nollaa myös muistutuksen.
+      markBackupTaken();
+      onBackedUp();
+      setStatus(t('cloud.done', { file: name, provider: provider.label }));
     } catch (err) {
       setStatus(t('common.error', { message: err instanceof Error ? err.message : String(err) }));
     } finally {
@@ -43,7 +48,7 @@ export default function CloudSheet({ song, onClose }: Props) {
   return (
     <div className="overlay" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('cloud.title', { title: song.title || t('app.untitled') })}</h2>
+        <h2>{t('cloud.title')}</h2>
         <p className="status">{t('cloud.description')}</p>
         <div className="button-row">
           <button disabled={busy} onClick={() => upload(dropboxProvider)}>

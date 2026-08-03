@@ -43,9 +43,11 @@ demoja puhelimella ja vie kaikki pilveen.
   Tiedostoihin tai iCloud Driveen; työpöydällä se latautuu normaalisti. Laululistalla
   näkyy milloin kopio on viimeksi otettu, ja viikon jälkeen huomautus korostuu.
   ”Palauta” lukee tiedoston takaisin.
-- **Pilvivienti** – laulu + nauhoitteet omaan kansioonsa **Dropboxiin** (OAuth PKCE)
-  tai **Google Driveen** (OAuth). Tiedostot menevät kunkin käyttäjän *omaan*
-  pilvitiliin, eivät kehittäjän.
+- **Varmuuskopio pilveen** – sama palautuva paketti **Dropboxiin** (OAuth PKCE) tai
+  **Google Driveen** (OAuth) yhdellä napautuksella laululistalta. Tiedosto on
+  päivätty (`sanoittaja-varmuuskopio-2026-08-03.json`), joten pilveen kertyy
+  historiaa päivä kerrallaan, ja ”Palauta” lukee sen sellaisenaan takaisin.
+  Tiedostot menevät kunkin käyttäjän *omaan* pilvitiliin, eivät kehittäjän.
 - **Live-tila** – esiintymisnäkymä, joka vierittää laulua valitulla nopeudella,
   jolloin kädet pysyvät soittimessa. Tekstikoko ja nopeus säädettävissä, ruudun
   napautus pysäyttää ja jatkaa, ja näyttö pidetään hereillä (Wake Lock). Nopeus ja
@@ -91,16 +93,43 @@ ja PWA-asennus toimivat puhelimessa.
 
 ### Pilvipalveluiden käyttöönotto
 
-Pilvivienti tarvitsee omat (ilmaiset) sovellustunnukset, jotka syötetään äpin
-asetuksissa (⚙︎ / ”Pilviasetukset”):
+Pilveen varmuuskopiointi tarvitsee omat (ilmaiset) sovellustunnukset, jotka
+syötetään äpin asetuksissa (⚙︎ / ”Pilviasetukset”). Varmuuskopiotiedosto
+(”Varmuuskopioi” / ”Palauta”) toimii ilman mitään tunnuksia, joten tämä on
+valinnaista.
 
-- **Dropbox**: luo sovellus osoitteessa <https://www.dropbox.com/developers/apps>
-  (Scoped access → App folder, oikeus `files.content.write`), lisää julkaistun äpin
-  osoite *Redirect URIs* -listaan ja syötä *App key* asetuksiin.
-- **Google Drive**: luo OAuth client id (Web application) Google Cloud Consolessa,
-  ota *Drive API* käyttöön ja lisää äpin osoite sallittuihin JavaScript-lähteisiin.
+#### Dropbox
 
-Varmuuskopiotiedosto (Lataa/Tuo varmuuskopio) toimii ilman mitään tunnuksia.
+1. Kirjaudu <https://www.dropbox.com/developers/apps> ja valitse **Create app**.
+2. **Choose an API**: Scoped access. **Type of access**: **App folder** – tällöin
+   sovellus näkee vain oman kansionsa, ei muuta Dropboxia.
+3. Anna sovellukselle nimi (näkyy käyttäjälle kansion nimenä `Apps/<nimi>/`).
+4. **Permissions**-välilehti: rastita `files.content.write` ja
+   `files.content.read`, ja **paina Submit**. Ilman Submitia oikeudet eivät tallennu
+   ja vienti kaatuu `missing_scope`-virheeseen.
+5. **Settings**-välilehti → **Redirect URIs**: lisää äpin osoite *täsmälleen*
+   sellaisena kuin se on osoiterivillä, päättävä kauttaviiva mukaan lukien:
+   `https://glasscube0987.github.io/sanoittaja/`. Sovellus lähettää
+   `window.location.origin + window.location.pathname`, ja Dropbox vaatii
+   merkintarkan osuman.
+6. Kopioi **App key** ja syötä se äpin pilviasetuksiin.
+
+App key ei ole salaisuus: PKCE-kulussa se on tarkoitettu julkiseksi eikä
+*App secret* -kenttää käytetä lainkaan. Data menee **kunkin käyttäjän omalle**
+Dropbox-tilille kansioon `Apps/<nimi>/`, ei kehittäjän tilille; kehittäjä näkee
+App Consolessa vain liitettyjen tilien lukumäärän. Kehitystilan sovellus sallii
+rajallisen määrän tilejä ennen tuotantostatuksen hakemista.
+
+*iOS-huomio:* kotivalikkoon asennetulla äpillä on eri tallennustila kuin
+Safarilla, joten OAuth-paluu voi päätyä Safariin ja jättää asennetun äpin
+kirjautumatta. Testaa ensin Safarissa ja sen jälkeen asennetussa äpissä.
+
+#### Google Drive
+
+Luo OAuth client id (Web application) Google Cloud Consolessa, ota *Drive API*
+käyttöön ja lisää äpin osoite sallittuihin JavaScript-lähteisiin. Oikeus on
+`drive.file`, joten sovellus näkee vain itse luomansa tiedostot; varmuuskopiot
+menevät kansioon `Sanoittaja`.
 
 ## Arkkitehtuuri
 

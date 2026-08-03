@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { formatDate, useI18n } from '../lib/i18n';
 import type { Song } from '../lib/types';
 import {
+  backupFileName,
   backupIsStale,
   daysSinceBackup,
   downloadBlob,
@@ -10,6 +11,7 @@ import {
   markBackupTaken,
   shareBlob,
 } from '../lib/sync/exportFile';
+import CloudSheet from './CloudSheet';
 import SettingsSheet from './SettingsSheet';
 
 interface Props {
@@ -22,6 +24,7 @@ interface Props {
 export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: Props) {
   const { t, lang } = useI18n();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [cloudOpen, setCloudOpen] = useState(false);
   const [status, setStatus] = useState('');
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -33,7 +36,7 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
     try {
       setStatus(t('list.preparingBackup'));
       const blob = await exportLibrary();
-      const name = `sanoittaja-varmuuskopio-${new Date().toISOString().slice(0, 10)}.json`;
+      const name = backupFileName();
       // Jakovalikko ensin: iPhonella tiedosto menee sieltä suoraan Tiedostoihin
       // tai iCloud Driveen. Työpöydällä pudotaan lataukseen.
       if (!(await shareBlob(blob, name))) downloadBlob(blob, name);
@@ -97,8 +100,11 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
             </div>
           </button>
         ))}
+        {/* Varmuuskopio koskee koko kirjastoa, joten myös pilvivienti kuuluu
+            tänne eikä yksittäisen laulun editoriin. */}
         <div className="button-row">
           <button onClick={handleExport}>{t('list.downloadBackup')}</button>
+          <button onClick={() => setCloudOpen(true)}>{t('list.cloudBackup')}</button>
           <button onClick={() => fileInput.current?.click()}>{t('list.importBackup')}</button>
         </div>
         <div className={backupIsStale() ? 'status backup-note stale' : 'status backup-note'}>
@@ -118,6 +124,9 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
         />
       </main>
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
+      {cloudOpen && (
+        <CloudSheet onClose={() => setCloudOpen(false)} onBackedUp={() => setBackupDays(daysSinceBackup())} />
+      )}
     </>
   );
 }

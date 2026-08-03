@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   BACKUP_REMINDER_DAYS,
+  backupFileName,
   backupIsStale,
   daysSinceBackup,
   lastBackupAt,
@@ -47,6 +48,25 @@ describe('varmuuskopion ikä', () => {
   it('sietää rikkinäisen arvon', () => {
     localStorage.setItem('sanoittaja.lastBackup', 'roska');
     expect(lastBackupAt()).toBeNull();
+  });
+});
+
+describe('backupFileName', () => {
+  it('päivää paikallisen kalenterin mukaan', () => {
+    // Ilta Suomessa on jo eilinen UTC:ssä; nimen pitää seurata käyttäjän päivää.
+    const ilta = new Date(2026, 7, 3, 23, 30);
+    expect(backupFileName(ilta)).toBe('sanoittaja-varmuuskopio-2026-08-03.json');
+  });
+
+  it('nollaa kuukauden ja päivän kaksinumeroisiksi', () => {
+    expect(backupFileName(new Date(2026, 0, 9, 12, 0))).toBe('sanoittaja-varmuuskopio-2026-01-09.json');
+  });
+
+  it('antaa saman nimen samana päivänä, jolloin pilvessä on kopio päivää kohti', () => {
+    const aamu = new Date(2026, 7, 3, 8, 0);
+    const ilta = new Date(2026, 7, 3, 20, 0);
+    expect(backupFileName(aamu)).toBe(backupFileName(ilta));
+    expect(backupFileName(new Date(2026, 7, 4, 8, 0))).not.toBe(backupFileName(aamu));
   });
 });
 

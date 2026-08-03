@@ -3,9 +3,7 @@
  * selain-/mobiilisovellukselle). Käyttäjä syöttää oman Dropbox-sovelluksensa
  * client id:n asetuksissa; token tallennetaan localStorageen.
  */
-import type { Recording, Song } from '../types';
-import type { CloudProvider, UploadResult } from './provider';
-import { recordingExtension, songFileName, songToJson } from './provider';
+import type { CloudProvider } from './provider';
 
 const CLIENT_ID_KEY = 'sanoittaja.dropbox.clientId';
 const TOKEN_KEY = 'sanoittaja.dropbox.token';
@@ -99,16 +97,12 @@ export const dropboxProvider: CloudProvider = {
     localStorage.removeItem(TOKEN_KEY);
   },
 
-  async uploadSong(song: Song, recordings: Recording[]): Promise<UploadResult> {
+  async uploadBackup(blob: Blob, filename: string): Promise<void> {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) throw new Error('Ei Dropbox-kirjautumista');
-    const folder = '/' + songFileName(song);
-    await dropboxUpload(token, `${folder}/laulu.json`, songToJson(song));
-    for (const rec of recordings) {
-      const ext = recordingExtension(rec.mimeType);
-      const safe = rec.name.replace(/[\\/:*?"<>|]/g, '_') || rec.id;
-      await dropboxUpload(token, `${folder}/nauhoitteet/${safe}-${rec.id}.${ext}`, rec.blob);
-    }
-    return { files: 1 + recordings.length };
+    // App folder -oikeudella "/" on kansio Apps/<sovellus>/ käyttäjän omalla
+    // tilillä, ei kehittäjän. Saman päivän kopio ylikirjoittuu, eri päivien
+    // kopiot jäävät talteen.
+    await dropboxUpload(token, `/${filename}`, blob);
   },
 };

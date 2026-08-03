@@ -3,9 +3,7 @@
  * -kirjastolla (ladataan dynaamisesti); käyttäjä syöttää oman OAuth client
  * id:nsä asetuksissa. Tiedostot viedään Driveen kansioon "Sanoittaja".
  */
-import type { Recording, Song } from '../types';
-import type { CloudProvider, UploadResult } from './provider';
-import { recordingExtension, songFileName, songToJson } from './provider';
+import type { CloudProvider } from './provider';
 
 const CLIENT_ID_KEY = 'sanoittaja.gdrive.clientId';
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
@@ -83,17 +81,37 @@ async function findOrCreateFolder(token: string, name: string, parentId?: string
   return created.id;
 }
 
-async function uploadFile(
-  token: string,
-  folderId: string,
-  name: string,
-  mimeType: string,
-  content: Blob | string,
-): Promise<void> {
-  const metadata = { name, parents: [folderId] };
+async function findFile(token: string, folderId: string, name: string): Promise<string | null> {
+  const q = encodeURIComponent(
+    `name='${name.replace(/'/g, "\\'")}' and '${folderId}' in parents and trashed=false`,
+  );
+  const found = await driveFetch(token, `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`, {
+    method: 'GET',
+  });
+  return found.files?.[0]?.id ?? null;
+}
+
+/**
+ * Kirjoittaa tiedoston kansioon: jos samanniminen on jo olemassa, sen sisältö
+ * korvataan. Drive sallii samannimiset tiedostot samassa kansiossa, joten ilman
+ * hakua joka vienti jättäisi uuden kaksoiskappaleen.
+ */
+async function uploadFile(token: string, folderId: string, name: string, content: Blob): Promise<void> {
+  const existing = await findFile(token, folderId, name);
+  if (existing) {
+    await driveFetch(
+      token,
+      `https://www.googleapis.com/upload/drive/v3/files/${existing}?uploadType=media&fields=id`,
+      { method: 'PATCH', headers: { 'Content-Type': content.type || 'application/octet-stream' }, body: content },
+    );
+    return;
+  }
   const form = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-  form.append('file', content instanceof Blob ? content : new Blob([content], { type: mimeType }));
+  form.append(
+    'metadata',
+    new Blob([JSON.stringify({ name, parents: [folderId] })], { type: 'application/json' }),
+  );
+  form.append('file', content);
   await driveFetch(token, 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
     method: 'POST',
     body: form,
@@ -115,16 +133,12 @@ export const gdriveProvider: CloudProvider = {
     accessToken = null;
   },
 
-  async uploadSong(song: Song, recordings: Recording[]): Promise<UploadResult> {
+  async uploadBackup(blob: Blob, filename: string): Promise<void> {
     const token = accessToken ?? (await requestToken());
-    const rootId = await findOrCreateFolder(token, 'Sanoittaja');
-    const songFolderId = await findOrCreateFolder(token, songFileName(song), rootId);
-    await uploadFile(token, songFolderId, 'laulu.json', 'application/json', songToJson(song));
-    for (const rec of recordings) {
-      const ext = recordingExtension(rec.mimeType);
-      const safe = rec.name.replace(/[\\/:*?"<>|]/g, '_') || rec.id;
-      await uploadFile(token, songFolderId, `${safe}-${rec.id}.${ext}`, rec.mimeType, rec.blob);
-    }
-    return { files: 1 + recordings.length };
+    // drive.file-oikeus näkee vain tämän sovelluksen luomat tiedostot, joten
+    // kansio ja kopiot ovat käyttäjän omassa Drivessa mutta muu sisältö pysyy
+    // sovelluksen ulottumattomissa.
+    const folderId = await findOrCreateFolder(token, 'Sanoittaja');
+    await uploadFile(token, folderId, filename, blob);
   },
 };

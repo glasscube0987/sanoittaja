@@ -58,6 +58,17 @@ export async function importLibrary(file: Blob): Promise<{ songs: number; record
   return { songs: bundle.songs.length, recordings: bundle.recordings.length };
 }
 
+/**
+ * Varmuuskopion tiedostonimi. Päiväys on paikallinen eikä UTC, jotta illalla
+ * otettu kopio ei näytä eiliseltä. Sama nimi käy tiedostoon ja pilveen, jolloin
+ * pilveen kertyy päiväkohtainen historia yhden ylikirjoittuvan tiedoston sijaan.
+ */
+export function backupFileName(at: number | Date = Date.now()): string {
+  const d = at instanceof Date ? at : new Date(at);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `sanoittaja-varmuuskopio-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
+}
+
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

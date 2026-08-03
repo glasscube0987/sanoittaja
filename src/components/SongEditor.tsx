@@ -18,7 +18,6 @@ import {
 import { useI18n } from '../lib/i18n';
 import { getSections, sectionTitle } from '../lib/sections';
 import ChordSheet from './ChordSheet';
-import CloudSheet from './CloudSheet';
 import LineEditor from './LineEditor';
 import LiveView from './LiveView';
 import BarSheet from './BarSheet';
@@ -46,7 +45,6 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
   const [chordTarget, setChordTarget] = useState<ChordTarget | null>(null);
   const [lineTargetId, setLineTargetId] = useState<string | null>(null);
   const [barsTargetId, setBarsTargetId] = useState<string | null>(null);
-  const [cloudOpen, setCloudOpen] = useState(false);
   const [liveOpen, setLiveOpen] = useState(false);
   const focusLineId = useRef<{ id: string; caret: number } | null>(null);
 
@@ -100,9 +98,6 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
             avatessa ilman että näkymää tarvitsee rullata alas. */}
         <button className="live-open" onClick={() => setLiveOpen(true)}>
           {t('editor.live')}
-        </button>
-        <button className="ghost" onClick={() => setCloudOpen(true)} aria-label={t('editor.cloud')}>
-          ☁︎
         </button>
       </header>
       <main className="screen">
@@ -249,7 +244,6 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
           onClose={() => setBarsTargetId(null)}
         />
       )}
-      {cloudOpen && <CloudSheet song={song} onClose={() => setCloudOpen(false)} />}
       {liveOpen && <LiveView song={song} onClose={() => setLiveOpen(false)} />}
     </>
   );

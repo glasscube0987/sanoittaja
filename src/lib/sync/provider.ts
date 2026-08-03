@@ -1,16 +1,13 @@
 /**
  * Pilvipalveluiden yhteinen rajapinta. Toteutukset: Dropbox ja Google Drive.
  *
- * Synkronointimalli on yksinkertainen ja luotettava: jokainen laulu viedään
- * pilveen omana JSON-tiedostonaan ja nauhoitteet ääni­tiedostoina laulun
- * alikansioon. Sovellus toimii aina offline; pilveen viedään käyttäjän
- * pyynnöstä ("Vie pilveen") kaikki paikallinen sisältö.
+ * Pilveen viedään sama koko kirjaston paketti kuin varmuuskopiotiedostoon
+ * (`exportLibrary`), jolloin se on palautettavissa `importLibrary`llä. Aiempi
+ * laulukohtainen JSON ei kelvannut tuontiin lainkaan, joten pilvivienti ei
+ * ollut varmuuskopio vaan umpikuja.
+ *
+ * Sovellus toimii aina offline; pilvi on vain kopio pois laitteelta.
  */
-import type { Recording, Song } from '../types';
-
-export interface UploadResult {
-  files: number;
-}
 
 export interface CloudProvider {
   readonly id: 'dropbox' | 'gdrive';
@@ -22,22 +19,6 @@ export interface CloudProvider {
   /** Käynnistää OAuth-kirjautumisen (uudelleenohjaus tai ponnahdus). */
   connect(): Promise<void>;
   disconnect(): void;
-  /** Vie laulun ja sen nauhoitteet pilveen. */
-  uploadSong(song: Song, recordings: Recording[]): Promise<UploadResult>;
-}
-
-export function songFileName(song: Song): string {
-  const safe = song.title.replace(/[\\/:*?"<>|]/g, '_').trim() || 'nimeton';
-  return `${safe}-${song.id}`;
-}
-
-export function songToJson(song: Song): string {
-  return JSON.stringify(song, null, 2);
-}
-
-export function recordingExtension(mimeType: string): string {
-  if (mimeType.includes('mp4')) return 'm4a';
-  if (mimeType.includes('ogg')) return 'ogg';
-  if (mimeType.includes('mpeg')) return 'mp3';
-  return 'webm';
+  /** Vie koko kirjaston varmuuskopion pilveen annetulla nimellä. */
+  uploadBackup(blob: Blob, filename: string): Promise<void>;
 }
