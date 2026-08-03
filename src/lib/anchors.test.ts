@@ -1,4 +1,30 @@
 import { describe, expect, it } from 'vitest';
+import { chordSpan, columnGuide, MIN_CHORD_SPAN } from './anchors';
+
+describe('chordSpan', () => {
+  it('antaa sanattomallekin riville sarakkeita', () => {
+    // Tekstin pituuteen rajaaminen salli tyhjällä rivillä vain paikan 0 eli
+    // yhden soinnun – välisoittoja ei voinut kirjoittaa lainkaan.
+    expect(chordSpan('')).toBe(MIN_CHORD_SPAN);
+    expect(chordSpan('')).toBeGreaterThan(1);
+  });
+
+  it('jättää varaa tekstin loppuun', () => {
+    expect(chordSpan('kuu valaisee yön')).toBeGreaterThan('kuu valaisee yön'.length);
+  });
+
+  it('kasvaa pitkän rivin mukana', () => {
+    const pitka = 'x'.repeat(120);
+    expect(chordSpan(pitka)).toBe(128);
+  });
+});
+
+describe('columnGuide', () => {
+  it('merkitsee joka neljännen sarakkeen ja säilyttää leveyden', () => {
+    expect(columnGuide(9)).toBe('·   ·   ·');
+    expect(columnGuide(32)).toHaveLength(32);
+  });
+});
 import { adjustPositions } from './anchors';
 
 describe('adjustPositions', () => {

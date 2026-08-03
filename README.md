@@ -11,6 +11,9 @@ demoja puhelimella ja vie kaikki pilveen.
 - **Sointumerkit** – napauta sointuriviä minkä tahansa merkin yläpuolelta lisätäksesi
   soinnun juuri siihen kohtaan. Soinnut on ankkuroitu merkkipositioihin ja ne
   **siirtyvät automaattisesti tekstin mukana**, kun sanoja muokataan.
+- **Välisoitot** – sanattomalle riville voi merkitä useita sointuja, joten introt,
+  soolot ja väliosat mahtuvat mukaan. Tyhjällä rivillä näkyy himmeä sarakeruudukko,
+  ja sointuja voi asettaa myös viimeisen sanan jälkeen kierrosointua varten.
 - **Soinnun hienosäätö** – sointua lisätessä tai jo asetettua napauttaessa sen paikkaa
   voi siirtää merkki kerrallaan ◀ ▶ -painikkeilla tai nuolinäppäimillä. Esikatselu
   näyttää soinnun sanoituksen yllä, joten kohdan näkee ennen tallennusta.

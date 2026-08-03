@@ -1,5 +1,5 @@
 /** Laulun muokkausoperaatiot – puhtaita funktioita, jotka palauttavat uuden laulun. */
-import { adjustPositions } from './anchors';
+import { adjustPositions, chordSpan } from './anchors';
 import type { Accidental } from './chords';
 import { respellChord, transposeChord } from './chords';
 import { getSections } from './sections';
@@ -113,7 +113,7 @@ export function placeChord(
     ...song,
     lines: song.lines.map((line) => {
       if (line.id !== lineId) return line;
-      const pos = Math.max(0, Math.min(line.text.length, toPos));
+      const pos = Math.max(0, Math.min(chordSpan(line.text), toPos));
       const others = line.chords.filter((c) => c.pos !== fromPos && c.pos !== pos);
       const trimmed = symbol.trim();
       if (!trimmed) return { ...line, chords: sortChords(others) };

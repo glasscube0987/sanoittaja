@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { chordSpan, columnGuide } from '../lib/anchors';
 import { useT } from '../lib/i18n';
 import type { LyricLine } from '../lib/types';
 
@@ -43,7 +44,8 @@ export default function LineEditor({
 
   function handleChordRowTap(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
-    const pos = Math.max(0, Math.min(line.text.length, Math.round((e.clientX - rect.left - 2) / charWidth())));
+    const span = chordSpan(line.text);
+    const pos = Math.max(0, Math.min(span, Math.round((e.clientX - rect.left - 2) / charWidth())));
     const existing = line.chords.find((c) => c.pos === pos);
     onChordTap(pos, existing?.symbol ?? '');
   }
@@ -74,7 +76,7 @@ export default function LineEditor({
           className="chord-row"
           onClick={handleChordRowTap}
           title={t('line.addChordHere')}
-          style={{ width: `calc(${Math.max(line.text.length, 8)}ch + 8px)` }}
+          style={{ width: `calc(${chordSpan(line.text)}ch + 8px)` }}
         >
           <span
             ref={measureRef}
@@ -83,6 +85,12 @@ export default function LineEditor({
           >
             0000000000
           </span>
+          {/* Sanattomalla rivillä sarakkeet näkyviin, jottei sointuja tarvitse arvata. */}
+          {line.text.length === 0 && (
+            <span className="hint" aria-hidden>
+              {columnGuide(chordSpan(line.text))}
+            </span>
+          )}
           {line.chords.map((chord) => (
             <button
               key={chord.id}

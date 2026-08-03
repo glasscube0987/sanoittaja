@@ -47,18 +47,18 @@ test('sointua siirretään nuolinäppäimillä ja esikatselu seuraa mukana', asy
   await page.locator('.line').first().locator('.chord', { hasText: 'F' }).click();
 
   const info = page.locator('.nudge-info');
-  await expect(info).toContainText('column 4/16');
+  await expect(info).toContainText('column 4/32');
 
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
-  await expect(info).toContainText('column 6/16');
+  await expect(info).toContainText('column 6/32');
   // textContent suoraan, koska toHaveText normalisoi välit – ja juuri välien
   // määrä kertoo tässä soinnun sijainnin.
   const merkkirivi = await page.locator('.sheet .context .mark').evaluate((el) => el.textContent);
   expect(merkkirivi).toBe('      F');
 
   await page.keyboard.press('ArrowLeft');
-  await expect(info).toContainText('column 5/16');
+  await expect(info).toContainText('column 5/32');
 });
 
 test('siirto pysähtyy rivin alkuun ja loppuun', async ({ page }) => {
@@ -66,10 +66,10 @@ test('siirto pysähtyy rivin alkuun ja loppuun', async ({ page }) => {
   await page.locator('.line').first().locator('.chord', { hasText: 'F' }).click();
 
   for (let i = 0; i < 10; i++) await page.keyboard.press('ArrowLeft');
-  await expect(page.locator('.nudge-info')).toContainText('column 0/16');
+  await expect(page.locator('.nudge-info')).toContainText('column 0/32');
 
-  for (let i = 0; i < 25; i++) await page.keyboard.press('ArrowRight');
-  await expect(page.locator('.nudge-info')).toContainText('column 16/16');
+  for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.nudge-info')).toContainText('column 32/32');
 });
 
 test('siirretty sointu tallentuu uuteen kohtaan ilman kaksoiskappaletta', async ({ page }) => {

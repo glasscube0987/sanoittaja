@@ -1,3 +1,28 @@
+/** Sarakkeita vähintään, myös täysin tyhjällä rivillä. */
+export const MIN_CHORD_SPAN = 32;
+
+/** Sarakkeita tekstin loppumisen jälkeen, kierrossointua varten. */
+const SLACK = 8;
+
+/**
+ * Monelleko sarakkeelle rivillä voi asettaa sointuja.
+ *
+ * Sointuja ei rajata tekstin pituuteen: sanaton rivi (välisoitto, intro) on
+ * tyhjä, jolloin rajaus sallisi vain yhden soinnun paikkaan 0. Tekstin loppuun
+ * jätetty vara sallii myös kierrosoinnun viimeisen sanan jälkeen.
+ */
+export function chordSpan(text: string): number {
+  return Math.max(text.length + SLACK, MIN_CHORD_SPAN);
+}
+
+/**
+ * Himmeä sarakeruudukko sanattomalle riville: piste joka neljännen merkin
+ * kohdalla, jotta napautuskohdan näkee kun tekstiä ei ole ohjaamassa silmää.
+ */
+export function columnGuide(span: number): string {
+  return Array.from({ length: span }, (_, i) => (i % 4 === 0 ? '·' : ' ')).join('');
+}
+
 /**
  * Sointuankkurien siirto, kun rivin tekstiä muokataan.
  *

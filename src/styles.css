@@ -300,14 +300,14 @@ textarea:focus {
 
 .chord-row .hint {
   position: absolute;
-  inset: 0;
+  /* 2px vastaa soinnun omaa siirtymää, jotta pisteet osuvat samoille sarakkeille. */
+  inset: 0 0 0 2px;
   color: var(--border);
-  font-size: 11px;
+  font-size: inherit;
   line-height: 24px;
-  overflow: hidden;
-  white-space: nowrap;
+  white-space: pre;
   user-select: none;
-  letter-spacing: 0;
+  pointer-events: none;
 }
 
 .line input.text {
@@ -398,6 +398,10 @@ textarea:focus {
 .sheet .context .mark {
   color: var(--accent);
   font-weight: 700;
+}
+
+.sheet .context .guide {
+  color: var(--border);
 }
 
 .nudge-row {

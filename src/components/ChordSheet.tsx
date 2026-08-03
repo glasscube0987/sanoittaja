@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { chordSpan, columnGuide } from '../lib/anchors';
 import { useT } from '../lib/i18n';
 import type { LyricLine } from '../lib/types';
 import type { ChordTarget } from './SongEditor';
@@ -18,6 +19,7 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
   const [symbol, setSymbol] = useState(target.symbol);
   const [pos, setPos] = useState(target.pos);
   const chips = suggestions.length > 0 ? suggestions : DEFAULT_SUGGESTIONS;
+  const span = chordSpan(line.text);
   const contextRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLSpanElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -52,7 +54,7 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
   }, [pos, symbol]);
 
   function nudge(step: number) {
-    setPos((p) => Math.max(0, Math.min(line.text.length, p + step)));
+    setPos((p) => Math.max(0, Math.min(span, p + step)));
   }
 
   /*
@@ -86,7 +88,8 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
             {' '.repeat(pos)}
             <span ref={markRef}>{symbol.trim() || '▼'}</span>
           </div>
-          <div className="lyric">{line.text || ' '}</div>
+          {/* Sanattomalla rivillä sarakeruudukko näyttää mihin sointu asettuu. */}
+          <div className={line.text ? 'lyric' : 'lyric guide'}>{line.text || columnGuide(span)}</div>
         </div>
 
         <div className="nudge-row">
@@ -94,7 +97,7 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
             ◀
           </button>
           <span className="nudge-info">
-            {t('chord.position', { pos, max: line.text.length })}
+            {t('chord.position', { pos, max: span })}
             <small>{t('chord.arrowHint')}</small>
           </span>
           <button type="button" onClick={() => nudge(1)} aria-label={t('chord.moveRight')}>

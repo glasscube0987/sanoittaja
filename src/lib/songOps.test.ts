@@ -91,13 +91,39 @@ describe('placeChord', () => {
     ]);
   });
 
-  it('rajaa kohdan rivin pituuteen', () => {
+  it('rajaa kohdan rivin sointualueeseen', () => {
+    // 'kuu valaisee yön' on 16 merkkiä, joten 16 + 8 jää alle 32:n vähimmäisleveyden.
     const song = placeChord(makeSong(), 'l1', 0, 999, 'Am');
-    expect(song.lines[0].chords.find((c) => c.symbol === 'Am')?.pos).toBe(16);
+    expect(song.lines[0].chords.find((c) => c.symbol === 'Am')?.pos).toBe(32);
     expect(placeChord(makeSong(), 'l1', 4, -5, 'F').lines[0].chords[0]).toMatchObject({
       pos: 0,
       symbol: 'F',
     });
+  });
+
+  it('sallii soinnun tekstin loppumisen jälkeen', () => {
+    // Kierrosointu viimeisen sanan jälkeen: ennen tämä napsahti rivin loppuun.
+    const song = placeChord(makeSong(), 'l1', 4, 20, 'G');
+    expect(song.lines[0].chords.find((c) => c.symbol === 'G')?.pos).toBe(20);
+  });
+
+  it('sallii useita sointuja sanattomalla rivillä', () => {
+    let song = makeSong();
+    song = { ...song, lines: [{ id: 'v1', text: '', chords: [] }, ...song.lines] };
+    for (const [pos, symbol] of [
+      [0, 'Am'],
+      [8, 'F'],
+      [16, 'C'],
+      [24, 'G'],
+    ] as const) {
+      song = placeChord(song, 'v1', pos, pos, symbol);
+    }
+    expect(song.lines[0].chords.map((c) => [c.pos, c.symbol])).toEqual([
+      [0, 'Am'],
+      [8, 'F'],
+      [16, 'C'],
+      [24, 'G'],
+    ]);
   });
 
   it('poistaa soinnun tyhjällä symbolilla myös siirrettäessä', () => {
