@@ -7,10 +7,12 @@ import {
   mergeLineWithPrevious,
   moveSection,
   placeChord,
+  resetTranspose,
   respellSong,
   setLineBars,
   setLineSection,
   splitLine,
+  transposeOffset,
   transposeSong,
 } from '../lib/songOps';
 import { useI18n } from '../lib/i18n';
@@ -48,6 +50,8 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
   const [liveOpen, setLiveOpen] = useState(false);
   const focusLineId = useRef<{ id: string; caret: number } | null>(null);
 
+  const offset = transposeOffset(song);
+  const offsetLabel = offset > 0 ? `+${offset}` : String(offset);
   const sections = useMemo(() => getSections(song), [song]);
   const lineTarget = song.lines.find((l) => l.id === lineTargetId) ?? null;
   const barsTarget = song.lines.find((l) => l.id === barsTargetId) ?? null;
@@ -130,6 +134,18 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
           <button onClick={() => onChange(respellSong(song, 'sharp'))} title={t('editor.useSharps')}>
             ♯
           </button>
+          {/* Siirtymä ja paluu näkyvät vain kun laulu ei ole alkuperäisessä
+              sävellajissaan – muuten ne olisivat pelkkää kohinaa. */}
+          {offset !== 0 && (
+            <button
+              className="reset-key"
+              onClick={() => onChange(resetTranspose(song))}
+              title={t('editor.resetKey')}
+              aria-label={t('editor.transposedBy', { offset: offsetLabel })}
+            >
+              {offsetLabel} ↺
+            </button>
+          )}
         </div>
 
         <div className="lyrics">

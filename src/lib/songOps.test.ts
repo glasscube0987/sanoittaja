@@ -3,8 +3,11 @@ import {
   editLineText,
   mergeLineWithPrevious,
   placeChord,
+  resetTranspose,
+  respellSong,
   setChord,
   splitLine,
+  transposeOffset,
   transposeSong,
 } from './songOps';
 import type { Song } from './types';
@@ -138,6 +141,32 @@ describe('transposeSong', () => {
     expect(song.songKey).toBe('Bm');
     expect(song.lines[0].chords.map((c) => c.symbol)).toEqual(['Bm', 'G', 'F#7']);
     expect(song.lines[1].chords[0].symbol).toBe('D');
+  });
+
+  it('kerryttää siirtymän ja palautus vie takaisin alkuperäiseen', () => {
+    const alku = makeSong();
+    let song = transposeSong(alku, 2);
+    song = transposeSong(song, 3);
+    expect(transposeOffset(song)).toBe(5);
+    expect(song.songKey).toBe('Dm');
+
+    const palautettu = resetTranspose(song);
+    expect(transposeOffset(palautettu)).toBe(0);
+    expect(palautettu.songKey).toBe('Am');
+    expect(palautettu.lines[0].chords.map((c) => c.symbol)).toEqual(['Am', 'F', 'E7']);
+  });
+
+  it('palautus tuo oikeat sävelet vaikka kirjoitusasu vaihtuisi', () => {
+    // Transponointi ei muista enharmonista valintaa: Bb voi palata muodossa A#.
+    const bb: Song = { ...makeSong(), songKey: 'Bb', lines: [{ id: 'l1', text: 'x', chords: [{ id: 'c', pos: 0, symbol: 'Bb' }] }] };
+    const palautettu = resetTranspose(transposeSong(bb, 1));
+    expect(transposeOffset(palautettu)).toBe(0);
+    expect(['Bb', 'A#']).toContain(palautettu.lines[0].chords[0].symbol);
+  });
+
+  it('kirjoitusasun vaihto ei muuta siirtymää', () => {
+    const song = respellSong(transposeSong(makeSong(), 2), 'flat');
+    expect(transposeOffset(song)).toBe(2);
   });
 
   it('transponoi myös sointurivit', () => {

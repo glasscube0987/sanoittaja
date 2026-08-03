@@ -35,6 +35,12 @@ export interface Song {
   title: string;
   /** Vapaamuotoinen sävellajimerkintä, esim. "Em". */
   songKey: string;
+  /**
+   * Nettosiirtymä puolisävelaskelina alkuperäisestä sävellajista. Soinnut
+   * tallennetaan transponoituina, joten tämä on ainoa muisto siitä mistä
+   * lähdettiin – sen avulla laulun voi palauttaa alkuperäiseen sävellajiin.
+   */
+  transpose?: number;
   lines: LyricLine[];
   createdAt: number;
   updatedAt: number;

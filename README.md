@@ -31,7 +31,10 @@ demoja puhelimella ja vie kaikki pilveen.
   automaattisesti** (Säkeistö 1, Säkeistö 2), ja kokonaisen osion voi siirtää
   riveineen ylös tai alas otsikon ▲ ▼ -painikkeilla.
 - **Transponointi** – koko laulu puolisävelaskelin ylös/alas, sekä ♯/♭-kirjoitusasun
-  vaihto. Tukee mm. laatuja (`m7`, `sus4`, `dim`…) ja bassosäveliä (`C/G`).
+  vaihto. Tukee mm. laatuja (`m7`, `sus4`, `dim`…) ja bassosäveliä (`C/G`). Siirtymä
+  alkuperäisestä näkyy palkissa (esim. `+2 ↺`), ja siitä pääsee yhdellä napautuksella
+  takaisin alkuperäiseen sävellajiin. *Sävelet palaavat oikeiksi, mutta enharmoninen
+  kirjoitusasu voi vaihtua (`Bb` → `A#`); ♭/♯ korjaa asun.*
 - **Nauhoitteet** – jokaiseen lauluun voi tallentaa ääniluonnoksia suoraan puhelimen
   mikrofonilla (MediaRecorder). Nauhoitteet tallentuvat laitteelle (IndexedDB) ja
   kulkevat laulun mukana pilveen.

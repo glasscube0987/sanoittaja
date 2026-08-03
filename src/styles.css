@@ -208,10 +208,22 @@ textarea:focus {
   align-items: center;
 }
 
+.transpose-bar {
+  flex-wrap: wrap;
+}
+
 .transpose-bar .label {
   color: var(--text-dim);
   font-size: 14px;
   flex: 1;
+}
+
+.transpose-bar .reset-key {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .lyrics {

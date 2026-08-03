@@ -198,10 +198,26 @@ export function moveSection(song: Song, blockId: string, direction: -1 | 1): Son
   });
 }
 
-/** Transponoi laulun kaikki soinnut pysyvästi. */
+/** Kuinka monta puolisävelaskelta laulu on alkuperäisestä sävellajistaan. */
+export function transposeOffset(song: Song): number {
+  return song.transpose ?? 0;
+}
+
+/**
+ * Palauttaa laulun alkuperäiseen sävellajiinsa.
+ *
+ * Sävelet palaavat oikeiksi, mutta enharmonista kirjoitusasua ei muisteta:
+ * `Bb` voi palata muodossa `A#`. ♭/♯-painikkeet korjaavat asun.
+ */
+export function resetTranspose(song: Song): Song {
+  return transposeSong(song, -transposeOffset(song));
+}
+
+/** Transponoi laulun kaikki soinnut pysyvästi ja kirjaa siirtymän. */
 export function transposeSong(song: Song, semitones: number, prefer?: Accidental): Song {
   return touch({
     ...song,
+    transpose: transposeOffset(song) + semitones,
     songKey: song.songKey ? transposeChord(song.songKey, semitones, prefer) : song.songKey,
     lines: song.lines.map((line) => ({
       ...line,
