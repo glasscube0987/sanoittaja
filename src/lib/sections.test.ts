@@ -96,10 +96,12 @@ describe('setLineSection', () => {
 });
 
 describe('setLineBars', () => {
-  it('muuttaa rivin sointuriviksi ja tyhjentää sanat', () => {
+  it('muuttaa rivin sointuriviksi sanoja hävittämättä', () => {
+    // Sanat säilyvät piilossa: muunnos on yhden napautuksen päässä, eikä sen
+    // saa hävittää sanoituksia peruuttamattomasti.
     const lahto = makeSong([line('a', 'sanoja', { kind: 'solo' })]);
     const song = setLineBars(lahto, 'a', ['Am', 'F']);
-    expect(song.lines[0]).toMatchObject({ text: '', chords: [], bars: ['Am', 'F'] });
+    expect(song.lines[0]).toMatchObject({ text: 'sanoja', bars: ['Am', 'F'] });
   });
 
   it('säilyttää osiomerkinnän, jotta välisoiton voi siirtää osiona', () => {

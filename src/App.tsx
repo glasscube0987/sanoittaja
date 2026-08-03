@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SongEditor from './components/SongEditor';
 import SongList from './components/SongList';
 import { deleteSong as dbDeleteSong, listSongs, saveSong } from './lib/db';
+import type { HistoryEntry } from './lib/history';
+import { pushHistory } from './lib/history';
 import type { Key, Lang, Params } from './lib/i18n';
 import { LangContext, loadLang, storeLang, translate } from './lib/i18n';
 import type { Song } from './lib/types';
@@ -13,6 +15,8 @@ export default function App() {
   const [songs, setSongs] = useState<Song[] | null>(null);
   const [view, setView] = useState<View>({ name: 'list' });
   const [lang, setLangState] = useState<Lang>(loadLang);
+  // Peruutuspino koskee vain auki olevaa laulua, joten yksi pino riittää.
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const saveTimers = useRef(new Map<string, number>());
 
   const i18n = useMemo(
@@ -35,8 +39,13 @@ export default function App() {
     listSongs().then(setSongs);
   }, []);
 
-  const updateSong = useCallback((song: Song) => {
-    setSongs((prev) => (prev ? prev.map((s) => (s.id === song.id ? song : s)) : prev));
+  // Peruutus koskee aina yhtä laulua kerrallaan, joten pino tyhjenee kun toinen avataan.
+  const editingId = view.name === 'editor' ? view.songId : null;
+  useEffect(() => {
+    setHistory([]);
+  }, [editingId]);
+
+  const scheduleSave = useCallback((song: Song) => {
     const timers = saveTimers.current;
     const existing = timers.get(song.id);
     if (existing) window.clearTimeout(existing);
@@ -48,6 +57,15 @@ export default function App() {
       }, 400),
     );
   }, []);
+
+  const updateSong = useCallback(
+    (song: Song, before?: Song) => {
+      if (before) setHistory((stack) => pushHistory(stack, before, song));
+      setSongs((prev) => (prev ? prev.map((s) => (s.id === song.id ? song : s)) : prev));
+      scheduleSave(song);
+    },
+    [scheduleSave],
+  );
 
   const createSong = useCallback(() => {
     const song = newSong();
@@ -70,12 +88,30 @@ export default function App() {
 
   const editing = view.name === 'editor' ? songs.find((s) => s.id === view.songId) : undefined;
 
+  function undo() {
+    const entry = history[history.length - 1];
+    if (!entry) return;
+    const restored = { ...entry.song, updatedAt: Date.now() };
+    // Odottava tallennus pitää sisällään peruutetun tilan; ilman perumista se
+    // kirjoittaisi sen takaisin kantaan hetkeä myöhemmin.
+    const pending = saveTimers.current.get(restored.id);
+    if (pending) {
+      window.clearTimeout(pending);
+      saveTimers.current.delete(restored.id);
+    }
+    setHistory((stack) => stack.slice(0, -1));
+    setSongs((prev) => (prev ? prev.map((s) => (s.id === restored.id ? restored : s)) : prev));
+    saveSong(restored).catch((err) => console.error('Tallennus epäonnistui', err));
+  }
+
   return (
     <LangContext.Provider value={i18n}>
       {editing ? (
         <SongEditor
           song={editing}
-          onChange={updateSong}
+          onChange={(next) => updateSong(next, editing)}
+          onUndo={undo}
+          canUndo={history.length > 0}
           onBack={() => setView({ name: 'list' })}
           onDelete={() => deleteSong(editing.id)}
         />

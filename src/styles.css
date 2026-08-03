@@ -119,6 +119,15 @@ textarea:focus {
   white-space: nowrap;
 }
 
+.topbar .ghost {
+  padding: 6px 10px;
+  min-height: 40px;
+}
+
+.topbar .ghost:disabled {
+  opacity: 0.3;
+}
+
 /* Kapea mutta korostettu, jottei se vie tilaa laulun nimeltä yläpalkissa. */
 .topbar .live-open {
   flex: 0 0 auto;

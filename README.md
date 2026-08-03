@@ -8,6 +8,10 @@ demoja puhelimella ja vie kaikki pilveen.
 
 - **Sanoituseditori** – rivipohjainen editori; Enter jakaa rivin, askelpalautin rivin
   alussa yhdistää edelliseen.
+- **Peruutus** – yläpalkin ↶ kumoaa viimeisimmän muutoksen. Kirjoittaminen peruuntuu
+  rupeama kerrallaan, ei kirjain kerrallaan, ja rakenteelliset muutokset omina
+  askelinaan. Rivin muuttaminen sointuriviksi ei myöskään hävitä sanoja: ne palaavat
+  kun rivi muutetaan takaisin.
 - **Sointumerkit** – napauta sanoitusrivin yläpuolelta minkä tahansa merkin kohdalta
   lisätäksesi soinnun juuri siihen kohtaan. Soinnut on ankkuroitu merkkipositioihin ja
   ne **siirtyvät automaattisesti tekstin mukana**, kun sanoja muokataan.
@@ -99,6 +103,7 @@ src/
     types.ts        Tietomalli: Song, LyricLine, ChordAnchor, SectionMark, Recording
     chords.ts       Sointusymbolien jäsennys ja transponointi
     anchors.ts      Sointuankkurien siirto tekstimuutoksissa
+    history.ts      Peruutuspino ja kirjoitusmuutosten yhdistäminen
     i18n.ts         Käännökset (en/fi), kielen tunnistus ja React-konteksti
     live.ts         Live-tilan vieritysaskel ja asetukset
     render.ts       Sointumerkkien ja sointurivien ladonta tekstiksi (tulostus, live)

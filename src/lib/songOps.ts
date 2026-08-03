@@ -138,8 +138,10 @@ export const DEFAULT_BARS = ['', '', '', ''];
 /**
  * Muuttaa rivin sointuriviksi tai (null) takaisin sanoitusriviksi.
  *
- * Sointurivillä ei ole sanoja eikä ankkuroituja sointuja, joten muunnos
- * tyhjentää molemmat. Osiomerkintä säilyy, jotta välisoiton voi merkitä
+ * Sanat ja ankkuroidut soinnut säilytetään muunnoksessa vaikka niitä ei
+ * sointurivillä piirretä: muunnos on yhden napautuksen päässä, ja tyhjentäminen
+ * hävittäisi sanoitukset peruuttamattomasti. Takaisin muunnettaessa ne palaavat
+ * sellaisinaan. Osiomerkintä säilyy niin ikään, jotta välisoiton voi merkitä
  * osioksi ja siirtää muiden osioiden mukana.
  */
 export function setLineBars(song: Song, lineId: string, bars: string[] | null): Song {
@@ -147,7 +149,7 @@ export function setLineBars(song: Song, lineId: string, bars: string[] | null): 
     ...song,
     lines: song.lines.map((line) => {
       if (line.id !== lineId) return line;
-      if (bars) return { ...line, text: '', chords: [], bars };
+      if (bars) return { ...line, bars };
       const next = { ...line };
       delete next.bars;
       return next;

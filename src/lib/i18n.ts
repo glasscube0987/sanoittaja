@@ -36,8 +36,9 @@ const en = {
   'list.importing': 'Importing…',
   'list.imported': 'Imported {songs} songs and {recordings} recordings.',
 
-  'editor.back': '‹ Songs',
-  'editor.backLabel': 'Back',
+  'editor.back': '‹',
+  'editor.backLabel': 'Songs',
+  'editor.undo': 'Undo',
   'editor.cloud': 'Cloud',
   'editor.titlePlaceholder': 'Song title',
   'editor.keyPlaceholder': 'Key',
@@ -156,8 +157,9 @@ const fi: Record<Key, string> = {
   'list.importing': 'Tuodaan…',
   'list.imported': 'Tuotu {songs} laulua ja {recordings} nauhoitetta.',
 
-  'editor.back': '‹ Laulut',
-  'editor.backLabel': 'Takaisin',
+  'editor.back': '‹',
+  'editor.backLabel': 'Laulut',
+  'editor.undo': 'Kumoa',
   'editor.cloud': 'Pilvi',
   'editor.titlePlaceholder': 'Laulun nimi',
   'editor.keyPlaceholder': 'Sävel.',

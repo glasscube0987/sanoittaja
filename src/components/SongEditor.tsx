@@ -27,6 +27,8 @@ import SongSheet from './SongSheet';
 interface Props {
   song: Song;
   onChange: (song: Song) => void;
+  onUndo: () => void;
+  canUndo: boolean;
   onBack: () => void;
   onDelete: () => void;
 }
@@ -37,7 +39,7 @@ export interface ChordTarget {
   symbol: string;
 }
 
-export default function SongEditor({ song, onChange, onBack, onDelete }: Props) {
+export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, onDelete }: Props) {
   const { t } = useI18n();
   const [chordTarget, setChordTarget] = useState<ChordTarget | null>(null);
   const [lineTargetId, setLineTargetId] = useState<string | null>(null);
@@ -86,6 +88,10 @@ export default function SongEditor({ song, onChange, onBack, onDelete }: Props) 
           {t('editor.back')}
         </button>
         <h1>{song.title || t('app.untitled')}</h1>
+        {/* Peruutus on turhaa jos sen luo pitää rullata: vahinko huomataan heti. */}
+        <button className="ghost" onClick={onUndo} disabled={!canUndo} aria-label={t('editor.undo')}>
+          ↶
+        </button>
         {/* Yläpalkki on sticky, joten live-tila on käytettävissä heti biisin
             avatessa ilman että näkymää tarvitsee rullata alas. */}
         <button className="live-open" onClick={() => setLiveOpen(true)}>
