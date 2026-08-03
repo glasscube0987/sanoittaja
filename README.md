@@ -38,10 +38,14 @@ demoja puhelimella ja vie kaikki pilveen.
 - **Nauhoitteet** – jokaiseen lauluun voi tallentaa ääniluonnoksia suoraan puhelimen
   mikrofonilla (MediaRecorder). Nauhoitteet tallentuvat laitteelle (IndexedDB) ja
   kulkevat laulun mukana pilveen.
+- **Varmuuskopio** – koko kirjasto yhtenä JSON-tiedostona ilman mitään tunnuksia.
+  Puhelimessa ”Varmuuskopioi” avaa jakovalikon, josta tiedoston tallentaa suoraan
+  Tiedostoihin tai iCloud Driveen; työpöydällä se latautuu normaalisti. Laululistalla
+  näkyy milloin kopio on viimeksi otettu, ja viikon jälkeen huomautus korostuu.
+  ”Palauta” lukee tiedoston takaisin.
 - **Pilvivienti** – laulu + nauhoitteet omaan kansioonsa **Dropboxiin** (OAuth PKCE)
-  tai **Google Driveen** (OAuth). Lisäksi koko kirjaston **varmuuskopio yhtenä
-  JSON-tiedostona** ilman mitään pilvitunnuksia – tiedoston voi jakaa puhelimen
-  jakovalikosta mihin tahansa palveluun.
+  tai **Google Driveen** (OAuth). Tiedostot menevät kunkin käyttäjän *omaan*
+  pilvitiliin, eivät kehittäjän.
 - **Live-tila** – esiintymisnäkymä, joka vierittää laulua valitulla nopeudella,
   jolloin kädet pysyvät soittimessa. Tekstikoko ja nopeus säädettävissä, ruudun
   napautus pysäyttää ja jatkaa, ja näyttö pidetään hereillä (Wake Lock). Nopeus ja

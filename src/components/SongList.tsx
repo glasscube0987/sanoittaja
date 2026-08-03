@@ -1,7 +1,15 @@
 import { useRef, useState } from 'react';
 import { formatDate, useI18n } from '../lib/i18n';
 import type { Song } from '../lib/types';
-import { downloadBlob, exportLibrary, importLibrary } from '../lib/sync/exportFile';
+import {
+  backupIsStale,
+  daysSinceBackup,
+  downloadBlob,
+  exportLibrary,
+  importLibrary,
+  markBackupTaken,
+  shareBlob,
+} from '../lib/sync/exportFile';
 import SettingsSheet from './SettingsSheet';
 
 interface Props {
@@ -15,6 +23,7 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
   const { t, lang } = useI18n();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [status, setStatus] = useState('');
+  const [backupDays, setBackupDays] = useState(daysSinceBackup);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const errorText = (err: unknown) =>
@@ -24,11 +33,23 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
     try {
       setStatus(t('list.preparingBackup'));
       const blob = await exportLibrary();
-      downloadBlob(blob, `sanoittaja-varmuuskopio-${new Date().toISOString().slice(0, 10)}.json`);
+      const name = `sanoittaja-varmuuskopio-${new Date().toISOString().slice(0, 10)}.json`;
+      // Jakovalikko ensin: iPhonella tiedosto menee sieltä suoraan Tiedostoihin
+      // tai iCloud Driveen. Työpöydällä pudotaan lataukseen.
+      if (!(await shareBlob(blob, name))) downloadBlob(blob, name);
+      markBackupTaken();
+      setBackupDays(daysSinceBackup());
       setStatus(t('list.backupDownloaded'));
     } catch (err) {
       setStatus(errorText(err));
     }
+  }
+
+  function backupNote(): string {
+    if (backupDays === null) return t('list.backupNever');
+    if (backupIsStale()) return t('list.backupStale', { days: backupDays });
+    if (backupDays === 0) return t('list.backupToday');
+    return t('list.backupDays', { days: backupDays });
   }
 
   async function handleImportFile(file: File) {
@@ -36,6 +57,7 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
       setStatus(t('list.importing'));
       const result = await importLibrary(file);
       onLibraryChanged();
+      setBackupDays(daysSinceBackup());
       setStatus(t('list.imported', { songs: result.songs, recordings: result.recordings }));
     } catch (err) {
       setStatus(errorText(err));
@@ -78,6 +100,9 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
         <div className="button-row">
           <button onClick={handleExport}>{t('list.downloadBackup')}</button>
           <button onClick={() => fileInput.current?.click()}>{t('list.importBackup')}</button>
+        </div>
+        <div className={backupIsStale() ? 'status backup-note stale' : 'status backup-note'}>
+          {backupNote()}
         </div>
         <div className="status">{status}</div>
         <input

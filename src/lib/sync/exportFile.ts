@@ -66,3 +66,49 @@ export function downloadBlob(blob: Blob, filename: string): void {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
+
+const LAST_BACKUP_KEY = 'sanoittaja.lastBackup';
+
+/** Milloin varmuuskopio viimeksi tehtiin, tai null jos ei koskaan. */
+export function lastBackupAt(): number | null {
+  const raw = localStorage.getItem(LAST_BACKUP_KEY);
+  const at = raw ? Number(raw) : NaN;
+  return Number.isFinite(at) ? at : null;
+}
+
+export function markBackupTaken(at: number = Date.now()): void {
+  localStorage.setItem(LAST_BACKUP_KEY, String(at));
+}
+
+/** Kokonaisia vuorokausia edellisestä varmuuskopiosta, tai null jos ei koskaan. */
+export function daysSinceBackup(now: number = Date.now(), at = lastBackupAt()): number | null {
+  if (at === null) return null;
+  return Math.max(0, Math.floor((now - at) / 86_400_000));
+}
+
+/** Muistutuksen raja: viikko riittää, jottei huomautus muutu taustakohinaksi. */
+export const BACKUP_REMINDER_DAYS = 7;
+
+export function backupIsStale(now: number = Date.now(), at = lastBackupAt()): boolean {
+  const days = daysSinceBackup(now, at);
+  return days === null || days >= BACKUP_REMINDER_DAYS;
+}
+
+/**
+ * Tarjoaa varmuuskopion jakovalikon kautta, jos selain tukee tiedostojen
+ * jakamista. iPhonella siitä pääsee suoraan Tiedostoihin tai iCloud Driveen,
+ * mikä on huomattavasti vähemmän askelia kuin lataus ja siirto käsin.
+ * Palauttaa false, jos jakaminen ei ole käytettävissä ja on ladattava.
+ */
+export async function shareBlob(blob: Blob, filename: string): Promise<boolean> {
+  const file = new File([blob], filename, { type: blob.type });
+  if (!navigator.canShare?.({ files: [file] })) return false;
+  try {
+    await navigator.share({ files: [file], title: filename });
+    return true;
+  } catch (err) {
+    // Käyttäjän peruutus ei ole virhe eikä saa pudottaa lataukseen.
+    if (err instanceof DOMException && err.name === 'AbortError') return true;
+    return false;
+  }
+}

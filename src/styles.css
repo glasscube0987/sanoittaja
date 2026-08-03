@@ -728,3 +728,8 @@ textarea:focus {
   font-size: 14px;
   min-height: 20px;
 }
+
+/* Huomautus varmuuskopiosta ei estä mitään, joten se korostuu vasta vanhentuessaan. */
+.backup-note.stale {
+  color: var(--accent);
+}
