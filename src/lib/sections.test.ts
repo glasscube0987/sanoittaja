@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 import type { Key, Params } from './i18n';
 import { translate } from './i18n';
 import { getSections, sectionTitle as title } from './sections';
-import { mergeLineWithPrevious, moveSection, removeLine, setLineBars, setLineSection } from './songOps';
+import {
+  duplicateSection,
+  mergeLineWithPrevious,
+  moveSection,
+  removeLine,
+  setLineBars,
+  setLineSection,
+} from './songOps';
 import type { LyricLine, SectionMark, Song } from './types';
 
 /** Testit ajetaan englanniksi, jotta odotetut nimet ovat yksiselitteisiä. */
@@ -82,6 +89,56 @@ describe('moveSection', () => {
     // Merkitsemättömät rivit kuuluisivat siirron jälkeen väärään osioon.
     const song = makeSong([line('x', 'irrallinen'), line('y', 'säkeistö', { kind: 'verse' })]);
     expect(moveSection(song, 'y', -1).lines).toEqual(song.lines);
+  });
+});
+
+describe('duplicateSection', () => {
+  it('lisää kopion alkuperäisen perään ja numeroi osiot', () => {
+    const song = duplicateSection(structured(), 'b1');
+    expect(getSections(song).map(sectionTitle)).toEqual([
+      'Verse 1',
+      'Chorus 1',
+      'Chorus 2',
+      'Verse 2',
+    ]);
+  });
+
+  it('kopioi kaikki osion rivit, ei vain ensimmäistä', () => {
+    const song = duplicateSection(structured(), 'a1');
+    expect(song.lines.map((l) => l.text)).toEqual([
+      'eka säkeistö',
+      'jatkuu',
+      'eka säkeistö',
+      'jatkuu',
+      'kertosäe',
+      'toka säkeistö',
+    ]);
+  });
+
+  it('antaa kopiolle omat tunnukset', () => {
+    const song = duplicateSection(structured(), 'b1');
+    const tunnukset = song.lines.map((l) => l.id);
+    expect(new Set(tunnukset).size).toBe(tunnukset.length);
+  });
+
+  it('kopioi soinnut ja tahdit omina olioinaan', () => {
+    const lahto = makeSong([
+      { id: 'a', text: 'sanat', chords: [{ id: 'c1', pos: 2, symbol: 'Am' }], section: { kind: 'chorus' } },
+      { id: 'b', text: '', chords: [], bars: ['Am', 'F'] },
+    ]);
+    const song = duplicateSection(lahto, 'a');
+
+    const [eka, tahdit, kopio, tahtiKopio] = song.lines;
+    expect(kopio.chords).toEqual([{ id: expect.any(String), pos: 2, symbol: 'Am' }]);
+    expect(kopio.chords[0].id).not.toBe(eka.chords[0].id);
+    // Jaettu taulukko muuttuisi molemmissa riveissä yhtä aikaa.
+    expect(tahtiKopio.bars).toEqual(['Am', 'F']);
+    expect(tahtiKopio.bars).not.toBe(tahdit.bars);
+  });
+
+  it('ei muuta laulua tuntemattomalla tunnuksella', () => {
+    const song = structured();
+    expect(duplicateSection(song, 'ei-ole').lines).toEqual(song.lines);
   });
 });
 

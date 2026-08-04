@@ -11,6 +11,7 @@
 
 export type IconName =
   | 'back'
+  | 'copy'
   | 'undo'
   | 'settings'
   | 'cloud'
@@ -31,6 +32,8 @@ interface Props {
 /** Viivapiirrokset; täytetyt muodot erikseen alla. */
 const PATHS: Record<IconName, string> = {
   back: 'M15 4 7 12l8 8',
+  // Kaksi lomittaista arkkia: kopio syntyy alkuperäisen viereen.
+  copy: 'M9 9h9.5a1.5 1.5 0 0 1 1.5 1.5V20a1.5 1.5 0 0 1-1.5 1.5H9A1.5 1.5 0 0 1 7.5 20v-9.5A1.5 1.5 0 0 1 9 9M4.5 15A1.5 1.5 0 0 1 3 13.5V4a1.5 1.5 0 0 1 1.5-1.5H14A1.5 1.5 0 0 1 15.5 4v1.5',
   // Nuoli kaartuu takaisin vasemmalle: kumoaminen, ei pelkkä "edellinen".
   undo: 'M8 7 3 12l5 5M3 12h10a5 5 0 0 1 0 10h-2',
   // Hammaspyörä: napa, runko ja kahdeksan hammasta. Pelkät säteittäiset viivat

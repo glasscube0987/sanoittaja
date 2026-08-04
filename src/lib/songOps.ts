@@ -198,6 +198,33 @@ export function moveSection(song: Song, blockId: string, direction: -1 | 1): Son
   });
 }
 
+/**
+ * Kopioi osion riveineen heti alkuperäisen perään.
+ *
+ * Toistuva osio – kertosäe, sama säkeistörakenne – kirjoitettaisiin muuten
+ * rivi riviltä uudelleen. Osiomerkintä kopioituu sellaisenaan, jolloin
+ * `getSections`in numerointi tekee lopun: yksi ”Kertosäe” muuttuu automaattisesti
+ * pariksi ”Kertosäe 1” ja ”Kertosäe 2”.
+ *
+ * Rivit ja sointuankkurit saavat uudet tunnukset: yhteiset tunnukset sotkisivat
+ * sekä Reactin avaimet että rivikohtaiset operaatiot.
+ */
+export function duplicateSection(song: Song, blockId: string): Song {
+  const block = getSections(song).find((b) => b.id === blockId);
+  if (!block) return song;
+
+  const copies: LyricLine[] = block.lines.map((line) => ({
+    ...line,
+    id: uid(),
+    chords: line.chords.map((chord) => ({ ...chord, id: uid() })),
+    ...(line.bars ? { bars: [...line.bars] } : {}),
+  }));
+
+  const lines = [...song.lines];
+  lines.splice(block.end, 0, ...copies);
+  return touch({ ...song, lines });
+}
+
 /** Kuinka monta puolisävelaskelta laulu on alkuperäisestä sävellajistaan. */
 export function transposeOffset(song: Song): number {
   return song.transpose ?? 0;

@@ -3,6 +3,7 @@ import type { Song } from '../lib/types';
 import {
   addLineAfter,
   DEFAULT_BARS,
+  duplicateSection,
   editLineText,
   mergeLineWithPrevious,
   moveSection,
@@ -156,6 +157,13 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
                 <div className="section-head">
                   <button className="section-name" onClick={() => setLineTargetId(block.id)}>
                     {sectionTitle(block, t)}
+                  </button>
+                  <button
+                    className="icon-button small"
+                    aria-label={t('editor.duplicateSection', { name: sectionTitle(block, t) })}
+                    onClick={() => onChange(duplicateSection(song, block.id))}
+                  >
+                    <Icon name="copy" size={17} />
                   </button>
                   <button
                     className="icon-button small"

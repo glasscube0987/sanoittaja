@@ -23,6 +23,51 @@ test('siirto laulun reunan yli on estetty', async ({ page }) => {
   await expect(page.getByLabel('Move section Verse 2 down')).toBeDisabled();
 });
 
+test('osion kopio syntyy alkuperäisen perään ja numeroituu', async ({ page }) => {
+  await avaaLaulu(page);
+  await page.getByLabel('Duplicate section Chorus').click();
+
+  await expect.poll(() => osiot(page)).toEqual(['Verse 1', 'Chorus 1', 'Chorus 2', 'Verse 2']);
+
+  // Kertosäkeen molemmat rivit kopioituvat, eivät vain ensimmäinen.
+  const rivit = await page.$$eval('.line input.text', (els) =>
+    els.map((e) => (e as HTMLInputElement).value),
+  );
+  expect(rivit).toEqual([
+    'kuu valaisee yön',
+    'ja tie vie pohjoiseen',
+    'älä katso taakse',
+    'aamu tulee kohta',
+    'älä katso taakse',
+    'aamu tulee kohta',
+    'toinen säkeistö tässä',
+  ]);
+});
+
+test('kopiointi kumoutuu yhdellä peruutuksella', async ({ page }) => {
+  await avaaLaulu(page);
+  await page.getByLabel('Duplicate section Chorus').click();
+  await expect.poll(() => osiot(page)).toHaveLength(4);
+
+  await page.getByLabel('Undo').click();
+  await expect.poll(() => osiot(page)).toEqual(['Verse 1', 'Chorus', 'Verse 2']);
+});
+
+test('kopioidun osion muokkaus ei muuta alkuperäistä', async ({ page }) => {
+  await avaaLaulu(page);
+  await page.getByLabel('Duplicate section Chorus').click();
+  await expect.poll(() => osiot(page)).toHaveLength(4);
+
+  // Kopion ensimmäinen rivi on neljäs rivi; alkuperäinen on kolmas.
+  await page.locator('.line input.text').nth(4).fill('älä katso eteen');
+
+  const rivit = await page.$$eval('.line input.text', (els) =>
+    els.map((e) => (e as HTMLInputElement).value),
+  );
+  expect(rivit[2]).toBe('älä katso taakse');
+  expect(rivit[4]).toBe('älä katso eteen');
+});
+
 test('rivin voi merkitä osioksi ja osio syntyy oikeaan kohtaan', async ({ page }) => {
   await avaaLaulu(page);
   await page.locator('.line').nth(1).getByLabel('Line settings').click();
