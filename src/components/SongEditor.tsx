@@ -18,8 +18,10 @@ import {
 } from '../lib/songOps';
 import { useI18n } from '../lib/i18n';
 import { getSections, sectionTitle } from '../lib/sections';
+import { isBlankLine } from '../lib/render';
 import ChordSheet from './ChordSheet';
 import Icon from './Icon';
+import ImportSheet from './ImportSheet';
 import LineEditor from './LineEditor';
 import LiveView from './LiveView';
 import BarSheet from './BarSheet';
@@ -48,6 +50,7 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
   const [lineTargetId, setLineTargetId] = useState<string | null>(null);
   const [barsTargetId, setBarsTargetId] = useState<string | null>(null);
   const [liveOpen, setLiveOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const focusLineId = useRef<{ id: string; caret: number } | null>(null);
 
   const offset = transposeOffset(song);
@@ -205,6 +208,7 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
           <button onClick={() => onChange(addLineAfter(song, song.lines[song.lines.length - 1].id))}>
             {t('editor.addLine')}
           </button>
+          <button onClick={() => setImportOpen(true)}>{t('import.pasteText')}</button>
           {/* Tulostusvalikosta valitaan "Tallenna PDF:nä"; erillistä kirjastoa ei tarvita. */}
           <button onClick={() => window.print()}>{t('editor.exportPdf')}</button>
           <button
@@ -256,6 +260,24 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
             setBarsTargetId(null);
           }}
           onClose={() => setBarsTargetId(null)}
+        />
+      )}
+      {importOpen && (
+        <ImportSheet
+          mode="append"
+          onImport={(result) => {
+            setImportOpen(false);
+            if (result.lines.length === 0) return;
+            // Koskematon uusi laulu on yksi tyhjä rivi; sen perään lisääminen
+            // jättäisi turhan tyhjän rivin laulun alkuun.
+            const tyhja = song.lines.length === 1 && isBlankLine(song.lines[0]);
+            onChange({
+              ...song,
+              lines: tyhja ? result.lines : [...song.lines, ...result.lines],
+              updatedAt: Date.now(),
+            });
+          }}
+          onClose={() => setImportOpen(false)}
         />
       )}
       {liveOpen && <LiveView song={song} onClose={() => setLiveOpen(false)} />}

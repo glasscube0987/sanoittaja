@@ -60,7 +60,11 @@ export function uid(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
-export function newSong(title = 'Uusi laulu'): Song {
+/**
+ * Nimi on oletuksena tyhjä, ei kiinteä teksti: käyttöliittymä näyttää tyhjän
+ * nimen tilalla käännetyn ”Nimetön”, joten kieli ei pääse vuotamaan dataan.
+ */
+export function newSong(title = ''): Song {
   const now = Date.now();
   return {
     id: uid(),

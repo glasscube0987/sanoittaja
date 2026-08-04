@@ -12,21 +12,25 @@ import {
   markBackupTaken,
   shareBlob,
 } from '../lib/sync/exportFile';
+import type { ImportResult } from '../lib/importText';
 import CloudSheet from './CloudSheet';
 import Icon from './Icon';
+import ImportSheet from './ImportSheet';
 import SettingsSheet from './SettingsSheet';
 
 interface Props {
   songs: Song[];
   onOpen: (songId: string) => void;
   onCreate: () => void;
+  onImport: (result: ImportResult) => void;
   onLibraryChanged: () => void;
 }
 
-export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: Props) {
+export default function SongList({ songs, onOpen, onCreate, onImport, onLibraryChanged }: Props) {
   const { t, lang } = useI18n();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cloudOpen, setCloudOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [status, setStatus] = useState('');
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -116,6 +120,12 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
             <Icon name="chevronRight" size={18} />
           </button>
         ))}
+        {/* Vanhat laulut ovat muualla kirjoitettuina; tuonti on laulun luonnin
+            rinnakkainen tapa, joten se on listalla eikä asetuksissa. */}
+        <div className="button-row">
+          <button onClick={() => setImportOpen(true)}>{t('import.open')}</button>
+        </div>
+
         {/* Varmuuskopio koskee koko kirjastoa, joten myös pilvivienti kuuluu
             tänne eikä yksittäisen laulun editoriin. */}
         <div className="button-row">
@@ -140,6 +150,16 @@ export default function SongList({ songs, onOpen, onCreate, onLibraryChanged }: 
         />
       </main>
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
+      {importOpen && (
+        <ImportSheet
+          mode="new"
+          onImport={(result) => {
+            setImportOpen(false);
+            onImport(result);
+          }}
+          onClose={() => setImportOpen(false)}
+        />
+      )}
       {cloudOpen && (
         <CloudSheet onClose={() => setCloudOpen(false)} onBackedUp={() => setBackupDays(daysSinceBackup())} />
       )}

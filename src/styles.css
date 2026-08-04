@@ -654,6 +654,81 @@ textarea:focus {
   flex: none;
 }
 
+/* --- Tekstin tuonti --- */
+.import-input {
+  font-family: var(--mono);
+  /* Tuotu teksti on tasalevyistä: sointujen kohdistuksen näkee jo kentässä. */
+  white-space: pre;
+  overflow-x: auto;
+  min-height: 120px;
+  resize: vertical;
+}
+
+/*
+ * Esikatselu vierittää itse. Ilman omaa vieritystä pitkä rivi kasvattaisi
+ * ponnahduslaatikkoa ja sitä kautta koko sivua.
+ */
+.import-preview {
+  max-height: 45vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+}
+
+.import-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1px 0;
+}
+
+/* Kapea: luettava teksti on tärkeämpi kuin valitsimen leveys. */
+.import-row select {
+  flex: 0 0 84px;
+  font: inherit;
+  /* Alle 16px:n kenttä saa iOS:n zoomaamaan koko näkymän kohdistuessa. */
+  font-size: max(16px, 1rem);
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 2px 4px 6px;
+  min-height: 34px;
+}
+
+.import-text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--text);
+}
+
+/* Sama värikieli kuin editorissa: soinnut ja osiot korostuvat. */
+.import-text[data-kind='chords'],
+.import-text[data-kind='bars'] {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.import-text[data-kind='section'] {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.import-text[data-kind='blank'] {
+  color: var(--text-dim);
+}
+
 /* --- Nuottilehti: tulostus ja live-tila --- */
 .song-sheet {
   display: none;

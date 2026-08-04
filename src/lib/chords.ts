@@ -40,6 +40,29 @@ export function parseChord(symbol: string): ParsedChord | null {
   return { root: m[1], quality: m[2] ?? '', bass: m[3] || undefined };
 }
 
+/**
+ * Tunnistaa sointumerkin *tiukasti*, tuontia varten.
+ *
+ * `parseChord` on tarkoituksella salliva: sen laatuosa on `[^/]*`, jotta
+ * transponointi ei hukkaa käyttäjän omia merkintöjä. Sivuvaikutuksena se
+ * hyväksyy soinnuksi minkä tahansa A–G-alkuisen sanan – `Dance`, `Every`,
+ * `Baby`, `Alone` – mikä on transponoinnissa harmitonta mutta tunnistuksessa
+ * kohtalokasta: isolla alkukirjaimella kirjoitettu sanoitusrivi luokittuisi
+ * sointuriviksi ja sanat katoaisivat sointumerkkien sekaan.
+ *
+ * Tässä laatuosa on siksi lueteltu. Tunnistamaton merkki tulkitaan sanaksi,
+ * mikä on turvallisempi suunta: väärin sanoitukseksi jäänyt sointurivi näkyy
+ * käyttäjälle sellaisenaan, toisin päin sanat menetettäisiin.
+ */
+const STRICT_CHORD_RE =
+  /^[A-G][#b]?(?:maj|min|aug|dim|sus|add|alt|m|M|Δ|°|ø|\+|-)*\d*(?:[#b]\d+)*(?:(?:sus|add|maj|no)\d+)*(?:\/[A-G][#b]?)?$/;
+
+export function isChordToken(token: string): boolean {
+  // Sulkeet ovat pelkkää ryhmittelyä: C(add9) on sointu siinä missä Cadd9.
+  const cleaned = token.replace(/[()]/g, '').trim();
+  return cleaned.length > 0 && STRICT_CHORD_RE.test(cleaned);
+}
+
 export type Accidental = 'sharp' | 'flat';
 
 export function transposeNote(note: string, semitones: number, prefer: Accidental): string {

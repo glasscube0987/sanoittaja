@@ -6,6 +6,7 @@ import type { HistoryEntry } from './lib/history';
 import { pushHistory } from './lib/history';
 import type { Key, Lang, Params } from './lib/i18n';
 import { LangContext, loadLang, storeLang, translate } from './lib/i18n';
+import type { ImportResult } from './lib/importText';
 import { AUTO_BACKUP_CHECK_MS, markLibraryChanged, maybeAutoBackup } from './lib/sync/autoBackup';
 import type { Song } from './lib/types';
 import { newSong } from './lib/types';
@@ -85,13 +86,22 @@ export default function App() {
     [scheduleSave],
   );
 
-  const createSong = useCallback(() => {
-    const song = newSong();
+  const startSong = useCallback((song: Song) => {
     setSongs((prev) => [song, ...(prev ?? [])]);
     markLibraryChanged();
     saveSong(song).catch((err) => console.error('Tallennus epäonnistui', err));
     setView({ name: 'editor', songId: song.id });
   }, []);
+
+  const createSong = useCallback(() => startSong(newSong()), [startSong]);
+
+  const importSong = useCallback(
+    (result: ImportResult) => {
+      const song = newSong(result.title ?? '');
+      startSong(result.lines.length > 0 ? { ...song, lines: result.lines } : song);
+    },
+    [startSong],
+  );
 
   const deleteSong = useCallback((songId: string) => {
     setSongs((prev) => (prev ? prev.filter((s) => s.id !== songId) : prev));
@@ -141,6 +151,7 @@ export default function App() {
           songs={songs}
           onOpen={(songId) => setView({ name: 'editor', songId })}
           onCreate={createSong}
+          onImport={importSong}
           onLibraryChanged={reload}
         />
       )}

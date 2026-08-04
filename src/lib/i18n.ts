@@ -108,6 +108,26 @@ const en = {
   'section.solo': 'Solo',
   'section.outro': 'Outro',
 
+  'import.open': 'Import text',
+  'import.title': 'Import a song from text',
+  'import.appendTitle': 'Paste text into this song',
+  'import.placeholder': 'Paste lyrics with chords above them…',
+  'import.chooseFile': 'Choose a .txt file',
+  'import.spacingHint':
+    'Chords land where they sit above the words, so keep the spacing as it was. If a chord ends up a character off, the arrow keys in the editor move it.',
+  'import.songTitle': 'Song title',
+  'import.preview': 'How each line was read',
+  'import.rowKind': 'Type of line {row}',
+  'import.usedAsTitle': '→ used as the song title',
+  'import.kindLyrics': 'Lyrics',
+  'import.kindChords': 'Chords',
+  'import.kindBars': 'Bars',
+  'import.kindSection': 'Section',
+  'import.kindBlank': 'Blank',
+  'import.create': 'Create song',
+  'import.append': 'Add to song',
+  'import.pasteText': 'Paste text',
+
   'cloud.title': 'Back up to cloud',
   'cloud.description':
     'The whole library — songs, chords and recordings — goes into your own cloud account as one file that “Restore” reads back. One file per day, so older backups stay.',
@@ -239,6 +259,26 @@ const fi: Record<Key, string> = {
   'section.bridge': 'C-osa',
   'section.solo': 'Soolo',
   'section.outro': 'Outro',
+
+  'import.open': 'Tuo teksti',
+  'import.title': 'Tuo laulu tekstistä',
+  'import.appendTitle': 'Liitä tekstiä tähän lauluun',
+  'import.placeholder': 'Liitä sanoitus, jonka yllä on soinnut…',
+  'import.chooseFile': 'Valitse .txt-tiedosto',
+  'import.spacingHint':
+    'Soinnut asettuvat siihen kohtaan, jossa ne ovat sanojen yllä, joten jätä välit ennalleen. Jos sointu menee merkin verran sivuun, editorin nuolinäppäimet siirtävät sen.',
+  'import.songTitle': 'Laulun nimi',
+  'import.preview': 'Miten rivit tulkittiin',
+  'import.rowKind': 'Rivin {row} tyyppi',
+  'import.usedAsTitle': '→ otetaan laulun nimeksi',
+  'import.kindLyrics': 'Sanat',
+  'import.kindChords': 'Soinnut',
+  'import.kindBars': 'Tahdit',
+  'import.kindSection': 'Osio',
+  'import.kindBlank': 'Tyhjä',
+  'import.create': 'Luo laulu',
+  'import.append': 'Lisää lauluun',
+  'import.pasteText': 'Liitä tekstiä',
 
   'cloud.title': 'Varmuuskopioi pilveen',
   'cloud.description':

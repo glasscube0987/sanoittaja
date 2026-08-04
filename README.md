@@ -26,6 +26,19 @@ demoja puhelimella ja vie kaikki pilveen.
 - **Soinnun hienosäätö** – sointua lisätessä tai jo asetettua napauttaessa sen paikkaa
   voi siirtää merkki kerrallaan ◀ ▶ -painikkeilla tai nuolinäppäimillä. Esikatselu
   näyttää soinnun sanoituksen yllä, joten kohdan näkee ennen tallennusta.
+- **Tuonti tekstistä** – vanhat laulut siirtyvät appiin liittämällä: sanoitus,
+  jonka yllä on soinnut välilyönnein kohdistettuna, luetaan riveiksi niin että
+  soinnut ankkuroituvat siihen merkkiin, jonka yllä ne olivat. Osio-otsikot
+  (`[Kertosäe]`, `Verse 2`) tunnistetaan molemmilla kielillä, tahtirivit
+  (`| Am | F |`) sointuriveiksi ja sanattomat sointurivit välisoitoiksi.
+  Esikatselu näyttää miten kukin rivi tulkittiin, ja tulkinnan voi korjata ennen
+  laulun luomista. Tuonti onnistuu myös `.txt`-tiedostosta ja avoimen laulun
+  perään. *Kohdistus säilyy vain jos soinnut on aseteltu välilyönnein;
+  sarkaimilla tehty asettelu tai PDF:stä kopiointi voi siirtää sointuja merkin
+  verran, jolloin nuolinäppäimet korjaavat ne.*
+- **Osion kopiointi** – toistuvan osion saa monistettua otsikkorivin
+  kopiointipainikkeesta. Kopio menee alkuperäisen perään ja osiot numeroituvat
+  automaattisesti (Kertosäe 1, Kertosäe 2).
 - **Osiot** – merkitse rivi osion aluksi (intro, säkeistö, nousu, kertosäe, C-osa,
   soolo, outro tai oma nimi) rivin §-painikkeesta. Toistuvat osiot **numeroituvat
   automaattisesti** (Säkeistö 1, Säkeistö 2), ja kokonaisen osion voi siirtää
@@ -150,6 +163,8 @@ src/
     anchors.ts      Sointuankkurien siirto tekstimuutoksissa
     history.ts      Peruutuspino ja kirjoitusmuutosten yhdistäminen
     i18n.ts         Käännökset (en/fi), kielen tunnistus ja React-konteksti
+    importText.ts   Tekstin tulkinta laulun riveiksi (sointu-, sanoitus- ja
+                    osiorivien tunnistus)
     live.ts         Live-tilan vieritysaskel ja asetukset
     render.ts       Sointumerkkien ja sointurivien ladonta tekstiksi (tulostus, live)
     sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
