@@ -4,21 +4,27 @@ import Icon from './Icon';
 
 interface Props {
   bars: string[];
+  /** Rivin oma tahtilaji, jos se poikkeaa laulun tahtilajista. */
+  meter?: string;
   suggestions: string[];
-  onSave: (bars: string[]) => void;
+  onSave: (bars: string[], meter: string) => void;
   onClose: () => void;
 }
 
 const DEFAULT_SUGGESTIONS = ['C', 'G', 'Am', 'F', 'D', 'Em', 'E', 'A', 'Dm', 'B7'];
+
+/** Tavallisimmat tahtilajit; kenttään voi kirjoittaa minkä tahansa muun. */
+const METERS = ['4/4', '3/4', '6/8', '2/4', '12/8'];
 
 /**
  * Sointurivin muokkaus: valittu tahti kerrallaan, samalla vuorovaikutuksella
  * kuin sointuponnahduksessa. Tahtiin voi kirjoittaa useamman soinnun ("Am F")
  * tai muun merkinnän ("%"), joten kenttä on vapaata tekstiä.
  */
-export default function BarSheet({ bars: initial, suggestions, onSave, onClose }: Props) {
+export default function BarSheet({ bars: initial, meter: initialMeter, suggestions, onSave, onClose }: Props) {
   const t = useT();
   const [bars, setBars] = useState<string[]>(initial.length ? initial : ['']);
+  const [meter, setMeter] = useState(initialMeter ?? '');
   const [index, setIndex] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const chips = suggestions.length > 0 ? suggestions : DEFAULT_SUGGESTIONS;
@@ -86,12 +92,13 @@ export default function BarSheet({ bars: initial, suggestions, onSave, onClose }
         onKeyDown={handleKeyDown}
         onSubmit={(e) => {
           e.preventDefault();
-          onSave(bars);
+          onSave(bars, meter);
         }}
       >
         <h2>{t('bars.title')}</h2>
 
         <div className="context bar-preview">
+          {meter.trim() && <span className="bar meter">{`${meter.trim()} `}</span>}
           {bars.map((bar, i) => (
             <span key={i} className={i === index ? 'bar current' : 'bar'}>
               {`| ${bar.trim() || ' '} `}
@@ -114,6 +121,7 @@ export default function BarSheet({ bars: initial, suggestions, onSave, onClose }
         </div>
 
         <input
+          id="bar-content"
           value={bars[index] ?? ''}
           onChange={(e) => setBar(e.target.value)}
           placeholder={t('bars.placeholder')}
@@ -140,6 +148,36 @@ export default function BarSheet({ bars: initial, suggestions, onSave, onClose }
           <button type="button" onClick={splitBar} disabled={!voiJakaa}>
             {t('bars.split')}
           </button>
+        </div>
+
+        {/* Tahtilaji merkitään vain siihen riviin josta se vaihtuu; laulun oma
+            tahtilaji on otsikkorivillä. */}
+        <div className="field">
+          <label htmlFor="bar-meter">{t('bars.meter')}</label>
+          <div className="chip-row">
+            <button type="button" className={meter ? '' : 'primary'} onClick={() => setMeter('')}>
+              —
+            </button>
+            {METERS.map((option) => (
+              <button
+                type="button"
+                key={option}
+                className={option === meter ? 'primary' : ''}
+                onClick={() => setMeter(option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <input
+            id="bar-meter"
+            value={meter}
+            onChange={(e) => setMeter(e.target.value)}
+            placeholder={t('bars.meterPlaceholder')}
+            autoCapitalize="off"
+            autoComplete="off"
+            spellCheck={false}
+          />
         </div>
 
         <div className="button-row">

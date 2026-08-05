@@ -23,6 +23,12 @@ export interface LyricLine {
   /** Jos asetettu, rivi aloittaa uuden osion. */
   section?: SectionMark;
   /**
+   * Tahtilaji, joka on voimassa tästä rivistä eteenpäin, esim. "3/4".
+   * Merkitään vain siihen kohtaan jossa laji vaihtuu; laulun oma tahtilaji on
+   * `Song.meter`.
+   */
+  meter?: string;
+  /**
    * Jos asetettu, rivi on sointurivi: soinnut luetaan tahteina eikä sanoihin
    * ankkuroituna, eikä rivillä ole sanoja. Yksi alkio on yhden tahdin sisältö
    * vapaana tekstinä, esim. "Am", "Am F" tai "%".
@@ -35,6 +41,11 @@ export interface Song {
   title: string;
   /** Vapaamuotoinen sävellajimerkintä, esim. "Em". */
   songKey: string;
+  /**
+   * Laulun tahtilaji, esim. "4/4". Vapaata tekstiä samasta syystä kuin
+   * sävellaji: "7/8" ja "12/8" ovat yhtä päteviä eikä listaa kannata rajata.
+   */
+  meter?: string;
   /**
    * Nettosiirtymä puolisävelaskelina alkuperäisestä sävellajista. Soinnut
    * tallennetaan transponoituina, joten tämä on ainoa muisto siitä mistä

@@ -12,6 +12,7 @@ import {
   resetTranspose,
   respellSong,
   setLineBars,
+  setLineMeter,
   setLineSection,
   splitLine,
   transposeOffset,
@@ -158,7 +159,17 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
             className="key"
             value={song.songKey}
             placeholder={t('editor.keyPlaceholder')}
+            aria-label={t('editor.keyLabel')}
             onChange={(e) => onChange({ ...song, songKey: e.target.value, updatedAt: Date.now() })}
+          />
+          <input
+            className="key"
+            value={song.meter ?? ''}
+            placeholder={t('editor.meterPlaceholder')}
+            aria-label={t('editor.meterLabel')}
+            inputMode="text"
+            autoComplete="off"
+            onChange={(e) => onChange({ ...song, meter: e.target.value, updatedAt: Date.now() })}
           />
         </div>
 
@@ -301,9 +312,10 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
       {barsTarget?.bars && (
         <BarSheet
           bars={barsTarget.bars}
+          meter={barsTarget.meter}
           suggestions={usedChords}
-          onSave={(bars) => {
-            onChange(setLineBars(song, barsTarget.id, bars));
+          onSave={(bars, meter) => {
+            onChange(setLineMeter(setLineBars(song, barsTarget.id, bars), barsTarget.id, meter));
             setBarsTargetId(null);
           }}
           onClose={() => setBarsTargetId(null)}

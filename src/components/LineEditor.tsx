@@ -86,7 +86,7 @@ export default function LineEditor({
           // Sointurivillä ei ole sanoja eikä sijoitettuja sointuja, joten se on
           // yksi napautettava rivi eikä sointumerkkien ja tekstikentän pari.
           <button className="bar-row" onClick={onBarsTap} title={t('line.editBars')}>
-            {barLineText(line.bars)}
+            {barLineText(line.bars, line.meter)}
           </button>
         ) : (
           <>

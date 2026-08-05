@@ -21,7 +21,9 @@ export default function SongSheet({ song, className }: Props) {
     <article className={className ? `song-sheet ${className}` : 'song-sheet'}>
       <header className="sheet-head">
         <h1>{song.title || t('app.untitled')}</h1>
-        {song.songKey && <p className="sheet-key">{song.songKey}</p>}
+        {(song.songKey || song.meter) && (
+          <p className="sheet-key">{[song.songKey, song.meter].filter(Boolean).join(' · ')}</p>
+        )}
       </header>
 
       {sections.map((block) => (
@@ -31,7 +33,7 @@ export default function SongSheet({ song, className }: Props) {
             if (line.bars) {
               return (
                 <div className="sheet-line" key={line.id}>
-                  <pre className="sheet-bars">{barLineText(line.bars)}</pre>
+                  <pre className="sheet-bars">{barLineText(line.bars, line.meter)}</pre>
                 </div>
               );
             }

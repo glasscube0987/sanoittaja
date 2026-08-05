@@ -29,7 +29,7 @@ test('siirtymä kertyy molempiin suuntiin', async ({ page }) => {
 test('palautus vie takaisin alkuperäiseen sävellajiin', async ({ page }) => {
   await avaaLaulu(page);
   const alku = await soinnut(page);
-  const savellaji = await page.locator('.title-row input.key').inputValue();
+  const savellaji = await page.getByLabel('Key', { exact: true }).inputValue();
 
   for (let i = 0; i < 4; i++) await page.getByLabel('Up a semitone').click();
   expect(await soinnut(page)).not.toEqual(alku);
@@ -37,7 +37,7 @@ test('palautus vie takaisin alkuperäiseen sävellajiin', async ({ page }) => {
   await page.getByLabel(/Transposed/).click();
 
   expect(await soinnut(page)).toEqual(alku);
-  expect(await page.locator('.title-row input.key').inputValue()).toBe(savellaji);
+  expect(await page.getByLabel('Key', { exact: true }).inputValue()).toBe(savellaji);
   await expect(page.getByLabel(/Transposed/)).toHaveCount(0);
 });
 

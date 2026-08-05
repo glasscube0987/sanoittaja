@@ -66,3 +66,20 @@ describe('isBlankLine', () => {
     expect(isBlankLine(line('sanat', []))).toBe(false);
   });
 });
+
+describe('barLineText tahtilajilla', () => {
+  it('etuliittää tahtilajin ensimmäisen tahtiviivan eteen', () => {
+    expect(barLineText(['Am', 'F'], '3/4')).toBe('3/4 | Am | F  |');
+  });
+
+  it('jättää etuliitteen pois ilman tahtilajia', () => {
+    expect(barLineText(['Am', 'F'])).toBe('| Am | F  |');
+    expect(barLineText(['Am', 'F'], '')).toBe('| Am | F  |');
+    expect(barLineText(['Am', 'F'], '   ')).toBe('| Am | F  |');
+  });
+
+  it('ei muuta tahtien tasausta', () => {
+    const ilman = barLineText(['Am', 'F']);
+    expect(barLineText(['Am', 'F'], '4/4').endsWith(ilman)).toBe(true);
+  });
+});

@@ -15,11 +15,21 @@ demoja puhelimella ja vie kaikki pilveen.
 - **Sointumerkit** – napauta sanoitusrivin yläpuolelta minkä tahansa merkin kohdalta
   lisätäksesi soinnun juuri siihen kohtaan. Soinnut on ankkuroitu merkkipositioihin ja
   ne **siirtyvät automaattisesti tekstin mukana**, kun sanoja muokataan.
+- **Rivin työkalut** – kirjoitettavan rivin alle ilmestyy kapea rivi, josta saa
+  lisättyä rivin, liitettyä tekstiä *tähän kohtaan* ja kumottua viimeisimmän
+  muutoksen. Työkalut näkyvät niin kauan kuin rivillä on kohdistus, eli katoavat
+  kun näppäimistön sulkee.
 - **Sointurivit** – rivin voi muuttaa sointuriviksi rivin §-painikkeesta, jolloin
-  soinnut merkitään tahteina: `| Am | F | C | G |`. Yhteen tahtiin mahtuu useampi
-  sointu (`Am F`) tai muu merkintä (`%`), ja tahdit tasataan saman levyisiksi niin
-  että tahtiviivat ovat allekkain. Transponointi käsittelee jokaisen tahdin soinnun
-  erikseen.
+  soinnut merkitään tahteina: `| Am | F | C | G |`. Rivillä jo olevat soinnut
+  siirtyvät tahdeiksi, yksi sointu tahtia kohti. Yhteen tahtiin mahtuu useampi
+  sointu (`Am F`) tai muu merkintä (`%`), pikavalinnat lisäävät soinnun tahtiin
+  entistä hävittämättä, ja ”Jaa tahti” pilkkoo tahdin kahdeksi. Tahdit tasataan
+  saman levyisiksi niin että tahtiviivat ovat allekkain, ja transponointi
+  käsittelee jokaisen tahdin soinnun erikseen.
+- **Tahtilaji** – laulun tahtilaji (esim. `4/4`) otsikkorivillä sävellajin
+  vieressä. Jos laji vaihtuu kesken laulun, sen voi merkitä yksittäiselle
+  sointuriville, jolloin merkintä näkyy tahtien edessä: `3/4 | Dm | E7 |`.
+  Transponointi ei koske tahtilajiin.
 - **Välisoitot** – sanattomalle riville voi merkitä useita sointuja, joten introt,
   soolot ja väliosat mahtuvat mukaan. Tyhjällä rivillä näkyy himmeä sarakeruudukko,
   ja sointuja voi asettaa myös viimeisen sanan jälkeen kierrosointua varten.

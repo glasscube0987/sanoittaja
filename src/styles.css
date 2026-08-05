@@ -280,9 +280,11 @@ textarea:focus {
   font-weight: 600;
 }
 
+/* Sävellaji ja tahtilaji ovat lyhyitä; nimi saa loput leveydestä. */
 .title-row input.key {
-  flex: 0 0 76px;
+  flex: 0 0 64px;
   text-align: center;
+  padding: 10px 4px;
 }
 
 .transpose-bar {

@@ -9,6 +9,7 @@ import {
   resetTranspose,
   respellSong,
   setChord,
+  setLineMeter,
   splitLine,
   transposeOffset,
   transposeSong,
@@ -237,5 +238,36 @@ describe('barsFromLine', () => {
     ];
     barsFromLine({ id: 'l', text: 'sanoja', chords });
     expect(chords.map((c) => c.symbol)).toEqual(['F', 'Am']);
+  });
+});
+
+describe('setLineMeter', () => {
+  it('asettaa ja poistaa rivin tahtilajin', () => {
+    let song = setLineMeter(makeSong(), 'l1', ' 3/4 ');
+    expect(song.lines[0].meter).toBe('3/4');
+
+    song = setLineMeter(song, 'l1', '');
+    expect(song.lines[0]).not.toHaveProperty('meter');
+  });
+});
+
+describe('tahtilaji ja transponointi', () => {
+  it('ei transponoi rivin tahtilajia', () => {
+    // transposeBar käsittelee tahdin sisällön sana kerrallaan; tahtilaji on
+    // oma kenttänsä juuri siksi, ettei se joudu sen läpi.
+    const lahto: Song = {
+      ...makeSong(),
+      meter: '4/4',
+      lines: [{ id: 'b1', text: '', chords: [], bars: ['Am', 'F'], meter: '3/4' }],
+    };
+    const song = transposeSong(lahto, 2);
+    expect(song.lines[0].meter).toBe('3/4');
+    expect(song.meter).toBe('4/4');
+    expect(song.lines[0].bars).toEqual(['Bm', 'G']);
+  });
+
+  it('ei muuta tahtilajia kirjoitusasua vaihdettaessa', () => {
+    const lahto: Song = { ...makeSong(), meter: '6/8' };
+    expect(respellSong(lahto, 'flat').meter).toBe('6/8');
   });
 });

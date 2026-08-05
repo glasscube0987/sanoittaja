@@ -31,10 +31,12 @@ const MIN_BAR_WIDTH = 2;
  * Tahdit tasataan rivin leveimmän mukaan, jotta tahtiviivat asettuvat
  * allekkain ja tahtien kesto on luettavissa silmäyksellä.
  */
-export function barLineText(bars: string[]): string {
+export function barLineText(bars: string[], meter?: string): string {
   if (bars.length === 0) return '';
   const width = Math.max(MIN_BAR_WIDTH, ...bars.map((bar) => bar.trim().length));
-  return `| ${bars.map((bar) => bar.trim().padEnd(width)).join(' | ')} |`;
+  const line = `| ${bars.map((bar) => bar.trim().padEnd(width)).join(' | ')} |`;
+  // Tahtilaji ensimmäisen tahtiviivan eteen, kuten nuotissa.
+  return meter?.trim() ? `${meter.trim()} ${line}` : line;
 }
 
 /** Onko rivillä mitään näytettävää – tyhjä rivi erottaa osioita. */

@@ -182,6 +182,22 @@ export function setLineBars(song: Song, lineId: string, bars: string[] | null): 
   });
 }
 
+/** Asettaa rivin tahtilajin tai (tyhjä) poistaa sen. */
+export function setLineMeter(song: Song, lineId: string, meter: string): Song {
+  const trimmed = meter.trim();
+  return touch({
+    ...song,
+    lines: song.lines.map((line) => {
+      if (line.id !== lineId) return line;
+      if (trimmed) return { ...line, meter: trimmed };
+      if (!line.meter) return line;
+      const next = { ...line };
+      delete next.meter;
+      return next;
+    }),
+  });
+}
+
 /** Merkitsee rivin osion aluksi tai (null) poistaa merkinnän. */
 export function setLineSection(song: Song, lineId: string, mark: SectionMark | null): Song {
   return touch({
