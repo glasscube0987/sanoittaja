@@ -42,6 +42,28 @@ export default function BarSheet({ bars: initial, suggestions, onSave, onClose }
     setIndex((i) => i + 1);
   }
 
+  /**
+   * Lisää soinnun tahtiin sen sijaan että korvaisi sen.
+   *
+   * Tahtiin mahtuu useampi sointu, ja toisen lisääminen on tavallisempaa kuin
+   * ensimmäisen vaihtaminen. Korvaaminen onnistuu tyhjentämällä kenttä, joka on
+   * samassa näkymässä.
+   */
+  function addChord(chip: string) {
+    const nykyinen = (bars[index] ?? '').trim();
+    setBar(nykyinen ? `${nykyinen} ${chip}` : chip);
+  }
+
+  /** Tahtiviiva sointujen väliin: `Am F` → `| Am | F |`. */
+  function splitBar() {
+    const osat = (bars[index] ?? '').trim().split(/\s+/).filter(Boolean);
+    if (osat.length < 2) return;
+    setBars((prev) => [...prev.slice(0, index), ...osat, ...prev.slice(index + 1)]);
+    setIndex((i) => i + osat.length - 1);
+  }
+
+  const voiJakaa = (bars[index] ?? '').trim().split(/\s+/).filter(Boolean).length > 1;
+
   function removeBar() {
     if (bars.length <= 1) return;
     setBars((prev) => prev.filter((_, i) => i !== index));
@@ -102,7 +124,7 @@ export default function BarSheet({ bars: initial, suggestions, onSave, onClose }
 
         <div className="chip-row">
           {chips.map((chip) => (
-            <button type="button" key={chip} onClick={() => setBar(chip)}>
+            <button type="button" key={chip} onClick={() => addChord(chip)}>
               {chip}
             </button>
           ))}
@@ -114,6 +136,9 @@ export default function BarSheet({ bars: initial, suggestions, onSave, onClose }
           </button>
           <button type="button" onClick={removeBar} disabled={bars.length <= 1}>
             {t('bars.remove')}
+          </button>
+          <button type="button" onClick={splitBar} disabled={!voiJakaa}>
+            {t('bars.split')}
           </button>
         </div>
 

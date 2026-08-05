@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  barsFromLine,
+  DEFAULT_BARS,
   editLineText,
   insertLinesAfter,
   mergeLineWithPrevious,
@@ -207,5 +209,33 @@ describe('insertLinesAfter', () => {
     const song = insertLinesAfter(lahto, 'l1', lisatyt);
     expect(song.lines[0]).toEqual(lahto.lines[0]);
     expect(song.lines[3]).toEqual(lahto.lines[1]);
+  });
+});
+
+describe('barsFromLine', () => {
+  it('siirtää rivin soinnut tahdeiksi sijaintijärjestyksessä', () => {
+    const line = {
+      id: 'l',
+      text: 'kuu valaisee yön',
+      chords: [
+        { id: 'c2', pos: 13, symbol: 'E7' },
+        { id: 'c1', pos: 0, symbol: 'Am' },
+        { id: 'c3', pos: 4, symbol: 'F' },
+      ],
+    };
+    expect(barsFromLine(line)).toEqual(['Am', 'F', 'E7']);
+  });
+
+  it('palaa oletustahteihin kun sointuja ei ole', () => {
+    expect(barsFromLine({ id: 'l', text: 'sanoja', chords: [] })).toEqual(DEFAULT_BARS);
+  });
+
+  it('ei muuta lähtörivin sointujen järjestystä', () => {
+    const chords = [
+      { id: 'c2', pos: 9, symbol: 'F' },
+      { id: 'c1', pos: 0, symbol: 'Am' },
+    ];
+    barsFromLine({ id: 'l', text: 'sanoja', chords });
+    expect(chords.map((c) => c.symbol)).toEqual(['F', 'Am']);
   });
 });

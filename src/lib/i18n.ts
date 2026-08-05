@@ -86,6 +86,7 @@ const en = {
   'bars.placeholder': 'e.g. Am, Am F, %',
   'bars.add': '+ Bar',
   'bars.remove': '− Bar',
+  'bars.split': 'Split bar',
 
   'chord.edit': 'Edit chord',
   'chord.add': 'Add chord',
@@ -237,6 +238,7 @@ const fi: Record<Key, string> = {
   'bars.placeholder': 'esim. Am, Am F, %',
   'bars.add': '+ Tahti',
   'bars.remove': '− Tahti',
+  'bars.split': 'Jaa tahti',
 
   'chord.edit': 'Muokkaa sointua',
   'chord.add': 'Lisää sointu',

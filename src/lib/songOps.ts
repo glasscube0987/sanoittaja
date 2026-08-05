@@ -149,6 +149,18 @@ export function setChord(song: Song, lineId: string, pos: number, symbol: string
 export const DEFAULT_BARS = ['', '', '', ''];
 
 /**
+ * Rivin ankkuroidut soinnut tahdeiksi, yksi sointu tahtia kohti.
+ *
+ * Sointurivin voi tehdä valmiiksi merkityn rivin päälle, ja silloin soinnut
+ * ovat jo tiedossa: neljä tyhjää tahtia pakottaisi kirjoittamaan ne uudelleen.
+ * Ilman sointuja palataan oletustahteihin.
+ */
+export function barsFromLine(line: LyricLine): string[] {
+  const symbols = [...line.chords].sort((a, b) => a.pos - b.pos).map((c) => c.symbol);
+  return symbols.length > 0 ? symbols : DEFAULT_BARS;
+}
+
+/**
  * Muuttaa rivin sointuriviksi tai (null) takaisin sanoitusriviksi.
  *
  * Sanat ja ankkuroidut soinnut säilytetään muunnoksessa vaikka niitä ei

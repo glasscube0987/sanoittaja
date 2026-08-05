@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { Song } from '../lib/types';
 import {
   addLineAfter,
-  DEFAULT_BARS,
+  barsFromLine,
   duplicateSection,
   editLineText,
   insertLinesAfter,
@@ -283,8 +283,14 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
         <LineSheet
           line={lineTarget}
           onSave={({ section, bars }) => {
-            // Tahtien sisältö säilyy, jos rivi on jo sointurivi.
-            const withBars = setLineBars(song, lineTarget.id, bars ? (lineTarget.bars ?? DEFAULT_BARS) : null);
+            // Tahtien sisältö säilyy, jos rivi on jo sointurivi; muuten rivin
+            // omat soinnut siirtyvät tahdeiksi eikä niitä tarvitse kirjoittaa
+            // uudelleen.
+            const withBars = setLineBars(
+              song,
+              lineTarget.id,
+              bars ? (lineTarget.bars ?? barsFromLine(lineTarget)) : null,
+            );
             onChange(setLineSection(withBars, lineTarget.id, section));
             setLineTargetId(null);
             if (bars && !lineTarget.bars) setBarsTargetId(lineTarget.id);

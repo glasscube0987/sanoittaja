@@ -117,3 +117,84 @@ test('sointurivi näkyy tulostusnäkymässä ja live-tilassa', async ({ page }) 
   await page.emulateMedia({ media: 'print' });
   expect(await teksti(page.locator('.song-sheet .sheet-bars').first())).toBe('| Am | F  |    |    |');
 });
+
+test('rivin soinnut siirtyvät tahdeiksi muunnettaessa', async ({ page }) => {
+  // Sointuriviksi muunto neljälle tyhjälle tahdille pakotti kirjoittamaan
+  // rivillä jo olevat soinnut uudelleen.
+  await avaaLaulu(
+    page,
+    laulu({
+      lines: [
+        {
+          id: 'v1',
+          text: '',
+          section: { kind: 'solo' },
+          chords: [
+            { id: 'c1', pos: 0, symbol: 'Am' },
+            { id: 'c2', pos: 8, symbol: 'F' },
+            { id: 'c3', pos: 16, symbol: 'C' },
+          ],
+        },
+      ],
+    }),
+  );
+
+  await teeSointurivi(page);
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  expect(await teksti(page.locator('.bar-row'))).toBe('| Am | F  | C  |');
+});
+
+test('tyhjä rivi saa edelleen tyhjät tahdit', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeSointurivi(page);
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  expect(await teksti(page.locator('.bar-row'))).toBe('|    |    |    |    |');
+});
+
+test('sointuvalinta lisää tahtiin toisen soinnun ensimmäistä hävittämättä', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeSointurivi(page);
+
+  await page.locator('.sheet input').fill('Am');
+  // Aiemmin valinta korvasi koko tahdin, joten toista sointua ei saanut lisättyä.
+  await page.locator('.chip-row').getByRole('button', { name: 'F', exact: true }).click();
+  await expect(page.locator('.sheet input')).toHaveValue('Am F');
+
+  await page.getByRole('button', { name: 'Save' }).click();
+  expect(await teksti(page.locator('.bar-row'))).toBe('| Am F |      |      |      |');
+});
+
+test('sointuvalinta täyttää tyhjän tahdin sellaisenaan', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeSointurivi(page);
+
+  await page.locator('.chip-row').getByRole('button', { name: 'C', exact: true }).click();
+  await expect(page.locator('.sheet input')).toHaveValue('C');
+});
+
+test('tahdin voi jakaa kahdeksi tahtiviivan kohdalta', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeSointurivi(page);
+
+  await page.locator('.sheet input').fill('Am F');
+  await page.getByRole('button', { name: 'Split bar' }).click();
+
+  await page.getByRole('button', { name: 'Save' }).click();
+  expect(await teksti(page.locator('.bar-row'))).toBe('| Am | F  |    |    |    |');
+});
+
+test('jakaminen on pois käytöstä kun tahdissa on yksi sointu', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeSointurivi(page);
+
+  const jaa = page.getByRole('button', { name: 'Split bar' });
+  await expect(jaa).toBeDisabled();
+
+  await page.locator('.sheet input').fill('Am');
+  await expect(jaa).toBeDisabled();
+
+  await page.locator('.sheet input').fill('Am F');
+  await expect(jaa).toBeEnabled();
+});
