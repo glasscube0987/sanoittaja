@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { avaaLaulu, avaaLista, osiot } from './apu';
+import { avaaLaulu, avaaLista, osiot, tallennettuLaulu } from './apu';
 
 test('käyttöliittymä on oletuksena englanniksi', async ({ page }) => {
   await avaaLista(page);
@@ -31,18 +31,7 @@ test('osioiden nimet seuraavat kieltä eivätkä tallennu lauluun', async ({ pag
   await page.locator('.song-card').first().click();
   await expect.poll(() => osiot(page)).toEqual(['Säkeistö 1', 'Kertosäe', 'Säkeistö 2']);
 
-  const tallennettu = await page.evaluate(
-    () =>
-      new Promise<string>((resolve, reject) => {
-        const req = indexedDB.open('sanoittaja', 1);
-        req.onsuccess = () => {
-          const get = req.result.transaction('songs').objectStore('songs').get('testi');
-          get.onsuccess = () => resolve(JSON.stringify(get.result));
-          get.onerror = () => reject(get.error);
-        };
-        req.onerror = () => reject(req.error);
-      }),
-  );
+  const tallennettu = await tallennettuLaulu(page);
   expect(tallennettu).toContain('"kind":"verse"');
   expect(tallennettu).not.toContain('Säkeistö');
   expect(tallennettu).not.toContain('Verse');

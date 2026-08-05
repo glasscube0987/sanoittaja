@@ -59,6 +59,41 @@ export interface Song {
   updatedAt: number;
 }
 
+/**
+ * Keikkakohtainen soittolista. Sisältää vain laulujen tunnuksia, ei kopioita,
+ * joten sama laulu voi olla useassa setissä ja muokkaus näkyy kaikkialla.
+ * ”Kaikki laulut” ei ole tallennettu setti vaan oletusnäkymä – niin mikään
+ * laulu ei voi pudota näkyvistä setin mukana.
+ */
+export interface Setlist {
+  id: string;
+  name: string;
+  songIds: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Käsin piirretty merkintä nuottilehdellä.
+ *
+ * Veto kuuluu riviin ja sen pisteet ovat suhteellisia: x on osuus lehden
+ * leveydestä ja y rivin korkeuden monikerta. Näin merkintä seuraa riviä kun
+ * laulua muokataan tai tekstikoko vaihtuu – näyttöpikselit eivät kelpaisi,
+ * koska lehti ladotaan uudelleen jokaisesta muutoksesta.
+ */
+export interface Annotation {
+  id: string;
+  songId: string;
+  /** Rivi, jolta veto alkoi. Veto saa ulottua rivin ulkopuolelle. */
+  lineId: string;
+  color: string;
+  /** Viivan paksuus samassa suhteellisessa yksikössä kuin x. */
+  width: number;
+  /** Litteä lukulista `[x0, y0, x1, y1, …]`; olio per piste kolminkertaistaisi koon. */
+  points: number[];
+  createdAt: number;
+}
+
 export interface Recording {
   id: string;
   songId: string;

@@ -1,6 +1,16 @@
 /** Yhteiset apurit selaintesteille: laulun kylvö kantaan ja editorin avaus. */
 import type { Page } from '@playwright/test';
+import { DB_VERSION } from '../src/lib/db';
 import type { Song } from '../src/lib/types';
+
+/**
+ * Kannan versio luetaan sovelluksesta eikä kirjoiteta tänne käsin.
+ *
+ * Testit avaavat kannan itse kylvääkseen dataa. Jos versio olisi kovakoodattu,
+ * sovelluksen versionnosto kaataisi ne `VersionError`iin – virheeseen, joka ei
+ * liity testattavaan asiaan mitenkään ja jonka syy on hankala nähdä.
+ */
+export { DB_VERSION };
 
 export const PITKA_RIVI =
   'ja tie vie pohjoiseen halki yön ja sateen kunnes aamu tulee ja valo osuu ikkunaan';
@@ -47,14 +57,19 @@ export async function avaaLista(page: Page, song: Song = laulu()): Promise<void>
   // kieliasetuksesta.
   await page.evaluate(() => localStorage.setItem('sanoittaja.lang', 'en'));
   await page.evaluate(
-    (s) =>
+    ({ s, versio }) =>
       new Promise<void>((resolve, reject) => {
-        const req = indexedDB.open('sanoittaja', 1);
+        const req = indexedDB.open('sanoittaja', versio);
         req.onupgradeneeded = () => {
           const db = req.result;
           if (!db.objectStoreNames.contains('songs')) db.createObjectStore('songs', { keyPath: 'id' });
-          if (!db.objectStoreNames.contains('recordings')) {
-            db.createObjectStore('recordings', { keyPath: 'id' }).createIndex('songId', 'songId');
+          for (const name of ['recordings', 'annotations']) {
+            if (!db.objectStoreNames.contains(name)) {
+              db.createObjectStore(name, { keyPath: 'id' }).createIndex('songId', 'songId');
+            }
+          }
+          if (!db.objectStoreNames.contains('setlists')) {
+            db.createObjectStore('setlists', { keyPath: 'id' });
           }
         };
         req.onsuccess = () => {
@@ -65,7 +80,7 @@ export async function avaaLista(page: Page, song: Song = laulu()): Promise<void>
         };
         req.onerror = () => reject(req.error);
       }),
-    song as unknown as Record<string, unknown>,
+    { s: song as unknown as Record<string, unknown>, versio: DB_VERSION },
   );
   await page.reload();
   await page.waitForSelector('.song-card');
@@ -76,6 +91,23 @@ export async function avaaLaulu(page: Page, song: Song = laulu()): Promise<void>
   await avaaLista(page, song);
   await page.locator('.song-card').first().click();
   await page.waitForSelector('.lyrics .section');
+}
+
+/** Kantaan tallennettu laulu JSON-merkkijonona. */
+export function tallennettuLaulu(page: Page, songId = 'testi'): Promise<string> {
+  return page.evaluate(
+    ({ id, versio }) =>
+      new Promise<string>((resolve, reject) => {
+        const req = indexedDB.open('sanoittaja', versio);
+        req.onsuccess = () => {
+          const get = req.result.transaction('songs').objectStore('songs').get(id);
+          get.onsuccess = () => resolve(JSON.stringify(get.result));
+          get.onerror = () => reject(get.error);
+        };
+        req.onerror = () => reject(req.error);
+      }),
+    { id: songId, versio: DB_VERSION },
+  );
 }
 
 /** Osioiden otsikot näytön järjestyksessä. */

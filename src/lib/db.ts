@@ -1,12 +1,15 @@
 /**
- * Paikallinen tallennus: IndexedDB, jossa kaksi taulua – laulut ja
- * nauhoitteet (äänidata Blobeina). Kaikki toimii offline; pilvisynkronointi
- * on erillinen kerros tämän päällä.
+ * Paikallinen tallennus: IndexedDB. Laulut, nauhoitteet (äänidata Blobeina),
+ * settilistat ja nuottilehden merkinnät omissa tauluissaan. Kaikki toimii
+ * offline; pilvisynkronointi on erillinen kerros tämän päällä.
+ *
+ * Taulut luodaan `if (!contains)` -vartioituna, joten version nosto lisää
+ * puuttuvat taulut koskematta olemassa olevaan dataan.
  */
-import type { Recording, Song } from './types';
+import type { Annotation, Recording, Setlist, Song } from './types';
 
 const DB_NAME = 'sanoittaja';
-const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -21,6 +24,13 @@ function openDb(): Promise<IDBDatabase> {
         }
         if (!db.objectStoreNames.contains('recordings')) {
           const store = db.createObjectStore('recordings', { keyPath: 'id' });
+          store.createIndex('songId', 'songId');
+        }
+        if (!db.objectStoreNames.contains('setlists')) {
+          db.createObjectStore('setlists', { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('annotations')) {
+          const store = db.createObjectStore('annotations', { keyPath: 'id' });
           store.createIndex('songId', 'songId');
         }
       };
@@ -59,14 +69,80 @@ export async function saveSong(song: Song): Promise<void> {
   await txDone(tx);
 }
 
+/**
+ * Poistaa laulun ja kaiken siihen kuuluvan samassa transaktiossa: nauhoitteet,
+ * merkinnät ja viittaukset settilistoilta. Orvoksi jäänyt viittaus näkyisi
+ * setissä tyhjänä rivinä.
+ */
 export async function deleteSong(songId: string): Promise<void> {
   const db = await openDb();
-  const tx = db.transaction(['songs', 'recordings'], 'readwrite');
+  const tx = db.transaction(['songs', 'recordings', 'annotations', 'setlists'], 'readwrite');
   tx.objectStore('songs').delete(songId);
-  const index = tx.objectStore('recordings').index('songId');
-  const keys = await reqResult(index.getAllKeys(songId));
-  for (const key of keys) tx.objectStore('recordings').delete(key);
+
+  for (const name of ['recordings', 'annotations'] as const) {
+    const keys = await reqResult(tx.objectStore(name).index('songId').getAllKeys(songId));
+    for (const key of keys) tx.objectStore(name).delete(key);
+  }
+
+  const setlists = (await reqResult(tx.objectStore('setlists').getAll())) as Setlist[];
+  for (const list of setlists) {
+    if (!list.songIds.includes(songId)) continue;
+    tx.objectStore('setlists').put({
+      ...list,
+      songIds: list.songIds.filter((id) => id !== songId),
+      updatedAt: Date.now(),
+    });
+  }
+
   await txDone(tx);
+}
+
+export async function listSetlists(): Promise<Setlist[]> {
+  const db = await openDb();
+  const lists = await reqResult(db.transaction('setlists').objectStore('setlists').getAll());
+  return (lists as Setlist[]).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function saveSetlist(list: Setlist): Promise<void> {
+  const db = await openDb();
+  const tx = db.transaction('setlists', 'readwrite');
+  tx.objectStore('setlists').put(list);
+  await txDone(tx);
+}
+
+export async function deleteSetlist(id: string): Promise<void> {
+  const db = await openDb();
+  const tx = db.transaction('setlists', 'readwrite');
+  tx.objectStore('setlists').delete(id);
+  await txDone(tx);
+}
+
+export async function listAnnotations(songId: string): Promise<Annotation[]> {
+  const db = await openDb();
+  const index = db.transaction('annotations').objectStore('annotations').index('songId');
+  const rows = await reqResult(index.getAll(songId));
+  return (rows as Annotation[]).sort((a, b) => a.createdAt - b.createdAt);
+}
+
+export async function saveAnnotation(note: Annotation): Promise<void> {
+  const db = await openDb();
+  const tx = db.transaction('annotations', 'readwrite');
+  tx.objectStore('annotations').put(note);
+  await txDone(tx);
+}
+
+export async function deleteAnnotation(id: string): Promise<void> {
+  const db = await openDb();
+  const tx = db.transaction('annotations', 'readwrite');
+  tx.objectStore('annotations').delete(id);
+  await txDone(tx);
+}
+
+/** Kaikki merkinnät varmuuskopiota varten. */
+export async function listAllAnnotations(): Promise<Annotation[]> {
+  const db = await openDb();
+  const rows = await reqResult(db.transaction('annotations').objectStore('annotations').getAll());
+  return rows as Annotation[];
 }
 
 export async function listRecordings(songId: string): Promise<Recording[]> {

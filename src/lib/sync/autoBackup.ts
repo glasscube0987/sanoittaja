@@ -8,7 +8,13 @@
  * napautuksen. Ilman kirjautumista pudotaan laululistan muistutukseen.
  */
 import { dropboxProvider } from './dropbox';
-import { backupFileName, exportLibrary, markBackupTaken } from './exportFile';
+import {
+  AUTO_BACKUP_MAX_BYTES,
+  backupFileName,
+  exportLibrary,
+  formatSize,
+  markBackupTaken,
+} from './exportFile';
 
 const ENABLED_KEY = 'sanoittaja.autoBackup';
 const CHANGED_KEY = 'sanoittaja.libraryChanged';
@@ -73,7 +79,7 @@ export function shouldAutoBackup({ enabled, connected, changedAt, lastAt, now }:
   return now - lastAt >= AUTO_BACKUP_INTERVAL_MS;
 }
 
-export type AutoBackupResult = 'skipped' | 'done';
+export type AutoBackupResult = 'skipped' | 'done' | 'too-large';
 
 /** Kesken oleva kopio; estää ajastinta ja näkyvyystapahtumaa päällekkäin. */
 let kesken: Promise<AutoBackupResult> | null = null;
@@ -95,7 +101,17 @@ async function runAutoBackup(now: number): Promise<AutoBackupResult> {
   };
   if (!shouldAutoBackup(state)) return 'skipped';
 
-  await dropboxProvider.uploadBackup(await exportLibrary(), backupFileName(now));
+  const paketti = await exportLibrary();
+  if (paketti.size > AUTO_BACKUP_MAX_BYTES) {
+    // Hitaasti epäonnistuva lataus toistuisi taustalla loputtomiin; käsin
+    // otettu kopio ja jakovalikko toimivat isollakin kirjastolla.
+    console.warn(
+      `Kirjasto on liian suuri automaattiseen pilvikopioon (${formatSize(paketti.size)})`,
+    );
+    return 'too-large';
+  }
+
+  await dropboxProvider.uploadBackup(paketti, backupFileName(now));
   markCloudBackupTaken(now);
   // Pilvikopio on yhtä lailla varmuuskopio, joten se nollaa myös muistutuksen.
   markBackupTaken(now);

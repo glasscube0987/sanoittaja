@@ -3,19 +3,41 @@
  * yhtenä JSON-tiedostona. Toimii ilman mitään pilvitunnuksia, ja tiedoston
  * voi jakaa puhelimen jakovalikosta suoraan Driveen tai Dropboxiin.
  */
-import { listRecordings, listSongs, saveRecording, saveSong } from '../db';
-import type { Recording, Song } from '../types';
+import {
+  listAllAnnotations,
+  listRecordings,
+  listSetlists,
+  listSongs,
+  saveAnnotation,
+  saveRecording,
+  saveSetlist,
+  saveSong,
+} from '../db';
+import type { Annotation, Recording, Setlist, Song } from '../types';
 
 interface ExportedRecording extends Omit<Recording, 'blob'> {
   dataBase64: string;
 }
 
+/** Nykyinen pakettiversio. Versio 1 oli ilman settilistoja ja merkintöjä. */
+export const BUNDLE_VERSION = 2;
+
 interface ExportBundle {
   app: 'sanoittaja';
-  version: 1;
+  version: number;
   exportedAt: number;
   songs: Song[];
   recordings: ExportedRecording[];
+  /** Versiosta 2 alkaen. Vanhemmissa paketeissa puuttuvat. */
+  setlists?: Setlist[];
+  annotations?: Annotation[];
+}
+
+export interface ImportResult {
+  songs: number;
+  recordings: number;
+  setlists: number;
+  annotations: number;
 }
 
 function blobToBase64(blob: Blob): Promise<string> {
@@ -43,19 +65,44 @@ export async function exportLibrary(): Promise<Blob> {
       recordings.push({ ...meta, dataBase64: await blobToBase64(blob) });
     }
   }
-  const bundle: ExportBundle = { app: 'sanoittaja', version: 1, exportedAt: Date.now(), songs, recordings };
+  const bundle: ExportBundle = {
+    app: 'sanoittaja',
+    version: BUNDLE_VERSION,
+    exportedAt: Date.now(),
+    songs,
+    recordings,
+    setlists: await listSetlists(),
+    annotations: await listAllAnnotations(),
+  };
   return new Blob([JSON.stringify(bundle)], { type: 'application/json' });
 }
 
-export async function importLibrary(file: Blob): Promise<{ songs: number; recordings: number }> {
+/**
+ * Lukee varmuuskopion. Vanhemmat paketit kelpaavat sellaisinaan: puuttuvat
+ * kentät ovat tyhjiä listoja, eikä jo otettu kopio saa lakata toimimasta
+ * siksi, että sovellukseen on myöhemmin lisätty uutta tallennettavaa.
+ */
+export async function importLibrary(file: Blob): Promise<ImportResult> {
   const bundle = JSON.parse(await file.text()) as ExportBundle;
   if (bundle.app !== 'sanoittaja') throw new Error('Tiedosto ei ole Sanoittaja-varmuuskopio');
+
+  const setlists = bundle.setlists ?? [];
+  const annotations = bundle.annotations ?? [];
+
   for (const song of bundle.songs) await saveSong(song);
   for (const rec of bundle.recordings) {
     const { dataBase64, ...meta } = rec;
     await saveRecording({ ...meta, blob: base64ToBlob(dataBase64, rec.mimeType) });
   }
-  return { songs: bundle.songs.length, recordings: bundle.recordings.length };
+  for (const list of setlists) await saveSetlist(list);
+  for (const note of annotations) await saveAnnotation(note);
+
+  return {
+    songs: bundle.songs.length,
+    recordings: bundle.recordings.length,
+    setlists: setlists.length,
+    annotations: annotations.length,
+  };
 }
 
 /**
@@ -76,6 +123,25 @@ export function downloadBlob(blob: Blob, filename: string): void {
   a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+/**
+ * Yläraja automaattiselle pilvikopiolle.
+ *
+ * Paketti koodaa nauhoitteet ja muun binäärin base64:ksi, joten iso kirjasto
+ * kasvaa nopeasti kymmeniin megatavuihin. Taustalla toistuva hidas ja
+ * epäonnistuva lataus on käyttäjälle huonompi kuin rehellinen huomautus, joten
+ * rajan ylittävä paketti jätetään lähettämättä ja se kerrotaan.
+ */
+export const AUTO_BACKUP_MAX_BYTES = 40 * 1024 * 1024;
+
+/** Paketin koko luettavana tekstinä, esim. "12,4 Mt". */
+export function formatSize(bytes: number, lang: 'en' | 'fi' = 'en'): string {
+  const mb = bytes / (1024 * 1024);
+  const unit = lang === 'fi' ? 'Mt' : 'MB';
+  if (mb >= 10) return `${Math.round(mb)} ${unit}`;
+  if (mb >= 0.1) return `${mb.toFixed(1).replace('.', lang === 'fi' ? ',' : '.')} ${unit}`;
+  return `${Math.max(1, Math.round(bytes / 1024))} ${lang === 'fi' ? 'kt' : 'kB'}`;
 }
 
 const LAST_BACKUP_KEY = 'sanoittaja.lastBackup';

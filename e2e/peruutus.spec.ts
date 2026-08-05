@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { avaaLaulu, laulu } from './apu';
+import { avaaLaulu, laulu, tallennettuLaulu } from './apu';
 
 function sanoituslaulu() {
   return laulu({
@@ -102,18 +102,7 @@ test('peruutus ei jätä kantaan peruutettua tilaa', async ({ page }) => {
   // Odottava tallennus sisälsi peruutetun tilan; jos sitä ei peruta, se
   // kirjoittuisi kantaan hetkeä myöhemmin ja peruutus kumoutuisi itsestään.
   await page.waitForTimeout(700);
-  const tallennettu = await page.evaluate(
-    () =>
-      new Promise<string>((resolve, reject) => {
-        const req = indexedDB.open('sanoittaja', 1);
-        req.onsuccess = () => {
-          const get = req.result.transaction('songs').objectStore('songs').get('testi');
-          get.onsuccess = () => resolve(JSON.stringify(get.result));
-          get.onerror = () => reject(get.error);
-        };
-        req.onerror = () => reject(req.error);
-      }),
-  );
+  const tallennettu = await tallennettuLaulu(page);
   expect(tallennettu).toContain('"symbol":"Am"');
   expect(tallennettu).not.toContain('"symbol":"Bm"');
 });

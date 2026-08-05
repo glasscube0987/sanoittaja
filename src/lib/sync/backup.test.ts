@@ -4,6 +4,7 @@ import {
   backupFileName,
   backupIsStale,
   daysSinceBackup,
+  formatSize,
   lastBackupAt,
   markBackupTaken,
 } from './exportFile';
@@ -83,5 +84,22 @@ describe('backupIsStale', () => {
 
     markBackupTaken(NOW - BACKUP_REMINDER_DAYS * DAY);
     expect(backupIsStale(NOW)).toBe(true);
+  });
+});
+
+describe('paketin koon esitys', () => {
+  it('näyttää suuret koot kokonaisina megatavuina', () => {
+    expect(formatSize(42 * 1024 * 1024)).toBe('42 MB');
+    expect(formatSize(42 * 1024 * 1024, 'fi')).toBe('42 Mt');
+  });
+
+  it('näyttää pienet koot desimaalilla', () => {
+    expect(formatSize(2.5 * 1024 * 1024)).toBe('2.5 MB');
+    expect(formatSize(2.5 * 1024 * 1024, 'fi')).toBe('2,5 Mt');
+  });
+
+  it('putoaa kilotavuihin pienellä kirjastolla', () => {
+    expect(formatSize(30 * 1024)).toBe('30 kB');
+    expect(formatSize(30 * 1024, 'fi')).toBe('30 kt');
   });
 });
