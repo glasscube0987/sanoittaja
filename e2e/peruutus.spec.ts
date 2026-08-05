@@ -117,3 +117,46 @@ test('peruutus ei jätä kantaan peruutettua tilaa', async ({ page }) => {
   expect(tallennettu).toContain('"symbol":"Am"');
   expect(tallennettu).not.toContain('"symbol":"Bm"');
 });
+
+/*
+ * Yläpalkki on position: sticky; top: 0, joten vieritettäessä se tarttuu
+ * näkymän yläreunaan – #root-elementin turva-aluetäytön yläpuolelle.
+ * iPhonella se jäi kameran ja tilapalkin taakse. Turva-alue emuloidaan
+ * oikeasti eikä tarkisteta pelkkää CSS-tekstiä.
+ */
+test('yläpalkki pysyy kameran ja tilapalkin alapuolella vieritettäessä', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'turva-alueen emulointi on Chromium-kohtainen');
+  await avaaLaulu(
+    page,
+    laulu({ lines: Array.from({ length: 40 }, (_, i) => ({ id: `l${i}`, text: `rivi ${i}`, chords: [] })) }),
+  );
+
+  const YLAREUNA = 59;
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: YLAREUNA } });
+
+  // Turva-alue on nyt palkin omassa täytössä, joten se on voimassa sekä ennen
+  // vieritystä että sen jälkeen.
+  const alussa = await page.getByLabel('Undo').boundingBox();
+  expect(alussa!.y, 'ennen vieritystä').toBeGreaterThanOrEqual(YLAREUNA);
+
+  await page.evaluate(() => window.scrollTo(0, 900));
+  const vieritettyna = await page.getByLabel('Undo').boundingBox();
+  expect(vieritettyna!.y, 'vieritettynä').toBeGreaterThanOrEqual(YLAREUNA);
+});
+
+test('laululistan yläpalkki pysyy kameran alapuolella', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'turva-alueen emulointi on Chromium-kohtainen');
+  await avaaLaulu(page);
+  await page.getByLabel('Songs').click();
+
+  const YLAREUNA = 59;
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: YLAREUNA } });
+
+  const asetukset = await page.getByLabel('Settings').boundingBox();
+  expect(asetukset!.y).toBeGreaterThanOrEqual(YLAREUNA);
+});
