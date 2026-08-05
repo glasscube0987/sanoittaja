@@ -17,7 +17,10 @@ import Icon from './Icon';
 import SongSheet from './SongSheet';
 
 interface Props {
-  song: Song;
+  /** Soittojono: yksi laulu editorista, tai settilistan laulut järjestyksessä. */
+  songs: Song[];
+  index: number;
+  onIndexChange: (index: number) => void;
   onClose: () => void;
 }
 
@@ -29,8 +32,10 @@ type WakeLockNavigator = Navigator & {
   wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinelLike> };
 };
 
-export default function LiveView({ song, onClose }: Props) {
+export default function LiveView({ songs, index, onIndexChange, onClose }: Props) {
   const t = useT();
+  const song = songs[index];
+  const monta = songs.length > 1;
   const initial = useRef(loadLiveSettings()).current;
   const [speed, setSpeed] = useState(initial.speed);
   const [fontSize, setFontSize] = useState(initial.fontSize);
@@ -124,9 +129,26 @@ export default function LiveView({ song, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose, wake]);
 
+  /*
+   * Biisin vaihtuessa aloitetaan alusta ja vieritys pysäytetään. Setin
+   * eteneminen on aina käyttäjän napautus: itsestään seuraavan biisin päälle
+   * jatkuva vieritys olisi keikalla pahempi kuin yksi ylimääräinen painallus.
+   */
+  useEffect(() => {
+    setRunning(false);
+    scrollRef.current?.scrollTo({ top: 0 });
+    wake();
+  }, [index, wake]);
+
   function toggle() {
     setRunning((r) => !r);
     wake();
+  }
+
+  function siirry(step: number) {
+    const next = index + step;
+    if (next < 0 || next >= songs.length) return;
+    onIndexChange(next);
   }
 
   function adjust(setter: (fn: (v: number) => number) => void, delta: number, min: number, max: number) {
@@ -148,9 +170,29 @@ export default function LiveView({ song, onClose }: Props) {
       </div>
 
       <div
-        className={showControls ? 'live-controls' : 'live-controls hidden'}
+        className={showControls ? 'live-bar' : 'live-bar hidden'}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Settilistan selaus omalla rivillään: ohjainrivi on jo täynnä. */}
+        {monta && (
+          <div className="live-nav">
+            <button onClick={() => siirry(-1)} disabled={index === 0} aria-label={t('live.previousSong')}>
+              <Icon name="chevronLeft" size={20} />
+            </button>
+            <span className="live-position">
+              {t('live.position', { index: index + 1, count: songs.length })}
+              <small>{song.title || t('app.untitled')}</small>
+            </span>
+            <button
+              onClick={() => siirry(1)}
+              disabled={index === songs.length - 1}
+              aria-label={t('live.nextSong')}
+            >
+              <Icon name="chevronRight" size={20} />
+            </button>
+          </div>
+        )}
+        <div className="live-controls">
         <button onClick={toggle} className="primary" aria-label={t(running ? 'live.pause' : 'live.play')}>
           <Icon name={running ? 'pause' : 'play'} size={20} />
         </button>
@@ -182,6 +224,7 @@ export default function LiveView({ song, onClose }: Props) {
         <button className="ghost" onClick={onClose} aria-label={t('live.exit')}>
           ✕
         </button>
+        </div>
       </div>
     </div>
   );

@@ -86,6 +86,40 @@ export async function avaaLista(page: Page, song: Song = laulu()): Promise<void>
   await page.waitForSelector('.song-card');
 }
 
+/** Kylvää useita lauluja ja jää laululistaan; järjestys on annettu järjestys. */
+export async function avaaMonta(page: Page, nimet: string[]): Promise<void> {
+  // Laululista järjestää muokkausajan mukaan uusin ensin, joten aikaleimat
+  // annetaan laskevina – muuten testien odotettu järjestys olisi käänteinen.
+  const songs = nimet.map((title, i) =>
+    laulu({ id: `s${i}`, title, updatedAt: nimet.length - i, lines: [{ id: `l${i}`, text: title, chords: [] }] }),
+  );
+  await avaaLista(page, songs[0]);
+  for (const song of songs.slice(1)) await kylvaLaulu(page, song);
+  await page.reload();
+  await page.waitForSelector('.song-card');
+}
+
+/** Lisää laulun kantaan ilman sivun uudelleenlatausta. */
+async function kylvaLaulu(page: Page, song: Song): Promise<void> {
+  await page.evaluate(
+    ({ s, versio }) =>
+      new Promise<void>((resolve, reject) => {
+        const req = indexedDB.open('sanoittaja', versio);
+        req.onsuccess = () => {
+          const tx = req.result.transaction('songs', 'readwrite');
+          tx.objectStore('songs').put(s);
+          tx.oncomplete = () => {
+            req.result.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
+        };
+        req.onerror = () => reject(req.error);
+      }),
+    { s: song as unknown as Record<string, unknown>, versio: DB_VERSION },
+  );
+}
+
 /** Kylvää laulun ja avaa sen editoriin. */
 export async function avaaLaulu(page: Page, song: Song = laulu()): Promise<void> {
   await avaaLista(page, song);

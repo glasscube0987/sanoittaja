@@ -28,7 +28,6 @@ import ChordSheet from './ChordSheet';
 import Icon from './Icon';
 import ImportSheet from './ImportSheet';
 import LineEditor from './LineEditor';
-import LiveView from './LiveView';
 import BarSheet from './BarSheet';
 import LineSheet from './LineSheet';
 import RecordingsPanel from './RecordingsPanel';
@@ -41,6 +40,8 @@ interface Props {
   canUndo: boolean;
   onBack: () => void;
   onDelete: () => void;
+  /** Live-tila avataan App-tasolla, jotta se voi selata settilistan läpi. */
+  onLive: () => void;
 }
 
 /**
@@ -56,12 +57,11 @@ export interface ChordTarget {
   symbol: string;
 }
 
-export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, onDelete }: Props) {
+export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, onDelete, onLive }: Props) {
   const { t } = useI18n();
   const [chordTarget, setChordTarget] = useState<ChordTarget | null>(null);
   const [lineTargetId, setLineTargetId] = useState<string | null>(null);
   const [barsTargetId, setBarsTargetId] = useState<string | null>(null);
-  const [liveOpen, setLiveOpen] = useState(false);
   // null = tuonti laulun loppuun, muuten rivin id jonka perään rivit menevät.
   const [importAfterId, setImportAfterId] = useState<string | null | undefined>(undefined);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
@@ -198,7 +198,7 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
         </button>
         {/* Yläpalkki on sticky, joten live-tila on käytettävissä heti biisin
             avatessa ilman että näkymää tarvitsee rullata alas. */}
-        <button className="live-open" onClick={() => setLiveOpen(true)}>
+        <button className="live-open" onClick={onLive}>
           {t('editor.live')}
         </button>
       </header>
@@ -396,7 +396,6 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
           onClose={() => setImportAfterId(undefined)}
         />
       )}
-      {liveOpen && <LiveView song={song} onClose={() => setLiveOpen(false)} />}
     </>
   );
 }

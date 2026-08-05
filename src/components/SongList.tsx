@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { formatDate, useI18n } from '../lib/i18n';
-import type { Song } from '../lib/types';
+import type { Setlist, Song } from '../lib/types';
+import { addSongs, moveSong, newSetlist, removeSong, renameSetlist, setlistSongs } from '../lib/setlists';
 import {
   BACKUP_EVENT,
   backupFileName,
@@ -16,22 +17,40 @@ import type { ImportResult } from '../lib/importText';
 import CloudSheet from './CloudSheet';
 import Icon from './Icon';
 import ImportSheet from './ImportSheet';
+import SetlistPicker from './SetlistPicker';
 import SettingsSheet from './SettingsSheet';
 
 interface Props {
   songs: Song[];
+  setlists: Setlist[];
   onOpen: (songId: string) => void;
   onCreate: () => void;
   onImport: (result: ImportResult) => void;
   onLibraryChanged: () => void;
+  onSetlistChange: (list: Setlist) => void;
+  onSetlistDelete: (id: string) => void;
+  onLive: (songIds: string[], index: number) => void;
 }
 
-export default function SongList({ songs, onOpen, onCreate, onImport, onLibraryChanged }: Props) {
+export default function SongList({
+  songs,
+  setlists,
+  onOpen,
+  onCreate,
+  onImport,
+  onLibraryChanged,
+  onSetlistChange,
+  onSetlistDelete,
+  onLive,
+}: Props) {
   const { t, lang } = useI18n();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [cloudOpen, setCloudOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [status, setStatus] = useState('');
+  // null = ”Kaikki laulut”, joka ei ole tallennettu setti vaan oletusnäkymä.
+  const [setlistId, setSetlistId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -80,6 +99,32 @@ export default function SongList({ songs, onOpen, onCreate, onImport, onLibraryC
     }
   }
 
+  const setlist = setlists.find((l) => l.id === setlistId) ?? null;
+  // Setti näyttää laulut omassa järjestyksessään, kirjasto viimeksi muokattu ensin.
+  const naytetyt = setlist ? setlistSongs(setlist, songs) : songs;
+
+  function luoSetti() {
+    const name = prompt(t('set.namePrompt'))?.trim();
+    if (!name) return;
+    const list = newSetlist(name);
+    onSetlistChange(list);
+    setSetlistId(list.id);
+  }
+
+  function nimeaSetti() {
+    if (!setlist) return;
+    const name = prompt(t('set.namePrompt'), setlist.name)?.trim();
+    if (!name) return;
+    onSetlistChange(renameSetlist(setlist, name));
+  }
+
+  function poistaSetti() {
+    if (!setlist) return;
+    if (!confirm(t('set.confirmDelete', { name: setlist.name }))) return;
+    onSetlistDelete(setlist.id);
+    setSetlistId(null);
+  }
+
   return (
     <>
       <header className="topbar">
@@ -96,6 +141,48 @@ export default function SongList({ songs, onOpen, onCreate, onImport, onLibraryC
         </button>
       </header>
       <main className="screen">
+        {/* Settivalitsin: ”Kaikki laulut” ensimmäisenä, jotta koko kirjasto on
+            aina yhden napautuksen päässä myös setin sisältä. */}
+        <div className="setlist-bar">
+          <button
+            className={setlist ? '' : 'primary'}
+            onClick={() => setSetlistId(null)}
+          >
+            {t('set.all')}
+          </button>
+          {setlists.map((list) => (
+            <button
+              key={list.id}
+              className={list.id === setlistId ? 'primary' : ''}
+              onClick={() => setSetlistId(list.id)}
+            >
+              {list.name}
+            </button>
+          ))}
+          <button className="ghost" onClick={luoSetti}>
+            {t('set.new')}
+          </button>
+        </div>
+
+        {setlist && (
+          <div className="button-row">
+            <button onClick={() => setPickerOpen(true)}>{t('set.addSongs')}</button>
+            <button
+              className="primary"
+              disabled={naytetyt.length === 0}
+              onClick={() => onLive(naytetyt.map((s) => s.id), 0)}
+            >
+              {t('set.playLive')}
+            </button>
+            <button className="ghost small" onClick={nimeaSetti}>
+              {t('set.rename')}
+            </button>
+            <button className="ghost small danger" onClick={poistaSetti}>
+              {t('set.delete')}
+            </button>
+          </div>
+        )}
+
         {songs.length === 0 && (
           <p className="empty-note">
             {t('list.emptyTitle')}
@@ -103,22 +190,61 @@ export default function SongList({ songs, onOpen, onCreate, onImport, onLibraryC
             {t('list.emptyHint')}
           </p>
         )}
-        {songs.map((song) => (
-          <button key={song.id} className="song-card" onClick={() => onOpen(song.id)}>
-            <span className="song-card-text">
-              <span className="title">{song.title || t('app.untitled')}</span>
-              <span className="meta">
-                {song.songKey ? `${song.songKey} · ` : ''}
-                {t('list.meta', {
-                  // Sointurivit lasketaan mukaan, jottei pelkistä tahdeista koostuva
-                  // laulu näytä tyhjältä.
-                  lines: song.lines.filter((l) => l.text.trim() || l.bars?.length).length,
-                  date: formatDate(song.updatedAt, lang),
-                })}
+        {setlist && naytetyt.length === 0 && songs.length > 0 && (
+          <p className="empty-note">
+            {t('set.empty')}
+            <br />
+            {t('set.emptyHint')}
+          </p>
+        )}
+        {naytetyt.map((song, i) => (
+          <div className="song-row" key={song.id}>
+            <button className="song-card" onClick={() => onOpen(song.id)}>
+              <span className="song-card-text">
+                <span className="title">
+                  {setlist && <span className="song-number">{i + 1}.</span>}
+                  {song.title || t('app.untitled')}
+                </span>
+                <span className="meta">
+                  {song.songKey ? `${song.songKey} · ` : ''}
+                  {t('list.meta', {
+                    // Sointurivit lasketaan mukaan, jottei pelkistä tahdeista koostuva
+                    // laulu näytä tyhjältä.
+                    lines: song.lines.filter((l) => l.text.trim() || l.bars?.length).length,
+                    date: formatDate(song.updatedAt, lang),
+                  })}
+                </span>
               </span>
-            </span>
-            <Icon name="chevronRight" size={18} />
-          </button>
+              <Icon name="chevronRight" size={18} />
+            </button>
+            {setlist && (
+              <div className="song-order">
+                <button
+                  className="icon-button small"
+                  disabled={i === 0}
+                  aria-label={t('set.moveUp', { title: song.title || t('app.untitled') })}
+                  onClick={() => onSetlistChange(moveSong(setlist, song.id, -1))}
+                >
+                  <Icon name="chevronUp" size={18} />
+                </button>
+                <button
+                  className="icon-button small"
+                  disabled={i === naytetyt.length - 1}
+                  aria-label={t('set.moveDown', { title: song.title || t('app.untitled') })}
+                  onClick={() => onSetlistChange(moveSong(setlist, song.id, 1))}
+                >
+                  <Icon name="chevronDown" size={18} />
+                </button>
+                <button
+                  className="icon-button small"
+                  aria-label={t('set.removeSong', { title: song.title || t('app.untitled') })}
+                  onClick={() => onSetlistChange(removeSong(setlist, song.id))}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
         ))}
         {/* Vanhat laulut ovat muualla kirjoitettuina; tuonti on laulun luonnin
             rinnakkainen tapa, joten se on listalla eikä asetuksissa. */}
@@ -150,6 +276,17 @@ export default function SongList({ songs, onOpen, onCreate, onImport, onLibraryC
         />
       </main>
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
+      {pickerOpen && setlist && (
+        <SetlistPicker
+          setlist={setlist}
+          songs={songs}
+          onAdd={(ids) => {
+            onSetlistChange(addSongs(setlist, ids));
+            setPickerOpen(false);
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
       {importOpen && (
         <ImportSheet
           mode="new"

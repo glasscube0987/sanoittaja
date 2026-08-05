@@ -77,6 +77,12 @@ demoja puhelimella ja vie kaikki pilveen.
   kopioidaan taustalla muutaman kerran päivässä aina kun jotain on muuttunut;
   mitään ei tarvitse muistaa painaa. Kirjautuminen säilyy refresh tokenilla, ja
   toiminnon voi kytkeä pois asetuksista.
+- **Settilistat** – laulut ovat aina ”Kaikki laulut” -näkymässä, ja niistä voi
+  koota keikkakohtaisia settejä. Setti sisältää vain viittauksia, joten sama
+  laulu voi olla useassa setissä ja muokkaus näkyy kaikissa. Järjestys ▲▼:llä,
+  ja **live-tilassa setin läpi pääsee biisistä toiseen** poistumatta
+  esitysnäkymästä. Biisin vaihto on aina käyttäjän napautus: automaattinen
+  vieritys ei jatku seuraavan biisin päälle itsestään.
 - **Live-tila** – esiintymisnäkymä, joka vierittää laulua valitulla nopeudella,
   jolloin kädet pysyvät soittimessa. Tekstikoko ja nopeus säädettävissä, ruudun
   napautus pysäyttää ja jatkaa, ja näyttö pidetään hereillä (Wake Lock). Nopeus ja
@@ -187,6 +193,7 @@ src/
     print.ts        Nuottilehden tulostus (oma moduulinsa natiiviporttia varten)
     render.ts       Sointumerkkien ja sointurivien ladonta tekstiksi (tulostus, live)
     sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
+    setlists.ts     Settilistojen sisältö ja järjestys (puhtaita funktioita)
     songOps.ts      Laulun muokkausoperaatiot (puhtaita funktioita)
     db.ts           Paikallinen tallennus (IndexedDB)
     recorder.ts     Ääninauhoitus (MediaRecorder)

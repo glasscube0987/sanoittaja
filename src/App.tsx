@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import LiveView from './components/LiveView';
 import SongEditor from './components/SongEditor';
 import SongList from './components/SongList';
-import { deleteSong as dbDeleteSong, listSongs, saveSong } from './lib/db';
+import {
+  deleteSetlist as dbDeleteSetlist,
+  deleteSong as dbDeleteSong,
+  listSetlists,
+  listSongs,
+  saveSetlist,
+  saveSong,
+} from './lib/db';
 import type { HistoryEntry } from './lib/history';
 import { pushHistory } from './lib/history';
 import type { Key, Lang, Params } from './lib/i18n';
 import { LangContext, loadLang, storeLang, translate } from './lib/i18n';
 import type { ImportResult } from './lib/importText';
 import { AUTO_BACKUP_CHECK_MS, markLibraryChanged, maybeAutoBackup } from './lib/sync/autoBackup';
-import type { Song } from './lib/types';
+import type { Setlist, Song } from './lib/types';
 import { newSong } from './lib/types';
 
 type View = { name: 'list' } | { name: 'editor'; songId: string };
@@ -16,6 +24,13 @@ type View = { name: 'list' } | { name: 'editor'; songId: string };
 export default function App() {
   const [songs, setSongs] = useState<Song[] | null>(null);
   const [view, setView] = useState<View>({ name: 'list' });
+  const [setlists, setSetlists] = useState<Setlist[]>([]);
+  /*
+   * Live-tila elää täällä eikä editorissa, koska se voi selata settilistan
+   * läpi: jono on laulujen tunnuksia, jotka ratkaistaan vasta piirrettäessä,
+   * jolloin muokkaus näkyy live-tilassa heti.
+   */
+  const [live, setLive] = useState<{ ids: string[]; index: number } | null>(null);
   const [lang, setLangState] = useState<Lang>(loadLang);
   // Peruutuspino koskee vain auki olevaa laulua, joten yksi pino riittää.
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -39,6 +54,23 @@ export default function App() {
 
   useEffect(() => {
     listSongs().then(setSongs);
+    listSetlists().then(setSetlists);
+  }, []);
+
+  const updateSetlist = useCallback((list: Setlist) => {
+    setSetlists((prev) => {
+      const known = prev.some((l) => l.id === list.id);
+      return known ? prev.map((l) => (l.id === list.id ? list : l)) : [...prev, list];
+    });
+    markLibraryChanged();
+    saveSetlist(list).catch((err) => console.error('Setin tallennus epäonnistui', err));
+  }, []);
+
+  const removeSetlist = useCallback((id: string) => {
+    // Setin poisto ei koske lauluihin: ne ovat edelleen kaikissa lauluissa.
+    setSetlists((prev) => prev.filter((l) => l.id !== id));
+    markLibraryChanged();
+    dbDeleteSetlist(id).catch((err) => console.error('Setin poisto epäonnistui', err));
   }, []);
 
   // Taustakopio pilveen: tarkistetaan käynnistyessä ja tasaisin välein, sekä
@@ -105,6 +137,12 @@ export default function App() {
 
   const deleteSong = useCallback((songId: string) => {
     setSongs((prev) => (prev ? prev.filter((s) => s.id !== songId) : prev));
+    // Kanta siivoaa viittaukset; sama muutos näkyviin heti ilman uudelleenlukua.
+    setSetlists((prev) =>
+      prev.map((l) =>
+        l.songIds.includes(songId) ? { ...l, songIds: l.songIds.filter((id) => id !== songId) } : l,
+      ),
+    );
     setView({ name: 'list' });
     markLibraryChanged();
     dbDeleteSong(songId).catch((err) => console.error('Poisto epäonnistui', err));
@@ -113,6 +151,7 @@ export default function App() {
   const reload = useCallback(() => {
     markLibraryChanged();
     listSongs().then(setSongs);
+    listSetlists().then(setSetlists);
   }, []);
 
   if (songs === null) return null;
@@ -135,6 +174,13 @@ export default function App() {
     saveSong(restored).catch((err) => console.error('Tallennus epäonnistui', err));
   }
 
+  // Jono ratkaistaan vasta tässä, jotta live-tila näyttää muokkaukset heti ja
+  // poistettu laulu katoaa jonosta itsestään.
+  const liveSongs = live
+    ? live.ids.map((id) => songs.find((s) => s.id === id)).filter((s): s is Song => !!s)
+    : [];
+  const liveIndex = Math.min(live?.index ?? 0, Math.max(0, liveSongs.length - 1));
+
   return (
     <LangContext.Provider value={i18n}>
       {editing ? (
@@ -145,14 +191,27 @@ export default function App() {
           canUndo={history.length > 0}
           onBack={() => setView({ name: 'list' })}
           onDelete={() => deleteSong(editing.id)}
+          onLive={() => setLive({ ids: [editing.id], index: 0 })}
         />
       ) : (
         <SongList
           songs={songs}
+          setlists={setlists}
           onOpen={(songId) => setView({ name: 'editor', songId })}
           onCreate={createSong}
           onImport={importSong}
           onLibraryChanged={reload}
+          onSetlistChange={updateSetlist}
+          onSetlistDelete={removeSetlist}
+          onLive={(ids, index) => setLive({ ids, index })}
+        />
+      )}
+      {liveSongs.length > 0 && (
+        <LiveView
+          songs={liveSongs}
+          index={liveIndex}
+          onIndexChange={(index) => setLive((prev) => (prev ? { ...prev, index } : prev))}
+          onClose={() => setLive(null)}
         />
       )}
     </LangContext.Provider>

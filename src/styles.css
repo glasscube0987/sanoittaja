@@ -283,6 +283,106 @@ textarea:focus {
   font-size: 13px;
 }
 
+/*
+ * Settivalitsin. Ei `.chip-row`ta, koska se on sointuvalinnoille ja käyttää
+ * tasalevyistä fonttia – settien nimet ovat tavallista tekstiä.
+ */
+.setlist-bar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+
+.setlist-bar button {
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: 14px;
+}
+
+/* Setin sivutoiminnot pienempinä: pääasia on laulut, ei setin hallinta. */
+button.small {
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+/* Setissä kortin rinnalla järjestyspainikkeet; kirjastossa kortti yksin. */
+.song-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+}
+
+.song-row .song-card {
+  flex: 1;
+  min-width: 0;
+}
+
+.song-order {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.song-order .icon-button.small {
+  width: 34px;
+  height: 30px;
+  min-height: 30px;
+}
+
+/* Järjestysnumero kertoo esityksen kulun yhdellä silmäyksellä. */
+.song-number {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  margin-right: 8px;
+}
+
+/* Laulujen valinta settiin: pitkä lista vierittää itse. */
+.picker-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+}
+
+.picker-row input {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.picker-row.already {
+  color: var(--text-dim);
+}
+
+.picker-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-key {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
 /* Nuoli kertoo että kortti avautuu; himmeänä se ei kilpaile nimen kanssa. */
 .song-card .icon {
   color: var(--text-dim);
@@ -871,20 +971,64 @@ textarea:focus {
   height: 70vh;
 }
 
-.live-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom))
+/* Ohjainpalkki: settilistan selaus omalla rivillään ohjainten yläpuolella. */
+.live-bar {
+  padding: 0 calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom))
     calc(8px + env(safe-area-inset-left));
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   border-top: 1px solid var(--border);
   transition: opacity 0.25s;
 }
 
-.live-controls.hidden {
+.live-bar.hidden {
   opacity: 0;
   pointer-events: none;
+}
+
+.live-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.live-nav button {
+  flex: 0 0 auto;
+  min-width: 46px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.live-nav button:disabled {
+  opacity: 0.3;
+}
+
+.live-position {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.live-position small {
+  display: block;
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
 }
 
 .live-controls button {
