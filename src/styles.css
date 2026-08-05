@@ -213,6 +213,29 @@ textarea:focus {
 }
 
 /*
+ * Tabletti ja vaakasuuntainen puhelin: leveämpi palsta.
+ *
+ * Sanoitus ja sointumerkit ovat tasalevyistä tekstiä, joten jokainen
+ * lisäsarake näyttää enemmän sanoja kerralla – pitkä rivi mahtuu näkyviin
+ * ilman vaakavieritystä. Kapea puhelinasettelu jättäisi isolla näytöllä
+ * puolet ruudusta käyttämättä ja pakottaisi silti vierittämään.
+ */
+@media (min-width: 768px) {
+  #root {
+    max-width: 1000px;
+  }
+
+  .screen {
+    padding: 0 24px 40px;
+  }
+
+  .topbar {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+
+/*
  * Näkymän lohkot pysyvät palstan levyisinä myös kun niiden sisältö on leveämpi.
  * Erityisesti .lyrics: se vierittää itse, mutta jos selain mitoittaa sen
  * sisällön mukaan, ylileveys valuu koko sivulle.

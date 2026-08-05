@@ -91,6 +91,11 @@ demoja puhelimella ja vie kaikki pilveen.
   lajina, joten kielen voi vaihtaa milloin tahansa ilman että laulut muuttuvat.
 - **Offline-first PWA** – asentuu puhelimen kotinäytölle, toimii ilman verkkoa;
   kaikki data on ensisijaisesti laitteella.
+- **Tabletti** – 768 pikselistä ylöspäin palsta levenee tuhanteen pikseliin.
+  Sanoitus ja sointumerkit ovat tasalevyistä tekstiä, joten jokainen lisäsarake
+  näyttää enemmän kerralla ja tavallinen pitkä rivi mahtuu näkyviin ilman
+  vaakavieritystä. Ponnahdukset pysyvät kapeina, koska leveä lomake on
+  hankalampi käyttää kuin kapea.
 
 **Sovellus verkossa:** <https://glasscube0987.github.io/sanoittaja/> – avaa puhelimen
 selaimella ja valitse ”Lisää Koti-valikkoon / aloitusnäytölle”, niin äppi asentuu kuin
@@ -179,6 +184,7 @@ src/
     importText.ts   Tekstin tulkinta laulun riveiksi (sointu-, sanoitus- ja
                     osiorivien tunnistus)
     live.ts         Live-tilan vieritysaskel ja asetukset
+    print.ts        Nuottilehden tulostus (oma moduulinsa natiiviporttia varten)
     render.ts       Sointumerkkien ja sointurivien ladonta tekstiksi (tulostus, live)
     sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
     songOps.ts      Laulun muokkausoperaatiot (puhtaita funktioita)
@@ -188,7 +194,8 @@ src/
                     varmuuskopiotiedosto, automaattinen taustakopio
   components/       React-käyttöliittymä (lista, editori, sointuvalitsin,
                     nauhoitteet, pilvivalikko, asetukset)
-e2e/                Selaintestit (Playwright): asettelu, osiot, soinnut, zoom
+e2e/                Selaintestit (Playwright): asettelu, osiot, soinnut, zoom,
+                    tabletti
 ```
 
 Ydinlogiikka (soinnut, ankkurit, muokkausoperaatiot) on erotettu käyttöliittymästä ja
@@ -196,7 +203,14 @@ katettu yksikkötestein (`npm test`). Asettelu ja käyttöliittymä katetaan eri
 selaintestein puhelimen kokoisella näytöllä (`npm run test:e2e`), koska osa vioista
 – sointujen kohdistus, sivun leveys – näkyy vasta oikeassa selaimessa ja voi erota
 moottorien välillä. Siksi mukana on Chromiumin lisäksi WebKit, sama moottoriperhe
-kuin Safarissa. Sama logiikka on siirrettävissä sellaisenaan
+kuin Safarissa. Testit ajetaan puhelimen koolla; `tabletti.spec.ts` vaihtaa
+näytön koon itse, jotta leveä asettelu ei jää katteen ulkopuolelle.
+
+Selain-API:t on eristetty omiin moduuleihinsa (`db`, `recorder`, `print`,
+`sync/`), koska ne ovat ne kohdat, jotka natiivikuoressa vaihtuvat: WebViewissä
+ei ole tulostusvalintaikkunaa, jakovalikkoa eikä Wake Lockia, ja OAuthin
+paluuosoite on eri. Logiikkakerros (soinnut, ankkurit, tahdit, tuonti,
+muokkausoperaatiot) ei koske selain-API:hin lainkaan ja siirtyy sellaisenaan. Sama logiikka on siirrettävissä sellaisenaan
 React Native / Capacitor -natiivikuoreen, jos sovellus halutaan myöhemmin
 sovelluskauppoihin.
 

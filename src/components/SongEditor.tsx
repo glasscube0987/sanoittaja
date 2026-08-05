@@ -22,6 +22,7 @@ import {
 import { useI18n } from '../lib/i18n';
 import { getSections, sectionTitle } from '../lib/sections';
 import { barRowOf } from '../lib/bars';
+import { printSheet } from '../lib/print';
 import { isBlankLine, meterGutter } from '../lib/render';
 import ChordSheet from './ChordSheet';
 import Icon from './Icon';
@@ -314,7 +315,7 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
           </button>
           <button onClick={() => setImportAfterId(null)}>{t('import.pasteText')}</button>
           {/* Tulostusvalikosta valitaan "Tallenna PDF:nä"; erillistä kirjastoa ei tarvita. */}
-          <button onClick={() => window.print()}>{t('editor.exportPdf')}</button>
+          <button onClick={() => printSheet()}>{t('editor.exportPdf')}</button>
           <button
             className="danger"
             onClick={() => {
