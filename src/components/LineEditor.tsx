@@ -16,6 +16,10 @@ interface Props {
   onChordTap: (pos: number, currentSymbol: string) => void;
   onSectionTap: () => void;
   onBarsTap: () => void;
+  /** Kohdistuksen tulo ja lähtö; ohjaa rivin työkalurivin näkymistä. */
+  onActive: (active: boolean) => void;
+  /** Työkalurivi, joka piirretään rivin alle kun se on kohdistettuna. */
+  tools?: React.ReactNode;
 }
 
 export default function LineEditor({
@@ -28,6 +32,8 @@ export default function LineEditor({
   onChordTap,
   onSectionTap,
   onBarsTap,
+  onActive,
+  tools,
 }: Props) {
   const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -127,9 +133,12 @@ export default function LineEditor({
           spellCheck={false}
           onChange={(e) => onTextChange(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={() => onActive(true)}
+          onBlur={() => onActive(false)}
         />
           </>
         )}
+        {tools}
       </div>
     </div>
   );

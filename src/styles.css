@@ -484,6 +484,32 @@ textarea:focus {
   border-bottom-color: var(--border);
 }
 
+/*
+ * Rivin työkalut kohdistetun rivin alla: kirjoittaessa ne ovat kädessä, eikä
+ * riviä tarvitse etsiä yläpalkista tai laulun lopusta. Näkyvyys on sidottu
+ * kohdistukseen, joten näppäimistön sulkeminen vie myös työkalut.
+ */
+.line-tools {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 0 2px;
+}
+
+.line-tools button {
+  min-height: 36px;
+  padding: 4px 12px;
+  font-size: 14px;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border-color: transparent;
+}
+
+.line-tools button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 .editor-actions,
 .button-row {
   display: flex;

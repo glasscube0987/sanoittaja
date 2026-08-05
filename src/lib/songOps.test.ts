@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   editLineText,
+  insertLinesAfter,
   mergeLineWithPrevious,
   placeChord,
   resetTranspose,
@@ -176,5 +177,35 @@ describe('transposeSong', () => {
       lines: [{ id: 'v1', text: '', chords: [], bars: ['Am F', '%', 'C'] }, ...lahto.lines],
     };
     expect(transposeSong(withBars, 2).lines[0].bars).toEqual(['Bm G', '%', 'D']);
+  });
+});
+
+describe('insertLinesAfter', () => {
+  const lisatyt = [
+    { id: 'n1', text: 'uusi eka', chords: [] },
+    { id: 'n2', text: 'uusi toka', chords: [] },
+  ];
+
+  it('lisää rivit annetun rivin perään', () => {
+    const song = insertLinesAfter(makeSong(), 'l1', lisatyt);
+    expect(song.lines.map((l) => l.id)).toEqual(['l1', 'n1', 'n2', 'l2']);
+  });
+
+  it('lisää laulun loppuun kun kohtaa ei anneta', () => {
+    const song = insertLinesAfter(makeSong(), null, lisatyt);
+    expect(song.lines.map((l) => l.id)).toEqual(['l1', 'l2', 'n1', 'n2']);
+  });
+
+  it('ei muuta laulua tyhjällä lisäyksellä eikä tuntemattomalla rivillä', () => {
+    const lahto = makeSong();
+    expect(insertLinesAfter(lahto, 'l1', [])).toBe(lahto);
+    expect(insertLinesAfter(lahto, 'ei-ole', lisatyt).lines).toEqual(lahto.lines);
+  });
+
+  it('säilyttää olemassa olevat rivit sellaisinaan', () => {
+    const lahto = makeSong();
+    const song = insertLinesAfter(lahto, 'l1', lisatyt);
+    expect(song.lines[0]).toEqual(lahto.lines[0]);
+    expect(song.lines[3]).toEqual(lahto.lines[1]);
   });
 });

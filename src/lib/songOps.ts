@@ -92,6 +92,19 @@ export function removeLine(song: Song, lineId: string): Song {
   return touch({ ...song, lines });
 }
 
+/**
+ * Lisää valmiit rivit annetun rivin perään, tai laulun loppuun kun `lineId` on
+ * null. Tuonti kohdistuu tämän kautta keskelle laulua eikä vain loppuun.
+ */
+export function insertLinesAfter(song: Song, lineId: string | null, added: LyricLine[]): Song {
+  if (added.length === 0) return song;
+  const idx = lineId === null ? song.lines.length - 1 : song.lines.findIndex((l) => l.id === lineId);
+  if (idx === -1) return song;
+  const lines = [...song.lines];
+  lines.splice(idx + 1, 0, ...added);
+  return touch({ ...song, lines });
+}
+
 export function addLineAfter(song: Song, lineId: string): Song {
   const idx = song.lines.findIndex((l) => l.id === lineId);
   if (idx === -1) return song;

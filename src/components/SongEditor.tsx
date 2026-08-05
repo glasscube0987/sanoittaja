@@ -5,6 +5,7 @@ import {
   DEFAULT_BARS,
   duplicateSection,
   editLineText,
+  insertLinesAfter,
   mergeLineWithPrevious,
   moveSection,
   placeChord,
@@ -50,7 +51,9 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
   const [lineTargetId, setLineTargetId] = useState<string | null>(null);
   const [barsTargetId, setBarsTargetId] = useState<string | null>(null);
   const [liveOpen, setLiveOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
+  // null = tuonti laulun loppuun, muuten rivin id jonka perään rivit menevät.
+  const [importAfterId, setImportAfterId] = useState<string | null | undefined>(undefined);
+  const [activeLineId, setActiveLineId] = useState<string | null>(null);
   const focusLineId = useRef<{ id: string; caret: number } | null>(null);
 
   const offset = transposeOffset(song);
@@ -78,6 +81,40 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
     const idx = next.lines.findIndex((l) => l.id === lineId);
     focusLineId.current = { id: next.lines[idx + 1].id, caret: 0 };
     onChange(next);
+  }
+
+  /**
+   * Työkalurivi kohdistetun rivin alle.
+   *
+   * `onPointerDown` estää oletustoiminnon, joka veisi kohdistuksen kentältä:
+   * ilman sitä työkalurivi katoaisi painalluksen alta eikä painike ehtisi
+   * koskaan laueta. Samalla näppäimistö pysyy auki, mikä on uutta riviä
+   * lisättäessä juuri se mitä halutaan.
+   */
+  function lineTools(lineId: string) {
+    const keepFocus = (e: React.PointerEvent) => e.preventDefault();
+    return (
+      <div className="line-tools">
+        <button
+          type="button"
+          onPointerDown={keepFocus}
+          onClick={() => {
+            const next = addLineAfter(song, lineId);
+            const idx = next.lines.findIndex((l) => l.id === lineId);
+            focusLineId.current = { id: next.lines[idx + 1].id, caret: 0 };
+            onChange(next);
+          }}
+        >
+          {t('editor.addLine')}
+        </button>
+        <button type="button" onPointerDown={keepFocus} onClick={() => setImportAfterId(lineId)}>
+          {t('import.pasteText')}
+        </button>
+        <button type="button" onPointerDown={keepFocus} onClick={onUndo} disabled={!canUndo}>
+          ↶ {t('editor.undo')}
+        </button>
+      </div>
+    );
   }
 
   function handleMerge(lineId: string) {
@@ -198,6 +235,10 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
                   onChordTap={(pos, symbol) => setChordTarget({ lineId: line.id, pos, symbol })}
                   onSectionTap={() => setLineTargetId(line.id)}
                   onBarsTap={() => setBarsTargetId(line.id)}
+                  onActive={(active) =>
+                    setActiveLineId((prev) => (active ? line.id : prev === line.id ? null : prev))
+                  }
+                  tools={activeLineId === line.id ? lineTools(line.id) : undefined}
                 />
               ))}
             </section>
@@ -208,7 +249,7 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
           <button onClick={() => onChange(addLineAfter(song, song.lines[song.lines.length - 1].id))}>
             {t('editor.addLine')}
           </button>
-          <button onClick={() => setImportOpen(true)}>{t('import.pasteText')}</button>
+          <button onClick={() => setImportAfterId(null)}>{t('import.pasteText')}</button>
           {/* Tulostusvalikosta valitaan "Tallenna PDF:nä"; erillistä kirjastoa ei tarvita. */}
           <button onClick={() => window.print()}>{t('editor.exportPdf')}</button>
           <button
@@ -262,22 +303,22 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
           onClose={() => setBarsTargetId(null)}
         />
       )}
-      {importOpen && (
+      {importAfterId !== undefined && (
         <ImportSheet
           mode="append"
           onImport={(result) => {
-            setImportOpen(false);
+            const after = importAfterId;
+            setImportAfterId(undefined);
             if (result.lines.length === 0) return;
             // Koskematon uusi laulu on yksi tyhjä rivi; sen perään lisääminen
             // jättäisi turhan tyhjän rivin laulun alkuun.
-            const tyhja = song.lines.length === 1 && isBlankLine(song.lines[0]);
-            onChange({
-              ...song,
-              lines: tyhja ? result.lines : [...song.lines, ...result.lines],
-              updatedAt: Date.now(),
-            });
+            if (song.lines.length === 1 && isBlankLine(song.lines[0])) {
+              onChange({ ...song, lines: result.lines, updatedAt: Date.now() });
+              return;
+            }
+            onChange(insertLinesAfter(song, after, result.lines));
           }}
-          onClose={() => setImportOpen(false)}
+          onClose={() => setImportAfterId(undefined)}
         />
       )}
       {liveOpen && <LiveView song={song} onClose={() => setLiveOpen(false)} />}
