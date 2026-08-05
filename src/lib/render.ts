@@ -31,12 +31,40 @@ const MIN_BAR_WIDTH = 2;
  * Tahdit tasataan rivin leveimmän mukaan, jotta tahtiviivat asettuvat
  * allekkain ja tahtien kesto on luettavissa silmäyksellä.
  */
-export function barLineText(bars: string[], meter?: string): string {
+export function barLineText(bars: string[], meters: string[] = [], gutter = 0): string {
   if (bars.length === 0) return '';
-  const width = Math.max(MIN_BAR_WIDTH, ...bars.map((bar) => bar.trim().length));
-  const line = `| ${bars.map((bar) => bar.trim().padEnd(width)).join(' | ')} |`;
-  // Tahtilaji ensimmäisen tahtiviivan eteen, kuten nuotissa.
-  return meter?.trim() ? `${meter.trim()} ${line}` : line;
+
+  /*
+   * Tahtilaji kuuluu siihen tahtiin josta laji vaihtuu, joten se kirjoitetaan
+   * tahtiviivan jälkeen tahdin alkuun – paitsi rivin ensimmäisessä tahdissa,
+   * jossa se on tapansa mukaan ennen ensimmäistä tahtiviivaa.
+   */
+  const cells = bars.map((bar, i) => {
+    const meter = (meters[i] ?? '').trim();
+    const content = bar.trim();
+    return i > 0 && meter ? `${meter} ${content}` : content;
+  });
+
+  const width = Math.max(MIN_BAR_WIDTH, ...cells.map((cell) => cell.length));
+  const lead = (meters[0] ?? '').trim();
+  // Johtava merkintä omassa sarakkeessaan: ilman varattua tilaa merkitty rivi
+  // liukuisi sivuun muiden sointurivien tahtiviivoista.
+  const prefix = (lead ? `${lead} ` : '').padStart(gutter);
+  return `${prefix}| ${cells.map((cell) => cell.padEnd(width)).join(' | ')} |`;
+}
+
+/**
+ * Kuinka leveä sarake laulun johtaville tahtilajeille on varattava, jotta
+ * sointurivien tahtiviivat pysyvät allekkain. Nolla kun merkintöjä ei ole.
+ */
+export function meterGutter(lines: LyricLine[]): number {
+  let widest = 0;
+  for (const line of lines) {
+    if (!line.bars) continue;
+    const lead = (line.meters?.[0] ?? line.meter ?? '').trim();
+    if (lead) widest = Math.max(widest, lead.length + 1);
+  }
+  return widest;
 }
 
 /** Onko rivillä mitään näytettävää – tyhjä rivi erottaa osioita. */

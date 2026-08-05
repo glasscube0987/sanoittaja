@@ -1,5 +1,6 @@
 import { useI18n } from '../lib/i18n';
-import { barLineText, chordLineText } from '../lib/render';
+import { barRowOf } from '../lib/bars';
+import { barLineText, chordLineText, meterGutter } from '../lib/render';
 import { getSections, sectionTitle } from '../lib/sections';
 import type { Song } from '../lib/types';
 
@@ -16,6 +17,7 @@ interface Props {
 export default function SongSheet({ song, className }: Props) {
   const { t } = useI18n();
   const sections = getSections(song);
+  const gutter = meterGutter(song.lines);
 
   return (
     <article className={className ? `song-sheet ${className}` : 'song-sheet'}>
@@ -33,7 +35,9 @@ export default function SongSheet({ song, className }: Props) {
             if (line.bars) {
               return (
                 <div className="sheet-line" key={line.id}>
-                  <pre className="sheet-bars">{barLineText(line.bars, line.meter)}</pre>
+                  <pre className="sheet-bars">
+                    {barLineText(line.bars, barRowOf(line).meters, gutter)}
+                  </pre>
                 </div>
               );
             }

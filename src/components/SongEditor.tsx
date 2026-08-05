@@ -12,8 +12,8 @@ import {
   removeLine,
   resetTranspose,
   respellSong,
+  setLineBarRow,
   setLineBars,
-  setLineMeter,
   setLineSection,
   splitLine,
   transposeOffset,
@@ -21,7 +21,8 @@ import {
 } from '../lib/songOps';
 import { useI18n } from '../lib/i18n';
 import { getSections, sectionTitle } from '../lib/sections';
-import { isBlankLine } from '../lib/render';
+import { barRowOf } from '../lib/bars';
+import { isBlankLine, meterGutter } from '../lib/render';
 import ChordSheet from './ChordSheet';
 import Icon from './Icon';
 import ImportSheet from './ImportSheet';
@@ -71,6 +72,8 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
   const offset = transposeOffset(song);
   const offsetLabel = offset > 0 ? `+${offset}` : String(offset);
   const sections = useMemo(() => getSections(song), [song]);
+  // Yhteinen sarakeleveys johtaville tahtilajeille pitää tahtiviivat allekkain.
+  const gutter = useMemo(() => meterGutter(song.lines), [song.lines]);
   const lineTarget = song.lines.find((l) => l.id === lineTargetId) ?? null;
   const barsTarget = song.lines.find((l) => l.id === barsTargetId) ?? null;
 
@@ -296,6 +299,7 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
                   onChordTap={(pos, symbol) => setChordTarget({ lineId: line.id, pos, symbol })}
                   onSectionTap={() => setLineTargetId(line.id)}
                   onBarsTap={() => setBarsTargetId(line.id)}
+                  meterGutter={gutter}
                   onActive={(active) => setActive(line.id, active)}
                   tools={activeLineId === line.id ? lineTools(line.id) : undefined}
                 />
@@ -364,11 +368,10 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
       )}
       {barsTarget?.bars && (
         <BarSheet
-          bars={barsTarget.bars}
-          meter={barsTarget.meter}
+          row={barRowOf(barsTarget)}
           suggestions={usedChords}
-          onSave={(bars, meter) => {
-            onChange(setLineMeter(setLineBars(song, barsTarget.id, bars), barsTarget.id, meter));
+          onSave={(row) => {
+            onChange(setLineBarRow(song, barsTarget.id, row));
             setBarsTargetId(null);
           }}
           onClose={() => setBarsTargetId(null)}

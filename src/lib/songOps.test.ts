@@ -9,7 +9,7 @@ import {
   resetTranspose,
   respellSong,
   setChord,
-  setLineMeter,
+  setLineBarRow,
   splitLine,
   transposeOffset,
   transposeSong,
@@ -241,13 +241,29 @@ describe('barsFromLine', () => {
   });
 });
 
-describe('setLineMeter', () => {
-  it('asettaa ja poistaa rivin tahtilajin', () => {
-    let song = setLineMeter(makeSong(), 'l1', ' 3/4 ');
-    expect(song.lines[0].meter).toBe('3/4');
+describe('setLineBarRow', () => {
+  it('kirjoittaa tahdit ja tahtilajit', () => {
+    const song = setLineBarRow(makeSong(), 'l1', {
+      bars: ['Am', 'F'],
+      meters: [' 3/4 ', ''],
+    });
+    expect(song.lines[0].bars).toEqual(['Am', 'F']);
+    expect(song.lines[0].meters).toEqual(['3/4', '']);
+  });
 
-    song = setLineMeter(song, 'l1', '');
+  it('jättää tyhjät tahtilajit kokonaan pois', () => {
+    const song = setLineBarRow(makeSong(), 'l1', { bars: ['Am'], meters: [''] });
+    expect(song.lines[0]).not.toHaveProperty('meters');
+  });
+
+  it('siivoaa vanhan rivikohtaisen kentän pois', () => {
+    const lahto: Song = {
+      ...makeSong(),
+      lines: [{ id: 'b1', text: '', chords: [], bars: ['Am'], meter: '4/4' }],
+    };
+    const song = setLineBarRow(lahto, 'b1', { bars: ['Am'], meters: ['4/4'] });
     expect(song.lines[0]).not.toHaveProperty('meter');
+    expect(song.lines[0].meters).toEqual(['4/4']);
   });
 });
 
@@ -258,10 +274,10 @@ describe('tahtilaji ja transponointi', () => {
     const lahto: Song = {
       ...makeSong(),
       meter: '4/4',
-      lines: [{ id: 'b1', text: '', chords: [], bars: ['Am', 'F'], meter: '3/4' }],
+      lines: [{ id: 'b1', text: '', chords: [], bars: ['Am', 'F'], meters: ['3/4', ''] }],
     };
     const song = transposeSong(lahto, 2);
-    expect(song.lines[0].meter).toBe('3/4');
+    expect(song.lines[0].meters).toEqual(['3/4', '']);
     expect(song.meter).toBe('4/4');
     expect(song.lines[0].bars).toEqual(['Bm', 'G']);
   });

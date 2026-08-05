@@ -91,7 +91,7 @@ const en = {
   'bars.add': '+ Bar',
   'bars.remove': '− Bar',
   'bars.split': 'Split bar',
-  'bars.meter': 'Time signature from this line on',
+  'bars.meter': 'Time signature from bar {index} on',
   'bars.meterPlaceholder': 'e.g. 3/4',
 
   'chord.edit': 'Edit chord',
@@ -249,7 +249,7 @@ const fi: Record<Key, string> = {
   'bars.add': '+ Tahti',
   'bars.remove': '− Tahti',
   'bars.split': 'Jaa tahti',
-  'bars.meter': 'Tahtilaji tästä rivistä alkaen',
+  'bars.meter': 'Tahtilaji tahdista {index} alkaen',
   'bars.meterPlaceholder': 'esim. 3/4',
 
   'chord.edit': 'Muokkaa sointua',

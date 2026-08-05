@@ -203,7 +203,9 @@ test('rivin tahtilaji näkyy tahtien edessä ja tallentuu', async ({ page }) => 
   await avaaLaulu(page, laulunPohja());
   await teeSointurivi(page);
 
-  await kirjoitaTahti(page, 'Am');
+  // Laji kohdistuu valittuun tahtiin, joten se asetetaan ensimmäisessä
+  // tahdissa ilman siirtymistä eteenpäin.
+  await page.locator('#bar-content').fill('Am');
   await page.getByRole('button', { name: '3/4', exact: true }).click();
   await page.getByRole('button', { name: 'Save' }).click();
 
@@ -230,6 +232,39 @@ test('tahtilajin voi poistaa riviltä', async ({ page }) => {
   expect(await teksti(page.locator('.bar-row'))).not.toContain('6/8');
 });
 
+test('tahtilajin voi merkitä keskelle riviä', async ({ page }) => {
+  await avaaLaulu(page, laulunPohja());
+  await teeSointurivi(page);
+
+  await kirjoitaTahti(page, 'Am');
+  await kirjoitaTahti(page, 'F');
+  // Kolmas tahti: laji vaihtuu vasta tästä eteenpäin.
+  await page.getByRole('button', { name: '3/4', exact: true }).click();
+  await page.locator('#bar-content').fill('Dm');
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  // Merkintä on tahtiviivan jälkeen, sen tahdin alussa josta laji vaihtuu.
+  expect(await teksti(page.locator('.bar-row'))).toBe('| Am     | F      | 3/4 Dm |        |');
+});
+
+test('johtava tahtilaji ei siirrä muita sointurivejä sivuun', async ({ page }) => {
+  await avaaLaulu(
+    page,
+    laulu({
+      lines: [
+        { id: 'b1', text: '', chords: [], bars: ['Am', 'F'], meters: ['3/4', ''] },
+        { id: 'b2', text: '', chords: [], bars: ['C', 'G'] },
+      ],
+    }),
+  );
+
+  const rivit = await page.$$eval('.bar-row', (els) => els.map((e) => e.textContent ?? ''));
+  // Ilman varattua saraketta merkitsemättömän rivin tahtiviiva olisi neljä
+  // merkkiä vasemmalla merkitystä rivistä.
+  expect(rivit[0].indexOf('|')).toBe(rivit[1].indexOf('|'));
+  expect(rivit[1].startsWith('    |')).toBe(true);
+});
+
 test('laulun tahtilaji näkyy tulostusnäkymässä sävellajin rinnalla', async ({ page }) => {
   await avaaLaulu(page, laulunPohja());
   await page.getByLabel('Time signature').fill('5/4');
@@ -240,7 +275,7 @@ test('laulun tahtilaji näkyy tulostusnäkymässä sävellajin rinnalla', async 
 test('transponointi ei koske tahtilajiin', async ({ page }) => {
   await avaaLaulu(page, laulunPohja());
   await teeSointurivi(page);
-  await kirjoitaTahti(page, 'Am');
+  await page.locator('#bar-content').fill('Am');
   await page.getByRole('button', { name: '3/4', exact: true }).click();
   await page.getByRole('button', { name: 'Save' }).click();
 

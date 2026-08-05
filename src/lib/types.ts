@@ -23,10 +23,12 @@ export interface LyricLine {
   /** Jos asetettu, rivi aloittaa uuden osion. */
   section?: SectionMark;
   /**
-   * Tahtilaji, joka on voimassa tästä rivistä eteenpäin, esim. "3/4".
-   * Merkitään vain siihen kohtaan jossa laji vaihtuu; laulun oma tahtilaji on
-   * `Song.meter`.
+   * Tahtilajit tahdeittain: `meters[i]` on voimassa tahdista `i` eteenpäin,
+   * esim. "3/4". Merkitään vain siihen tahtiin jossa laji vaihtuu; laulun oma
+   * tahtilaji on `Song.meter`.
    */
+  meters?: string[];
+  /** Vanha, koko riviä koskenut tahtilaji. Luetaan ensimmäisen tahdin lajiksi. */
   meter?: string;
   /**
    * Jos asetettu, rivi on sointurivi: soinnut luetaan tahteina eikä sanoihin

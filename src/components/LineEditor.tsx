@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { chordSpan, columnGuide } from '../lib/anchors';
+import { barRowOf } from '../lib/bars';
 import { useT } from '../lib/i18n';
 import { barLineText } from '../lib/render';
 import type { LyricLine } from '../lib/types';
@@ -16,6 +17,8 @@ interface Props {
   onChordTap: (pos: number, currentSymbol: string) => void;
   onSectionTap: () => void;
   onBarsTap: () => void;
+  /** Yhteinen sarakeleveys johtaville tahtilajeille, jotta tahtiviivat ovat allekkain. */
+  meterGutter: number;
   /** Kohdistuksen tulo ja lähtö; ohjaa rivin työkalurivin näkymistä. */
   onActive: (active: boolean) => void;
   /** Työkalurivi, joka piirretään rivin alle kun se on kohdistettuna. */
@@ -32,6 +35,7 @@ export default function LineEditor({
   onChordTap,
   onSectionTap,
   onBarsTap,
+  meterGutter,
   onActive,
   tools,
 }: Props) {
@@ -86,7 +90,7 @@ export default function LineEditor({
           // Sointurivillä ei ole sanoja eikä sijoitettuja sointuja, joten se on
           // yksi napautettava rivi eikä sointumerkkien ja tekstikentän pari.
           <button className="bar-row" onClick={onBarsTap} title={t('line.editBars')}>
-            {barLineText(line.bars, line.meter)}
+            {barLineText(line.bars, barRowOf(line).meters, meterGutter)}
           </button>
         ) : (
           <>

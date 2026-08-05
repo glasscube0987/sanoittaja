@@ -27,8 +27,10 @@ demoja puhelimella ja vie kaikki pilveen.
   saman levyisiksi niin että tahtiviivat ovat allekkain, ja transponointi
   käsittelee jokaisen tahdin soinnun erikseen.
 - **Tahtilaji** – laulun tahtilaji (esim. `4/4`) otsikkorivillä sävellajin
-  vieressä. Jos laji vaihtuu kesken laulun, sen voi merkitä yksittäiselle
-  sointuriville, jolloin merkintä näkyy tahtien edessä: `3/4 | Dm | E7 |`.
+  vieressä. Jos laji vaihtuu kesken laulun, merkintä tehdään siihen **tahtiin**
+  josta laji vaihtuu, myös keskelle riviä: `| Am | F | 3/4 Dm |`. Rivin alussa
+  se on tapansa mukaan ennen ensimmäistä tahtiviivaa, ja merkinnälle varataan
+  oma sarake, joten muiden sointurivien tahtiviivat pysyvät allekkain.
   Transponointi ei koske tahtilajiin.
 - **Välisoitot** – sanattomalle riville voi merkitä useita sointuja, joten introt,
   soolot ja väliosat mahtuvat mukaan. Tyhjällä rivillä näkyy himmeä sarakeruudukko,
@@ -171,6 +173,7 @@ src/
     types.ts        Tietomalli: Song, LyricLine, ChordAnchor, SectionMark, Recording
     chords.ts       Sointusymbolien jäsennys ja transponointi
     anchors.ts      Sointuankkurien siirto tekstimuutoksissa
+    bars.ts         Sointurivin tahdit ja tahtilajit; tahtien muokkausoperaatiot
     history.ts      Peruutuspino ja kirjoitusmuutosten yhdistäminen
     i18n.ts         Käännökset (en/fi), kielen tunnistus ja React-konteksti
     importText.ts   Tekstin tulkinta laulun riveiksi (sointu-, sanoitus- ja

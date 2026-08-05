@@ -1,5 +1,7 @@
 /** Laulun muokkausoperaatiot – puhtaita funktioita, jotka palauttavat uuden laulun. */
 import { adjustPositions, chordSpan } from './anchors';
+import type { BarRow } from './bars';
+import { storedMeters } from './bars';
 import type { Accidental } from './chords';
 import { respellChord, transposeBar, transposeChord } from './chords';
 import { getSections } from './sections';
@@ -182,16 +184,17 @@ export function setLineBars(song: Song, lineId: string, bars: string[] | null): 
   });
 }
 
-/** Asettaa rivin tahtilajin tai (tyhjä) poistaa sen. */
-export function setLineMeter(song: Song, lineId: string, meter: string): Song {
-  const trimmed = meter.trim();
+/** Kirjoittaa rivin tahdit ja niiden tahtilajit. */
+export function setLineBarRow(song: Song, lineId: string, row: BarRow): Song {
+  const meters = storedMeters(row.meters);
   return touch({
     ...song,
     lines: song.lines.map((line) => {
       if (line.id !== lineId) return line;
-      if (trimmed) return { ...line, meter: trimmed };
-      if (!line.meter) return line;
-      const next = { ...line };
+      const next: LyricLine = { ...line, bars: [...row.bars] };
+      if (meters) next.meters = meters;
+      else delete next.meters;
+      // Vanha rivikohtainen kenttä on luettu jo tahtilajeihin.
       delete next.meter;
       return next;
     }),

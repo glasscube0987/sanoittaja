@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
+import type { BarRow } from '../lib/bars';
+import {
+  insertBarAfter,
+  removeBarAt,
+  setBarAt,
+  setMeterAt,
+  splitBarAt,
+  splitCount,
+} from '../lib/bars';
 import { useT } from '../lib/i18n';
 import Icon from './Icon';
 
 interface Props {
-  bars: string[];
-  /** Rivin oma tahtilaji, jos se poikkeaa laulun tahtilajista. */
-  meter?: string;
+  row: BarRow;
   suggestions: string[];
-  onSave: (bars: string[], meter: string) => void;
+  onSave: (row: BarRow) => void;
   onClose: () => void;
 }
 
@@ -19,15 +26,20 @@ const METERS = ['4/4', '3/4', '6/8', '2/4', '12/8'];
 /**
  * Sointurivin muokkaus: valittu tahti kerrallaan, samalla vuorovaikutuksella
  * kuin sointuponnahduksessa. Tahtiin voi kirjoittaa useamman soinnun ("Am F")
- * tai muun merkinnän ("%"), joten kenttä on vapaata tekstiä.
+ * tai muun merkinnän ("%"), joten kenttä on vapaata tekstiä. Myös tahtilaji
+ * kohdistuu valittuun tahtiin, koska laji voi vaihtua kesken rivin.
  */
-export default function BarSheet({ bars: initial, meter: initialMeter, suggestions, onSave, onClose }: Props) {
+export default function BarSheet({ row: initial, suggestions, onSave, onClose }: Props) {
   const t = useT();
-  const [bars, setBars] = useState<string[]>(initial.length ? initial : ['']);
-  const [meter, setMeter] = useState(initialMeter ?? '');
+  const [row, setRow] = useState<BarRow>(
+    initial.bars.length ? initial : { bars: [''], meters: [''] },
+  );
   const [index, setIndex] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const chips = suggestions.length > 0 ? suggestions : DEFAULT_SUGGESTIONS;
+
+  const bar = row.bars[index] ?? '';
+  const meter = row.meters[index] ?? '';
 
   /* Kohdistus lomakkeeseen eikä kenttään: kenttä avaisi näppäimistön ja
      laukaisisi iOS:n zoomin, joka jää päälle ponnahduksen sulkeuduttua. */
@@ -36,16 +48,26 @@ export default function BarSheet({ bars: initial, meter: initialMeter, suggestio
   }, []);
 
   function setBar(value: string) {
-    setBars((prev) => prev.map((bar, i) => (i === index ? value : bar)));
+    setRow((prev) => setBarAt(prev, index, value));
+  }
+
+  function setMeter(value: string) {
+    setRow((prev) => setMeterAt(prev, index, value));
   }
 
   function move(step: number) {
-    setIndex((i) => Math.max(0, Math.min(bars.length - 1, i + step)));
+    setIndex((i) => Math.max(0, Math.min(row.bars.length - 1, i + step)));
   }
 
   function addBar() {
-    setBars((prev) => [...prev.slice(0, index + 1), '', ...prev.slice(index + 1)]);
+    setRow((prev) => insertBarAfter(prev, index));
     setIndex((i) => i + 1);
+  }
+
+  function removeBar() {
+    if (row.bars.length <= 1) return;
+    setRow((prev) => removeBarAt(prev, index));
+    setIndex((i) => Math.max(0, Math.min(row.bars.length - 2, i)));
   }
 
   /**
@@ -56,24 +78,15 @@ export default function BarSheet({ bars: initial, meter: initialMeter, suggestio
    * samassa näkymässä.
    */
   function addChord(chip: string) {
-    const nykyinen = (bars[index] ?? '').trim();
+    const nykyinen = bar.trim();
     setBar(nykyinen ? `${nykyinen} ${chip}` : chip);
   }
 
-  /** Tahtiviiva sointujen väliin: `Am F` → `| Am | F |`. */
   function splitBar() {
-    const osat = (bars[index] ?? '').trim().split(/\s+/).filter(Boolean);
-    if (osat.length < 2) return;
-    setBars((prev) => [...prev.slice(0, index), ...osat, ...prev.slice(index + 1)]);
-    setIndex((i) => i + osat.length - 1);
-  }
-
-  const voiJakaa = (bars[index] ?? '').trim().split(/\s+/).filter(Boolean).length > 1;
-
-  function removeBar() {
-    if (bars.length <= 1) return;
-    setBars((prev) => prev.filter((_, i) => i !== index));
-    setIndex((i) => Math.max(0, Math.min(bars.length - 2, i)));
+    const osat = splitCount(row, index);
+    if (osat < 2) return;
+    setRow((prev) => splitBarAt(prev, index));
+    setIndex((i) => i + osat - 1);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
@@ -92,16 +105,18 @@ export default function BarSheet({ bars: initial, meter: initialMeter, suggestio
         onKeyDown={handleKeyDown}
         onSubmit={(e) => {
           e.preventDefault();
-          onSave(bars, meter);
+          onSave(row);
         }}
       >
         <h2>{t('bars.title')}</h2>
 
         <div className="context bar-preview">
-          {meter.trim() && <span className="bar meter">{`${meter.trim()} `}</span>}
-          {bars.map((bar, i) => (
+          {row.bars.map((content, i) => (
             <span key={i} className={i === index ? 'bar current' : 'bar'}>
-              {`| ${bar.trim() || ' '} `}
+              {i === 0 && row.meters[0]?.trim() ? `${row.meters[0].trim()} ` : ''}
+              {`| `}
+              {i > 0 && row.meters[i]?.trim() ? `${row.meters[i].trim()} ` : ''}
+              {`${content.trim() || ' '} `}
             </span>
           ))}
           <span className="bar">|</span>
@@ -112,7 +127,7 @@ export default function BarSheet({ bars: initial, meter: initialMeter, suggestio
             <Icon name="chevronLeft" size={20} />
           </button>
           <span className="nudge-info">
-            {t('bars.position', { index: index + 1, count: bars.length })}
+            {t('bars.position', { index: index + 1, count: row.bars.length })}
             <small>{t('bars.hint')}</small>
           </span>
           <button type="button" onClick={() => move(1)} aria-label={t('chord.moveRight')}>
@@ -122,7 +137,7 @@ export default function BarSheet({ bars: initial, meter: initialMeter, suggestio
 
         <input
           id="bar-content"
-          value={bars[index] ?? ''}
+          value={bar}
           onChange={(e) => setBar(e.target.value)}
           placeholder={t('bars.placeholder')}
           autoCapitalize="off"
@@ -142,18 +157,18 @@ export default function BarSheet({ bars: initial, meter: initialMeter, suggestio
           <button type="button" onClick={addBar}>
             {t('bars.add')}
           </button>
-          <button type="button" onClick={removeBar} disabled={bars.length <= 1}>
+          <button type="button" onClick={removeBar} disabled={row.bars.length <= 1}>
             {t('bars.remove')}
           </button>
-          <button type="button" onClick={splitBar} disabled={!voiJakaa}>
+          <button type="button" onClick={splitBar} disabled={splitCount(row, index) < 2}>
             {t('bars.split')}
           </button>
         </div>
 
-        {/* Tahtilaji merkitään vain siihen riviin josta se vaihtuu; laulun oma
-            tahtilaji on otsikkorivillä. */}
+        {/* Tahtilaji kohdistuu valittuun tahtiin: laji voi vaihtua kesken rivin,
+            eikä merkintä siksi kuulu koko riville. */}
         <div className="field">
-          <label htmlFor="bar-meter">{t('bars.meter')}</label>
+          <label htmlFor="bar-meter">{t('bars.meter', { index: index + 1 })}</label>
           <div className="chip-row">
             <button type="button" className={meter ? '' : 'primary'} onClick={() => setMeter('')}>
               —
