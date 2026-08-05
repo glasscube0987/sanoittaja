@@ -132,3 +132,32 @@ test('sointurivillä ei ole työkaluriviä', async ({ page }) => {
   await page.locator('.bar-row').click();
   await expect(page.locator('.line-tools')).toHaveCount(0);
 });
+
+test('työkalu toimii vaikka kohdistus katoaisi ennen napautusta', async ({ page }) => {
+  await avaaLaulu(page);
+  await page.locator('.line input.text').nth(1).click();
+  await page.getByLabel('Up a semitone').click();
+  await page.locator('.line input.text').nth(1).click();
+
+  // iOS ei noudata pointerdownin preventDefaultia, joten kohdistus katoaa
+  // ennen kuin napautus ehtii perille. Sama järjestys pakotetaan tässä.
+  await page.locator('.line input.text').nth(1).evaluate((el: HTMLInputElement) => el.blur());
+  await page.locator('.line-tools').getByRole('button', { name: 'Undo' }).click();
+
+  await expect(page.locator('.line .chord').first()).toHaveText('Am');
+});
+
+test('kumoaminen jättää työkalut näkyviin toistoa varten', async ({ page }) => {
+  await avaaLaulu(page);
+  await page.locator('.line input.text').nth(1).click();
+  await page.getByLabel('Up a semitone').click();
+  await page.getByLabel('Up a semitone').click();
+
+  await page.locator('.line-tools').getByRole('button', { name: 'Undo' }).click();
+  // Ilman kohdistuksen palautusta rivi olisi kadonnut ja riviä pitäisi
+  // napauttaa uudelleen ennen seuraavaa kumoamista.
+  await expect(page.locator('.line-tools')).toHaveCount(1);
+
+  await page.locator('.line-tools').getByRole('button', { name: 'Undo' }).click();
+  await expect(page.locator('.line .chord').first()).toHaveText('Am');
+});

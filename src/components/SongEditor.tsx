@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Song } from '../lib/types';
 import {
   addLineAfter,
@@ -9,6 +9,7 @@ import {
   mergeLineWithPrevious,
   moveSection,
   placeChord,
+  removeLine,
   resetTranspose,
   respellSong,
   setLineBars,
@@ -40,6 +41,13 @@ interface Props {
   onDelete: () => void;
 }
 
+/**
+ * Kuinka kauan työkalurivi jää näkyviin kohdistuksen kadottua. Riittävän pitkä
+ * kattamaan napautuksen (blur tulee juuri ennen clickiä), riittävän lyhyt
+ * jottei rivi jää roikkumaan näppäimistön sulkeuduttua.
+ */
+const TOOLS_HIDE_MS = 250;
+
 export interface ChordTarget {
   lineId: string;
   pos: number;
@@ -56,6 +64,9 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
   const [importAfterId, setImportAfterId] = useState<string | null | undefined>(undefined);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
   const focusLineId = useRef<{ id: string; caret: number } | null>(null);
+  const blurTimer = useRef<number | null>(null);
+
+  useEffect(() => () => window.clearTimeout(blurTimer.current ?? undefined), []);
 
   const offset = transposeOffset(song);
   const offsetLabel = offset > 0 ? `+${offset}` : String(offset);
@@ -85,20 +96,43 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
   }
 
   /**
-   * Työkalurivi kohdistetun rivin alle.
+   * Kohdistuksen katoaminen piilottaa työkalurivin vasta pienen viiveen
+   * jälkeen.
    *
-   * `onPointerDown` estää oletustoiminnon, joka veisi kohdistuksen kentältä:
-   * ilman sitä työkalurivi katoaisi painalluksen alta eikä painike ehtisi
-   * koskaan laueta. Samalla näppäimistö pysyy auki, mikä on uutta riviä
-   * lisättäessä juuri se mitä halutaan.
+   * Painallus vie kohdistuksen kentältä ennen kuin napautus ehtii perille, ja
+   * ilman viivettä rivi purettaisiin juuri sillä hetkellä – painike ei
+   * laukeaisi kertaakaan. `preventDefault` korjaisi tämän työpöydällä, mutta
+   * iOS ei noudata sitä osoitintapahtumissa, joten viive on ainoa keino joka
+   * toimii kaikkialla samoin.
    */
+  function setActive(lineId: string, active: boolean) {
+    if (blurTimer.current) {
+      window.clearTimeout(blurTimer.current);
+      blurTimer.current = null;
+    }
+    if (active) {
+      setActiveLineId(lineId);
+      return;
+    }
+    blurTimer.current = window.setTimeout(() => {
+      blurTimer.current = null;
+      setActiveLineId((prev) => (prev === lineId ? null : prev));
+    }, TOOLS_HIDE_MS);
+  }
+
+  /** Työkalurivi kohdistetun rivin alle. */
   function lineTools(lineId: string) {
-    const keepFocus = (e: React.PointerEvent) => e.preventDefault();
+    /* Kohdistus takaisin riville: työkalut jäävät näkyviin ja näppäimistö
+       auki, joten esimerkiksi kumoamista voi toistaa ilman rivin etsimistä. */
+    const stayOnLine = () => {
+      const line = song.lines.find((l) => l.id === lineId);
+      if (line && !line.bars) focusLineId.current = { id: lineId, caret: line.text.length };
+    };
+
     return (
       <div className="line-tools">
         <button
           type="button"
-          onPointerDown={keepFocus}
           onClick={() => {
             const next = addLineAfter(song, lineId);
             const idx = next.lines.findIndex((l) => l.id === lineId);
@@ -108,10 +142,17 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
         >
           {t('editor.addLine')}
         </button>
-        <button type="button" onPointerDown={keepFocus} onClick={() => setImportAfterId(lineId)}>
+        <button type="button" onClick={() => setImportAfterId(lineId)}>
           {t('import.pasteText')}
         </button>
-        <button type="button" onPointerDown={keepFocus} onClick={onUndo} disabled={!canUndo}>
+        <button
+          type="button"
+          disabled={!canUndo}
+          onClick={() => {
+            onUndo();
+            stayOnLine();
+          }}
+        >
           ↶ {t('editor.undo')}
         </button>
       </div>
@@ -120,7 +161,16 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
 
   function handleMerge(lineId: string) {
     const idx = song.lines.findIndex((l) => l.id === lineId);
-    if (idx <= 0) return;
+    if (idx === -1) return;
+    // Ensimmäisellä rivillä ei ole edellistä johon yhdistää, joten tyhjä rivi
+    // poistetaan: muuten laulun alkuun jäänyttä tyhjää riviä ei saanut pois.
+    if (idx === 0) {
+      const line = song.lines[0];
+      if (line.text !== '' || line.bars || song.lines.length <= 1) return;
+      focusLineId.current = { id: song.lines[1].id, caret: 0 };
+      onChange(removeLine(song, lineId));
+      return;
+    }
     const prev = song.lines[idx - 1];
     focusLineId.current = { id: prev.id, caret: prev.text.length };
     onChange(mergeLineWithPrevious(song, lineId));
@@ -246,9 +296,7 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
                   onChordTap={(pos, symbol) => setChordTarget({ lineId: line.id, pos, symbol })}
                   onSectionTap={() => setLineTargetId(line.id)}
                   onBarsTap={() => setBarsTargetId(line.id)}
-                  onActive={(active) =>
-                    setActiveLineId((prev) => (active ? line.id : prev === line.id ? null : prev))
-                  }
+                  onActive={(active) => setActive(line.id, active)}
                   tools={activeLineId === line.id ? lineTools(line.id) : undefined}
                 />
               ))}
@@ -293,6 +341,11 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
       {lineTarget && (
         <LineSheet
           line={lineTarget}
+          canDelete={song.lines.length > 1}
+          onDelete={() => {
+            onChange(removeLine(song, lineTarget.id));
+            setLineTargetId(null);
+          }}
           onSave={({ section, bars }) => {
             // Tahtien sisältö säilyy, jos rivi on jo sointurivi; muuten rivin
             // omat soinnut siirtyvät tahdeiksi eikä niitä tarvitse kirjoittaa

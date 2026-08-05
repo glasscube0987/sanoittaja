@@ -12,7 +12,10 @@ export interface LineSettings {
 
 interface Props {
   line: LyricLine;
+  /** Viimeistä riviä ei voi poistaa: laulussa on aina oltava jotain. */
+  canDelete: boolean;
   onSave: (settings: LineSettings) => void;
+  onDelete: () => void;
   onClose: () => void;
 }
 
@@ -21,7 +24,7 @@ interface Props {
  * sanoitus- vai sointurivi. Molemmat ovat rivin ominaisuuksia, ja välisoitto
  * merkitään käytännössä aina molemmiksi kerralla.
  */
-export default function LineSheet({ line, onSave, onClose }: Props) {
+export default function LineSheet({ line, canDelete, onSave, onDelete, onClose }: Props) {
   const t = useT();
   const [bars, setBars] = useState(Boolean(line.bars));
   const [kind, setKind] = useState<SectionKind | null>(line.section?.kind ?? null);
@@ -95,6 +98,11 @@ export default function LineSheet({ line, onSave, onClose }: Props) {
         <div className="button-row">
           <button type="submit" className="primary">
             {t('common.save')}
+          </button>
+          {/* Rivin asetukset on ainoa paikka, joka on kaikilla rivityypeillä:
+              sointuriviltä puuttuu tekstikenttä eikä sitä saanut muuten pois. */}
+          <button type="button" className="danger" disabled={!canDelete} onClick={onDelete}>
+            {t('line.delete')}
           </button>
           <button type="button" className="ghost" onClick={onClose}>
             {t('common.cancel')}

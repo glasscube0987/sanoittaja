@@ -82,6 +82,7 @@ const en = {
   'line.typeBars': 'Chord bars',
   'line.sectionMarker': 'Section marker',
   'line.editBars': 'Edit chord bars',
+  'line.delete': 'Delete line',
 
   'bars.title': 'Chord bars',
   'bars.position': 'bar {index}/{count}',
@@ -239,6 +240,7 @@ const fi: Record<Key, string> = {
   'line.typeBars': 'Sointurivi',
   'line.sectionMarker': 'Osiomerkintä',
   'line.editBars': 'Muokkaa sointuriviä',
+  'line.delete': 'Poista rivi',
 
   'bars.title': 'Sointurivi',
   'bars.position': 'tahti {index}/{count}',

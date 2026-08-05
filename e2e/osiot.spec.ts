@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { avaaLaulu, osiot } from './apu';
+import { avaaLaulu, laulu, osiot } from './apu';
 
 test('osiot nimetään ja toistuvat lajit numeroidaan', async ({ page }) => {
   await avaaLaulu(page);
@@ -75,4 +75,82 @@ test('rivin voi merkitä osioksi ja osio syntyy oikeaan kohtaan', async ({ page 
   await page.getByRole('button', { name: 'Save' }).click();
 
   await expect.poll(() => osiot(page)).toEqual(['Verse 1', 'Bridge', 'Chorus', 'Verse 2']);
+});
+
+test('rivin voi poistaa rivin asetuksista', async ({ page }) => {
+  await avaaLaulu(page);
+  await page.locator('.line').nth(1).getByLabel('Line settings').click();
+  await page.getByRole('button', { name: 'Delete line' }).click();
+
+  const rivit = await page.$$eval('.line input.text', (els) =>
+    els.map((e) => (e as HTMLInputElement).value),
+  );
+  expect(rivit).toEqual([
+    'kuu valaisee yön',
+    'älä katso taakse',
+    'aamu tulee kohta',
+    'toinen säkeistö tässä',
+  ]);
+});
+
+test('sointurivin voi poistaa vaikka siinä ei ole tekstikenttää', async ({ page }) => {
+  await avaaLaulu(
+    page,
+    laulu({
+      lines: [
+        { id: 'b1', text: '', chords: [], bars: ['Am', 'F'], section: { kind: 'intro' } },
+        { id: 'l1', text: 'sanoja', chords: [], section: { kind: 'verse' } },
+      ],
+    }),
+  );
+  await expect(page.locator('.bar-row')).toHaveCount(1);
+
+  await page.locator('.line').first().getByLabel('Line settings').click();
+  await page.getByRole('button', { name: 'Delete line' }).click();
+
+  await expect(page.locator('.bar-row')).toHaveCount(0);
+  // Seuraavalla rivillä on jo oma merkintänsä, joten poistetun rivin osio ei
+  // peri sitä – jäljelle jää pelkkä Verse.
+  await expect.poll(() => osiot(page)).toEqual(['Verse']);
+});
+
+test('laulun ainoaa riviä ei voi poistaa', async ({ page }) => {
+  await avaaLaulu(page, laulu({ lines: [{ id: 'l1', text: 'ainoa', chords: [] }] }));
+  await page.locator('.line').first().getByLabel('Line settings').click();
+  await expect(page.getByRole('button', { name: 'Delete line' })).toBeDisabled();
+});
+
+test('tyhjän ensimmäisen rivin saa pois askelpalauttimella', async ({ page }) => {
+  await avaaLaulu(
+    page,
+    laulu({
+      lines: [
+        { id: 'l0', text: '', chords: [] },
+        { id: 'l1', text: 'ensimmäinen sana', chords: [] },
+      ],
+    }),
+  );
+
+  const kentta = page.locator('.line input.text').first();
+  await kentta.click();
+  await page.keyboard.press('Backspace');
+
+  const rivit = await page.$$eval('.line input.text', (els) =>
+    els.map((e) => (e as HTMLInputElement).value),
+  );
+  expect(rivit).toEqual(['ensimmäinen sana']);
+});
+
+test('ensimmäinen rivi säilyy jos siinä on tekstiä', async ({ page }) => {
+  await avaaLaulu(page);
+  const kentta = page.locator('.line input.text').first();
+  await kentta.click();
+  await kentta.press('Home');
+  await page.keyboard.press('Backspace');
+
+  const rivit = await page.$$eval('.line input.text', (els) =>
+    els.map((e) => (e as HTMLInputElement).value),
+  );
+  expect(rivit[0]).toBe('kuu valaisee yön');
+  expect(rivit).toHaveLength(5);
 });
