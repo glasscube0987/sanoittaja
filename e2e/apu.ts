@@ -120,6 +120,18 @@ async function kylvaLaulu(page: Page, song: Song): Promise<void> {
   );
 }
 
+/**
+ * Avaa asetukset ja napauttaa kirjaston toimintoa.
+ *
+ * Varmuuskopio, palautus, pilvi ja tekstin tuonti siirtyivät laululistan
+ * alalaidasta rattaan taakse, koska pitkässä listassa ne jäivät koko listan
+ * taakse. Testit käyttävät tätä, jottei jokaisessa toisteta samaa polkua.
+ */
+export async function kirjastoToiminto(page: Page, nimi: string): Promise<void> {
+  await page.getByLabel('Settings').click();
+  await page.getByRole('button', { name: nimi, exact: true }).click();
+}
+
 /** Luo setin nimellä; nimi kysytään selaimen kyselyllä. */
 export async function luoSetti(page: Page, nimi: string): Promise<void> {
   page.once('dialog', (d) => d.accept(nimi));

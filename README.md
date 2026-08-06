@@ -63,13 +63,23 @@ demoja puhelimella ja vie kaikki pilveen.
 - **Nauhoitteet** – jokaiseen lauluun voi tallentaa ääniluonnoksia suoraan puhelimen
   mikrofonilla (MediaRecorder). Nauhoitteet tallentuvat laitteelle (IndexedDB) ja
   kulkevat laulun mukana pilveen.
+- **Järjestys** – «Kaikki laulut» -näkymän voi järjestää viimeksi muokatun,
+  aakkosten (A–Ö) tai käänteisten aakkosten mukaan. Aakkostus on kielikohtainen,
+  joten ä ja ö menevät suomessa aakkosten loppuun eivätkä merkistön mukaan.
+  Valinta muistetaan. Setissä järjestys on käyttäjän asettama esitysjärjestys,
+  eikä sitä lajitella pois alta.
+- **Valikoiden sijoittelu** – laululista on pelkkä lista: settivalitsin,
+  järjestys, laulut ja varmuuskopiomuistutus. Koko kirjastoa koskevat toiminnot
+  (varmuuskopio, palautus, pilvi, tekstin tuonti) ovat rattaan takana omassa
+  osiossaan, koska pitkässä listassa ne jäivät kaiken taakse. «+ Uusi laulu»
+  kysyy tyhjän laulun ja tekstistä tuonnin väliltä.
 - **Varmuuskopio** – koko kirjasto yhtenä JSON-tiedostona ilman mitään tunnuksia.
-  Puhelimessa ”Varmuuskopioi” avaa jakovalikon, josta tiedoston tallentaa suoraan
+  Puhelimessa asetusten ”Varmuuskopioi” avaa jakovalikon, josta tiedoston tallentaa suoraan
   Tiedostoihin tai iCloud Driveen; työpöydällä se latautuu normaalisti. Laululistalla
   näkyy milloin kopio on viimeksi otettu, ja viikon jälkeen huomautus korostuu.
   ”Palauta” lukee tiedoston takaisin.
 - **Varmuuskopio pilveen** – sama palautuva paketti **Dropboxiin** (OAuth PKCE) tai
-  **Google Driveen** (OAuth) yhdellä napautuksella laululistalta. Tiedosto on
+  **Google Driveen** (OAuth) yhdellä napautuksella asetusten Kirjasto-osiosta. Tiedosto on
   päivätty (`sanoittaja-varmuuskopio-2026-08-03.json`), joten pilveen kertyy
   historiaa päivä kerrallaan, ja ”Palauta” lukee sen sellaisenaan takaisin.
   Tiedostot menevät kunkin käyttäjän *omaan* pilvitiliin, eivät kehittäjän.
@@ -212,6 +222,7 @@ src/
     render.ts       Sointumerkkien ja sointurivien ladonta tekstiksi (tulostus, live)
     sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
     setlists.ts     Settilistojen sisältö ja järjestys (puhtaita funktioita)
+    sortSongs.ts    Laululistan järjestys ja kielikohtainen aakkostus
     swipe.ts        Liu'utuseleen kynnykset (puhtaita funktioita)
     songOps.ts      Laulun muokkausoperaatiot (puhtaita funktioita)
     useAnnotations.ts  Laulun merkinnät kannasta; live-tila ja tulostuslehti

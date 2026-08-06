@@ -4,7 +4,7 @@ import { avaaLaulu, avaaLista, osiot, tallennettuLaulu } from './apu';
 test('käyttöliittymä on oletuksena englanniksi', async ({ page }) => {
   await avaaLista(page);
   await expect(page.getByRole('button', { name: '+ New song' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Back up' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'All songs' })).toBeVisible();
 });
 
 test('kielen vaihto vaihtaa tekstit ja säilyy uudelleenlatauksen yli', async ({ page }) => {

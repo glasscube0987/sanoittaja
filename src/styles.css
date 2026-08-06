@@ -308,6 +308,51 @@ button.small {
 }
 
 /* Setissä kortin rinnalla järjestyspainikkeet; kirjastossa kortti yksin. */
+/* Lajitteluvalitsin settivalitsimen alla; vain koko kirjastolle. */
+.sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+
+.sort-label {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-right: 2px;
+}
+
+/*
+ * Valittu järjestys erottuu ilman korostusväriä. Kulta kertoo settivalitsimessa
+ * missä kokoelmassa ollaan; jos se tarkoittaisi myös järjestystä, kaksi
+ * eritasoista valintaa näyttäisi päällekkäisillä riveillä samalta.
+ */
+.sort-bar button.current {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/*
+ * Asetusten osio-otsikko: erottaa kirjaston, yleiset ja tunnukset.
+ *
+ * Viiva otsikon yllä, koska `.sheet h2` on jo pieni, harmaa ja versaali:
+ * ilman erottavaa viivaa osio-otsikko näyttäisi samalta kuin koko näkymän
+ * otsikko eikä hierarkiaa erottaisi.
+ */
+.settings-group {
+  margin: 20px 0 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
 /*
  * Liu'utettava rivi: poistopainike on sisällön alla ja paljastuu kun sisältöä
  * liu'utetaan vasemmalle. Painike on aina DOM:issa ja kohdistettavissa, joten
@@ -707,7 +752,14 @@ button.small {
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(3px);
   display: flex;
-  align-items: flex-end;
+  /*
+   * Alareunaan kohdistus tehdään `margin-top: auto`lla eikä
+   * `align-items: flex-end`illä. Flexboxin reunakohdistus työntää ruutua
+   * korkeamman sisällön yläreunan vierityksen ulottumattomiin, jolloin
+   * ponnahduksen otsikkoon ei pääse millään. Automaattinen marginaali imee
+   * vapaan tilan samalla tavalla mutta katoaa kun tilaa ei ole.
+   */
+  align-items: flex-start;
   justify-content: center;
   z-index: 50;
   /* Korkea ponnahdus (näppäimistö auki) vieritetään pystyyn; vaakasuuntaan ei
@@ -729,6 +781,7 @@ button.small {
   flex-direction: column;
   gap: 12px;
   box-shadow: var(--shadow);
+  margin-top: auto;
 }
 
 /* Vetokahva kertoo että laatikko nousee alhaalta ja on suljettavissa. */

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { formatDate, useI18n } from '../lib/i18n';
 import type { Setlist, Song } from '../lib/types';
 import { addSongs, moveSong, newSetlist, removeSong, renameSetlist, setlistSongs } from '../lib/setlists';
+import { loadSortOrder, SORT_ORDERS, sortSongs, storeSortOrder } from '../lib/sortSongs';
+import type { SortOrder } from '../lib/sortSongs';
 import {
   BACKUP_EVENT,
   backupFileName,
@@ -54,6 +56,8 @@ export default function SongList({
   const [pickerOpen, setPickerOpen] = useState(false);
   /* Vain yksi rivi kerrallaan auki, jotta poistopainikkeita ei jää roikkumaan. */
   const [avoinId, setAvoinId] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortOrder>(loadSortOrder);
+  const [newOpen, setNewOpen] = useState(false);
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -104,7 +108,16 @@ export default function SongList({
 
   const setlist = setlists.find((l) => l.id === setlistId) ?? null;
   // Setti näyttää laulut omassa järjestyksessään, kirjasto viimeksi muokattu ensin.
-  const naytetyt = setlist ? setlistSongs(setlist, songs) : songs;
+  /* Lajittelu koskee vain koko kirjastoa: setissä järjestys on käyttäjän itse
+     asettama esitysjärjestys, eikä sitä saa lajitella pois alta. */
+  const naytetyt = setlist
+    ? setlistSongs(setlist, songs)
+    : sortSongs(songs, sort, lang, t('app.untitled'));
+
+  function vaihdaJarjestys(order: SortOrder) {
+    setSort(order);
+    storeSortOrder(order);
+  }
 
   function luoSetti() {
     const name = prompt(t('set.namePrompt'))?.trim();
@@ -139,7 +152,9 @@ export default function SongList({
         >
           <Icon name="settings" />
         </button>
-        <button className="primary" onClick={onCreate}>
+        {/* Valinta eikä suora luonti: tyhjä laulu tallentuu heti, joten
+            «luo tyhjä ja tuo sitten» jättäisi keskeytettäessä tyhjän laulun. */}
+        <button className="primary" onClick={() => setNewOpen(true)}>
           {t('list.newSong')}
         </button>
       </header>
@@ -166,6 +181,22 @@ export default function SongList({
             {t('set.new')}
           </button>
         </div>
+
+        {/* Lajittelu vain koko kirjastolle; setissä järjestys on esitysjärjestys. */}
+        {!setlist && songs.length > 1 && (
+          <div className="sort-bar">
+            <span className="sort-label">{t('sort.label')}</span>
+            {SORT_ORDERS.map((order) => (
+              <button
+                key={order}
+                className={order === sort ? 'small current' : 'ghost small'}
+                onClick={() => vaihdaJarjestys(order)}
+              >
+                {t(`sort.${order}`)}
+              </button>
+            ))}
+          </div>
+        )}
 
         {setlist && (
           <div className="button-row">
@@ -261,19 +292,9 @@ export default function SongList({
             </div>
           );
         })}
-        {/* Vanhat laulut ovat muualla kirjoitettuina; tuonti on laulun luonnin
-            rinnakkainen tapa, joten se on listalla eikä asetuksissa. */}
-        <div className="button-row">
-          <button onClick={() => setImportOpen(true)}>{t('import.open')}</button>
-        </div>
-
-        {/* Varmuuskopio koskee koko kirjastoa, joten myös pilvivienti kuuluu
-            tänne eikä yksittäisen laulun editoriin. */}
-        <div className="button-row">
-          <button onClick={handleExport}>{t('list.downloadBackup')}</button>
-          <button onClick={() => setCloudOpen(true)}>{t('list.cloudBackup')}</button>
-          <button onClick={() => fileInput.current?.click()}>{t('list.importBackup')}</button>
-        </div>
+        {/* Varmuuskopiohuomautus jää listalle, koska se on muistutus eikä
+            toiminto: valikon takana piilotettuna se ei muistuttaisi mistään.
+            Toiminnot itse ovat asetuksissa. */}
         <div className={backupIsStale() ? 'status backup-note stale' : 'status backup-note'}>
           {backupNote()}
         </div>
@@ -290,7 +311,57 @@ export default function SongList({
           }}
         />
       </main>
-      {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && (
+        <SettingsSheet
+          onClose={() => setSettingsOpen(false)}
+          onBackup={() => {
+            setSettingsOpen(false);
+            void handleExport();
+          }}
+          onCloud={() => {
+            setSettingsOpen(false);
+            setCloudOpen(true);
+          }}
+          onRestore={() => {
+            setSettingsOpen(false);
+            fileInput.current?.click();
+          }}
+          onImportText={() => {
+            setSettingsOpen(false);
+            setImportOpen(true);
+          }}
+        />
+      )}
+
+      {newOpen && (
+        <div className="overlay" onClick={() => setNewOpen(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <h2>{t('list.newTitle')}</h2>
+            <div className="button-row">
+              <button
+                className="primary"
+                onClick={() => {
+                  setNewOpen(false);
+                  onCreate();
+                }}
+              >
+                {t('list.newBlank')}
+              </button>
+              <button
+                onClick={() => {
+                  setNewOpen(false);
+                  setImportOpen(true);
+                }}
+              >
+                {t('list.newFromText')}
+              </button>
+              <button className="ghost" onClick={() => setNewOpen(false)}>
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {pickerOpen && setlist && (
         <SetlistPicker
           setlist={setlist}

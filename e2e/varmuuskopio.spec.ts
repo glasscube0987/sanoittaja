@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { avaaLista, dropboxViennit, kirjauduDropboxiin, pysaytaDropbox } from './apu';
+import { avaaLista, dropboxViennit, kirjauduDropboxiin, pysaytaDropbox, kirjastoToiminto } from './apu';
 
 const AVAIN = 'sanoittaja.lastBackup';
 
@@ -38,7 +38,7 @@ test('varmuuskopiointi merkitsee ajankohdan ja päivittää huomautuksen', async
 
   // Selaintestissä lataus menee Playwrightin lataustapahtumaan; jakovalikkoa ei ole.
   const lataus = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Back up' }).click();
+  await kirjastoToiminto(page, 'Back up');
   await lataus;
 
   await expect(page.locator('.backup-note')).toContainText('Backed up today');
@@ -51,7 +51,7 @@ test('varmuuskopiointi merkitsee ajankohdan ja päivittää huomautuksen', async
 test('varmuuskopio ladataan kun jakamista ei tueta', async ({ page }) => {
   await avaaLista(page);
   const lataus = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Back up' }).click();
+  await kirjastoToiminto(page, 'Back up');
   const tiedosto = await lataus;
   expect(tiedosto.suggestedFilename()).toMatch(/^sanoittaja-varmuuskopio-\d{4}-\d{2}-\d{2}\.json$/);
 });
@@ -69,7 +69,7 @@ test('kirjautuminen onnistuu ilman omia tunnuksia', async ({ page }) => {
     await route.abort();
   });
 
-  await page.getByRole('button', { name: 'To cloud' }).click();
+  await kirjastoToiminto(page, 'To cloud');
   await page.getByRole('button', { name: 'Sign in to Dropbox' }).click();
 
   await expect.poll(() => osoite).not.toBe('');
@@ -87,7 +87,7 @@ test('pilveen viety paketti on sama palautuva varmuuskopio', async ({ page }) =>
   await avaaLista(page);
   await kirjauduDropboxiin(page);
 
-  await page.getByRole('button', { name: 'To cloud' }).click();
+  await kirjastoToiminto(page, 'To cloud');
   await page.getByRole('button', { name: 'Back up to Dropbox' }).click();
   await expect(page.locator('.sheet .status').last()).toContainText('Backed up to Dropbox');
 
@@ -138,7 +138,7 @@ test('pilvivienti nollaa varmuuskopiomuistutuksen', async ({ page }) => {
   await page.reload();
   await expect(page.locator('.backup-note')).toHaveClass(/stale/);
 
-  await page.getByRole('button', { name: 'To cloud' }).click();
+  await kirjastoToiminto(page, 'To cloud');
   await page.getByRole('button', { name: 'Back up to Dropbox' }).click();
   await expect(page.locator('.sheet .status').last()).toContainText('Backed up to Dropbox');
 
@@ -152,7 +152,7 @@ test('käsin otettu pilvikopio ei laukaise taustakopiota heti perään', async (
   await avaaLista(page);
   await kirjauduDropboxiin(page);
 
-  await page.getByRole('button', { name: 'To cloud' }).click();
+  await kirjastoToiminto(page, 'To cloud');
   await page.getByRole('button', { name: 'Back up to Dropbox' }).click();
   await expect(page.locator('.sheet .status').last()).toContainText('Backed up to Dropbox');
   await page.getByRole('button', { name: 'Close' }).click();

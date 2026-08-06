@@ -4,7 +4,7 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { avaaLaulu, avaaLista, osiot } from './apu';
+import { avaaLaulu, avaaLista, osiot, kirjastoToiminto } from './apu';
 
 const LAULU = [
   'Kuu valaisee',
@@ -32,7 +32,7 @@ async function liita(page: Page, teksti: string): Promise<void> {
 
 test('liitetystä laulupaperista syntyy laulu osioineen', async ({ page }) => {
   await avaaLista(page);
-  await page.getByRole('button', { name: 'Import text' }).click();
+  await kirjastoToiminto(page, 'Import text');
   await liita(page, LAULU);
 
   // Nimi tunnistetaan ensimmäisestä rivistä eikä jää sanoitukseksi.
@@ -48,7 +48,7 @@ test('liitetystä laulupaperista syntyy laulu osioineen', async ({ page }) => {
 
 test('tuotu sointu osuu oikean merkin kohdalle', async ({ page }) => {
   await avaaLista(page);
-  await page.getByRole('button', { name: 'Import text' }).click();
+  await kirjastoToiminto(page, 'Import text');
   // F on sarakkeessa 13, eli sanan "yön" alussa.
   await liita(page, ['Am           F', 'kuu valaisee yön'].join('\n'));
   await page.getByRole('button', { name: 'Create song' }).click();
@@ -76,7 +76,7 @@ test('tuotu sointu osuu oikean merkin kohdalle', async ({ page }) => {
 
 test('esikatselu näyttää rivien tulkinnan', async ({ page }) => {
   await avaaLista(page);
-  await page.getByRole('button', { name: 'Import text' }).click();
+  await kirjastoToiminto(page, 'Import text');
   await liita(page, ['[Chorus]', 'Am  F', 'kuu valaisee yön'].join('\n'));
 
   const tulkinnat = await page.$$eval('.import-row select', (els) =>
@@ -87,7 +87,7 @@ test('esikatselu näyttää rivien tulkinnan', async ({ page }) => {
 
 test('väärin tunnistetun rivin tyypin voi korjata ennen luontia', async ({ page }) => {
   await avaaLista(page);
-  await page.getByRole('button', { name: 'Import text' }).click();
+  await kirjastoToiminto(page, 'Import text');
   // "Am F" on tässä sanoitusta, ei sointuja; ilman korjausta se söisi
   // seuraavan rivin sointuriviksi.
   await liita(page, ['Am  F', 'kuu valaisee yön'].join('\n'));
@@ -115,7 +115,7 @@ test('tekstin voi liittää avoimen laulun perään ja peruuttaa', async ({ page
 
 test('esikatselurivi ei peri editorin sanoituslaatikon tyylejä', async ({ page }) => {
   await avaaLista(page);
-  await page.getByRole('button', { name: 'Import text' }).click();
+  await kirjastoToiminto(page, 'Import text');
   await liita(page, 'kuu valaisee yön');
 
   // Rivin laji oli aluksi luokkana, ja `lyrics` on myös editorin
@@ -130,7 +130,7 @@ test('esikatselurivi ei peri editorin sanoituslaatikon tyylejä', async ({ page 
 
 test('tuonti ei levitä sivua leveällä tekstillä', async ({ page }) => {
   await avaaLista(page);
-  await page.getByRole('button', { name: 'Import text' }).click();
+  await kirjastoToiminto(page, 'Import text');
   await liita(page, ['Am' + ' '.repeat(90) + 'F', 'x'.repeat(120)].join('\n'));
 
   const ylivuoto = await page.evaluate(

@@ -6,9 +6,27 @@ import { getGdriveClientId, setGdriveClientId } from '../lib/sync/gdrive';
 
 interface Props {
   onClose: () => void;
+  /**
+   * Koko kirjastoa koskevat toiminnot. Ne olivat aiemmin laululistan alalaidassa,
+   * jolloin varmuuskopiointi vaati koko listan ohi vierittämisen. Ne ovat harvoin
+   * tarvittavia mutta tärkeitä, joten ne kuuluvat valikkoon eivätkä listaan.
+   *
+   * Toiminto sulkee asetukset ja suorittaa itsensä, jolloin tilaviesti näkyy
+   * listalla siellä missä se ennenkin näkyi.
+   */
+  onBackup?: () => void;
+  onCloud?: () => void;
+  onRestore?: () => void;
+  onImportText?: () => void;
 }
 
-export default function SettingsSheet({ onClose }: Props) {
+export default function SettingsSheet({
+  onClose,
+  onBackup,
+  onCloud,
+  onRestore,
+  onImportText,
+}: Props) {
   const { t, lang, setLang } = useI18n();
   const [dropboxId, setDropboxId] = useState(getDropboxClientIdOverride());
   const [gdriveId, setGdriveId] = useState(getGdriveClientId());
@@ -26,6 +44,23 @@ export default function SettingsSheet({ onClose }: Props) {
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
         <h2>{t('settings.title')}</h2>
 
+        {/* Pilvinäkymästä avattuna asetuksissa on vain tunnukset: kirjaston
+            toiminnot kuuluvat laululistalle eivätkä pilvivalikon sisään. */}
+        {onBackup && onCloud && onRestore && onImportText && (
+          <>
+            <h3 className="settings-group">{t('settings.library')}</h3>
+            <div className="field">
+              <div className="button-row">
+                <button onClick={onBackup}>{t('list.downloadBackup')}</button>
+                <button onClick={onCloud}>{t('list.cloudBackup')}</button>
+                <button onClick={onRestore}>{t('list.importBackup')}</button>
+                <button onClick={onImportText}>{t('import.open')}</button>
+              </div>
+            </div>
+          </>
+        )}
+
+        <h3 className="settings-group">{t('settings.preferences')}</h3>
         <div className="field">
           <label>{t('settings.language')}</label>
           {/* Kieli vaihtuu heti valittaessa, jotta muutoksen näkee ennen tallennusta. */}
@@ -44,6 +79,19 @@ export default function SettingsSheet({ onClose }: Props) {
         </div>
 
         <div className="field">
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={autoBackup}
+              onChange={(e) => setAutoBackup(e.target.checked)}
+            />
+            {t('settings.autoBackup')}
+          </label>
+          <small>{t('settings.autoBackupHelp')}</small>
+        </div>
+
+        <h3 className="settings-group">{t('settings.credentials')}</h3>
+        <div className="field">
           <label htmlFor="dropbox-id">{t('settings.dropboxKey')}</label>
           <input
             id="dropbox-id"
@@ -55,18 +103,6 @@ export default function SettingsSheet({ onClose }: Props) {
             spellCheck={false}
           />
           <small>{t('settings.dropboxHelp')}</small>
-        </div>
-
-        <div className="field">
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={autoBackup}
-              onChange={(e) => setAutoBackup(e.target.checked)}
-            />
-            {t('settings.autoBackup')}
-          </label>
-          <small>{t('settings.autoBackupHelp')}</small>
         </div>
 
         <div className="field">

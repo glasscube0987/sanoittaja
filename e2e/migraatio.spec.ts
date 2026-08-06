@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { kirjastoToiminto } from './apu';
 
 /** Vanhan version 1 kanta: vain laulut ja nauhoitteet. */
 async function kylvaVanhaKanta(page: Page) {
@@ -115,7 +116,7 @@ test('uusi varmuuskopio sisältää settilistat ja merkinnät', async ({ page })
   await page.reload();
 
   const lataus = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Back up' }).click();
+  await kirjastoToiminto(page, 'Back up');
   const tiedosto = await lataus;
   const polku = await tiedosto.path();
   const sisalto = JSON.parse(readFileSync(polku!, 'utf8'));

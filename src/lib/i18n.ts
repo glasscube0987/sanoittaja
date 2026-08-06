@@ -26,6 +26,9 @@ const en = {
 
   'list.settings': 'Settings',
   'list.newSong': '+ New song',
+  'list.newTitle': 'New song',
+  'list.newBlank': 'Blank song',
+  'list.newFromText': 'Import from text',
   'list.emptyTitle': 'No songs yet.',
   'list.emptyHint': 'Tap “New song” to start — lyrics, chords and recordings are stored on your device.',
   'list.meta': '{lines} lines · edited {date}',
@@ -132,6 +135,10 @@ const en = {
   'set.addTitle': 'Add songs to “{name}”',
   'set.empty': 'No songs in this set yet.',
   'set.emptyHint': 'Tap “Add songs” to build the set for a gig.',
+  'sort.label': 'Sort',
+  'sort.edited': 'Edited',
+  'sort.az': 'A–Z',
+  'sort.za': 'Z–A',
   'set.removeSong': 'Remove {title} from the set',
   'set.removeAction': 'Remove',
   'set.moveUp': 'Move {title} up',
@@ -172,6 +179,9 @@ const en = {
   'cloud.done': 'Backed up to {provider} as {file}.',
 
   'settings.title': 'Settings',
+  'settings.library': 'Library',
+  'settings.preferences': 'General',
+  'settings.credentials': 'Cloud credentials',
   'settings.language': 'Language',
   'settings.dropboxKey': 'Dropbox app key (optional)',
   'settings.dropboxHelp':
@@ -207,6 +217,9 @@ const fi: Record<Key, string> = {
 
   'list.settings': 'Asetukset',
   'list.newSong': '+ Uusi laulu',
+  'list.newTitle': 'Uusi laulu',
+  'list.newBlank': 'Tyhjä laulu',
+  'list.newFromText': 'Tuo tekstistä',
   'list.emptyTitle': 'Ei vielä lauluja.',
   'list.emptyHint':
     'Aloita painamalla ”Uusi laulu” – sanat, soinnut ja nauhoitteet tallentuvat puhelimeesi.',
@@ -315,6 +328,10 @@ const fi: Record<Key, string> = {
   'set.addTitle': 'Lisää lauluja settiin ”{name}”',
   'set.empty': 'Setissä ei ole vielä lauluja.',
   'set.emptyHint': 'Kokoa keikan setti painamalla ”Lisää lauluja”.',
+  'sort.label': 'Järjestys',
+  'sort.edited': 'Muokattu',
+  'sort.az': 'A–Ö',
+  'sort.za': 'Ö–A',
   'set.removeSong': 'Poista {title} setistä',
   'set.removeAction': 'Poista',
   'set.moveUp': 'Siirrä {title} ylös',
@@ -355,6 +372,9 @@ const fi: Record<Key, string> = {
   'cloud.done': 'Varmuuskopioitu palveluun {provider} nimellä {file}.',
 
   'settings.title': 'Asetukset',
+  'settings.library': 'Kirjasto',
+  'settings.preferences': 'Yleiset',
+  'settings.credentials': 'Pilvitunnukset',
   'settings.language': 'Kieli',
   'settings.dropboxKey': 'Dropbox app key (valinnainen)',
   'settings.dropboxHelp':
