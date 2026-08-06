@@ -19,6 +19,7 @@ import Icon from './Icon';
 import ImportSheet from './ImportSheet';
 import SetlistPicker from './SetlistPicker';
 import SettingsSheet from './SettingsSheet';
+import SwipeRow from './SwipeRow';
 
 interface Props {
   songs: Song[];
@@ -51,6 +52,8 @@ export default function SongList({
   // null = ”Kaikki laulut”, joka ei ole tallennettu setti vaan oletusnäkymä.
   const [setlistId, setSetlistId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  /* Vain yksi rivi kerrallaan auki, jotta poistopainikkeita ei jää roikkumaan. */
+  const [avoinId, setAvoinId] = useState<string | null>(null);
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -197,8 +200,8 @@ export default function SongList({
             {t('set.emptyHint')}
           </p>
         )}
-        {naytetyt.map((song, i) => (
-          <div className="song-row" key={song.id}>
+        {naytetyt.map((song, i) => {
+          const kortti = (
             <button className="song-card" onClick={() => onOpen(song.id)}>
               <span className="song-card-text">
                 <span className="title">
@@ -217,7 +220,26 @@ export default function SongList({
               </span>
               <Icon name="chevronRight" size={18} />
             </button>
-            {setlist && (
+          );
+
+          if (!setlist) return <div className="song-row" key={song.id}>{kortti}</div>;
+
+          /* Poisto on liu'utuksen takana eikä painikkeena: ✕ rivin reunassa oli
+             puhelimella liian helppo osua vahingossa. Vain setissä – «Kaikki
+             laulut» -näkymässä sama ele hävittäisi laulun kokonaan. */
+          return (
+            <div className="song-row" key={song.id}>
+              {/* Liu'utus koskee vain korttia: jos koko rivi liukuisi, ▲▼
+                  siirtyisivät sen mukana keskelle ruutua. */}
+              <SwipeRow
+                open={avoinId === song.id}
+                onOpenChange={(auki) => setAvoinId(auki ? song.id : null)}
+                actionLabel={t('set.removeAction')}
+                actionName={t('set.removeSong', { title: song.title || t('app.untitled') })}
+                onAction={() => onSetlistChange(removeSong(setlist, song.id))}
+              >
+                {kortti}
+              </SwipeRow>
               <div className="song-order">
                 <button
                   className="icon-button small"
@@ -235,17 +257,10 @@ export default function SongList({
                 >
                   <Icon name="chevronDown" size={18} />
                 </button>
-                <button
-                  className="icon-button small"
-                  aria-label={t('set.removeSong', { title: song.title || t('app.untitled') })}
-                  onClick={() => onSetlistChange(removeSong(setlist, song.id))}
-                >
-                  ✕
-                </button>
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
         {/* Vanhat laulut ovat muualla kirjoitettuina; tuonti on laulun luonnin
             rinnakkainen tapa, joten se on listalla eikä asetuksissa. */}
         <div className="button-row">

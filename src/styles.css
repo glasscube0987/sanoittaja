@@ -308,6 +308,58 @@ button.small {
 }
 
 /* Setissä kortin rinnalla järjestyspainikkeet; kirjastossa kortti yksin. */
+/*
+ * Liu'utettava rivi: poistopainike on sisällön alla ja paljastuu kun sisältöä
+ * liu'utetaan vasemmalle. Painike on aina DOM:issa ja kohdistettavissa, joten
+ * näppäimistöllä ja työpöydällä samaan toimintoon pääsee ilman elettä.
+ */
+.swipe-row {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  /* Kortin paikalla rivissä: nuolet jäävät oman leveytensä verran oikealle. */
+  flex: 1;
+  min-width: 0;
+}
+
+.swipe-action {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  align-items: stretch;
+}
+
+/*
+ * Täytetty punainen, ei muun sovelluksen reunallinen `danger`: kortin alta
+ * paljastuva toiminto pitää tunnistaa yhdellä silmäyksellä, ja reunallinen
+ * laatikko lukisi tässä kortin osana eikä sen takaa paljastuvana painikkeena.
+ */
+.swipe-action button.danger {
+  border-radius: 0;
+  border-color: transparent;
+  padding: 0 20px;
+  font-weight: 600;
+  background: var(--danger);
+  color: #1a1113;
+}
+
+.swipe-content {
+  position: relative;
+  /* Pystyvieritys jää selaimelle; vain vaakaele on JavaScriptin varassa. */
+  touch-action: pan-y;
+  background: var(--bg);
+}
+
+/* Sormen alla rivi seuraa heti; irti päästettäessä se asettuu pehmeästi. */
+.swipe-content:not(.dragging) {
+  transition: transform 0.18s ease-out;
+}
+
+/* Näppäimistökohdistus painikkeeseen avaa rivin, jotta painike on näkyvissä. */
+.swipe-action:focus-within ~ .swipe-content {
+  transform: translateX(-88px) !important;
+}
+
 .song-row {
   display: flex;
   align-items: stretch;

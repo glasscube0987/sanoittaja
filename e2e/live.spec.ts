@@ -127,3 +127,40 @@ test('live-tilasta pääsee pois eikä editori jää taakse rikki', async ({ pag
   await expect(page.locator('.live-view')).toHaveCount(0);
   await expect(page.locator('.lyrics')).toBeVisible();
 });
+
+/*
+ * Ohjainpalkki piiloutuu itsestään, jottei se peitä lehteä esiintyessä. Silloin
+ * se on myös läpäisemätön (`pointer-events: none`), joten jokaisen tilan on
+ * tarjottava jokin tapa saada se takaisin. Piirtotilassa lehden napautus on
+ * varattu piirtämiselle, ja ilman erillistä takuuta palkki jäi puhelimella
+ * pysyvästi piiloon: laulusta ei päässyt ulos muuten kuin lataamalla appi
+ * uudelleen. Näppäimistö ei ole varareitti, koska puhelimessa sitä ei ole.
+ */
+test('ohjaimiin pääsee käsiksi piilotuksen jälkeen', async ({ page }) => {
+  await avaaLive(page);
+  const palkki = page.locator('.live-bar');
+  await expect(palkki).toHaveClass(/hidden/);
+
+  // Napautus lehteen tuo ohjaimet takaisin.
+  await page.locator('.live-scroll').click({ position: { x: 30, y: 200 } });
+  await expect(palkki).not.toHaveClass(/hidden/);
+});
+
+test('piirtotilassa ohjaimet pysyvät käytettävissä', async ({ page }) => {
+  await avaaLive(page);
+  await page.locator('.live-scroll').click({ position: { x: 30, y: 200 } });
+  await page.getByLabel('Draw on the sheet').click();
+  await expect(page.locator('.draw-tools')).toBeVisible();
+
+  /* Odotus on tässä itse testi: piilotus tapahtuu ajastimella, joten pelkkä
+     tilan tarkistus heti napautuksen jälkeen menisi läpi vaikka palkki katoaisi
+     sekuntia myöhemmin. Siksi odotetaan tarkoituksella yli piilotusajan. */
+  await page.waitForTimeout(4500);
+
+  await expect(page.locator('.live-bar')).not.toHaveClass(/hidden/);
+  await expect(page.getByLabel('Exit live mode')).toBeVisible();
+
+  // Ja ulos on päästävä.
+  await page.getByLabel('Exit live mode').click();
+  await expect(page.locator('.live-view')).toHaveCount(0);
+});

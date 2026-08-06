@@ -91,12 +91,22 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
     storeLiveSettings({ speed, fontSize });
   }, [speed, fontSize]);
 
-  /* Ohjaimet piiloon, jottei esiintyessä tarvitse osua pieniin painikkeisiin. */
+  /*
+   * Ohjaimet piiloon, jotta lehti näkyy esiintyessä kokonaan. Piilotettuna
+   * palkki on myös läpäisemätön, joten jokaisesta tilasta on oltava tie
+   * takaisin – muuten laulusta ei pääse ulos muuten kuin lataamalla appi
+   * uudelleen, eikä puhelimessa ole näppäimistöä varareitiksi.
+   *
+   * Piirtotilassa palkkia ei piiloteta lainkaan: siellä lehden napautus on
+   * varattu piirtämiselle, eikä mikään ele toisi palkkia takaisin. Työkalut
+   * ovat sitä paitsi juuri se asia jota piirtäessä käytetään.
+   */
   useEffect(() => {
     setShowControls(true);
+    if (tool.active) return;
     const id = window.setTimeout(() => setShowControls(false), 3500);
     return () => window.clearTimeout(id);
-  }, [poke]);
+  }, [poke, tool.active]);
 
   /* Vieritys: murto-osapikselit kerätään talteen, jotta hidas nopeus liikkuu. */
   useEffect(() => {
@@ -205,6 +215,11 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
         /* Piirtotilassa napautus jättää jäljen; se ei saa myös käynnistää
            vieritystä, joten toisto kytketään vain tavallisessa tilassa. */
         onClick={tool.active ? undefined : toggle}
+        /* Herätys on erikseen osoittimessa eikä napautuksessa: napautus voi olla
+           varattu piirtoon, mutta kosketuksen on aina tuotava ohjaimet esiin.
+           Näin uusi tila, joka varaa napautuksen, ei voi vahingossa hukata
+           ainoaa tietä takaisin ohjaimiin. */
+        onPointerDown={wake}
         style={{
           fontSize: `${fontSize}px`,
           // Sormella piirrettäessä vieritys on estettävä, muuten veto vierittää

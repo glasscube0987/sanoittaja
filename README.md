@@ -79,10 +79,15 @@ demoja puhelimella ja vie kaikki pilveen.
   toiminnon voi kytkeä pois asetuksista.
 - **Settilistat** – laulut ovat aina ”Kaikki laulut” -näkymässä, ja niistä voi
   koota keikkakohtaisia settejä. Setti sisältää vain viittauksia, joten sama
-  laulu voi olla useassa setissä ja muokkaus näkyy kaikissa. Järjestys ▲▼:llä,
-  ja **live-tilassa setin läpi pääsee biisistä toiseen** poistumatta
-  esitysnäkymästä. Biisin vaihto on aina käyttäjän napautus: automaattinen
-  vieritys ei jatku seuraavan biisin päälle itsestään.
+  laulu voi olla useassa setissä ja muokkaus näkyy kaikissa. Järjestystä
+  muutetaan ▲▼:llä, ja **live-tilassa setin läpi pääsee biisistä toiseen**
+  poistumatta esitysnäkymästä. Biisin vaihto on aina käyttäjän napautus:
+  automaattinen vieritys ei jatku seuraavan biisin päälle itsestään.
+  **Biisi poistetaan setistä liu'uttamalla riviä vasemmalle**: lyhyt liu'utus
+  paljastaa Poista-painikkeen, ja rivin vetäminen kokonaan yli poistaa suoraan.
+  Ele on tarkoituksellinen tavalla jota pieni ✕ ei ollut – sitä tuli painettua
+  vahingossa. Pystyveto vierittää listaa normaalisti, ja laulu itse jää aina
+  kirjastoon.
 - **Omat merkinnät** – live-tilan kynäpainike avaa piirtotilan, jossa
   sointulapun päälle voi merkitä muistiinpanoja kynällä tai sormella viidellä
   värillä. Pyyhekumi ja «kumoa veto» ovat samassa rivissä. Kun kynää on kerran
@@ -206,6 +211,7 @@ src/
     render.ts       Sointumerkkien ja sointurivien ladonta tekstiksi (tulostus, live)
     sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
     setlists.ts     Settilistojen sisältö ja järjestys (puhtaita funktioita)
+    swipe.ts        Liu'utuseleen kynnykset (puhtaita funktioita)
     songOps.ts      Laulun muokkausoperaatiot (puhtaita funktioita)
     useAnnotations.ts  Laulun merkinnät kannasta; live-tila ja tulostuslehti
                     pysyvät synkassa kannan tapahtuman kautta

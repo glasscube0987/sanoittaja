@@ -19,6 +19,45 @@ function nimet(page: Page): Promise<string[]> {
   );
 }
 
+
+/**
+ * Liu'uttaa nimetyn rivin vasemmalle annetun matkan.
+ *
+ * Tapahtumat lähetetään yksitellen, koska ele elää Reactin tilassa: saman
+ * kierroksen sisällä `pointermove` näkisi vielä vanhan arvon. Playwrightin
+ * hiiri ei myöskään aseta `pointerType`-arvoa, joten kosketus syntetisoidaan.
+ */
+async function liuuta(page: Page, nimi: string, matka: number, dy = 0) {
+  const rivi = page.locator('.swipe-row', { hasText: nimi }).locator('.swipe-content');
+  const box = (await rivi.boundingBox())!;
+  const x0 = box.x + box.width - 20;
+  const y0 = box.y + box.height / 2;
+
+  const laheta = (tapahtuma: string, x: number, y: number) =>
+    rivi.evaluate(
+      (el, [nimi2, cx, cy]) => {
+        el.setPointerCapture = () => {};
+        el.dispatchEvent(
+          new PointerEvent(nimi2 as string, {
+            pointerId: 1,
+            pointerType: 'touch',
+            clientX: cx as number,
+            clientY: cy as number,
+            buttons: 1,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      },
+      [tapahtuma, x, y] as const,
+    );
+
+  await laheta('pointerdown', x0, y0);
+  await laheta('pointermove', x0 + matka * 0.3, y0 + dy * 0.3);
+  await laheta('pointermove', x0 + matka, y0 + dy);
+  await laheta('pointerup', x0 + matka, y0 + dy);
+}
+
 test('setin luonti ja laulujen lisääminen', async ({ page }) => {
   await avaaMonta(page, BIISIT);
   await luoSetti(page, 'Keikka');
@@ -61,16 +100,67 @@ test('järjestystä ei voi siirtää setin reunojen yli', async ({ page }) => {
   await expect(page.getByLabel('Move Kolmas down')).toBeDisabled();
 });
 
-test('laulun poisto setistä ei poista laulua kirjastosta', async ({ page }) => {
+test('lyhyt liu\'utus paljastaa poistopainikkeen ja se poistaa vain setistä', async ({ page }) => {
   await avaaMonta(page, BIISIT);
   await luoSetti(page, 'Keikka');
   await lisaaLauluja(page, BIISIT);
 
-  await page.getByLabel('Remove Toinen from the set').click();
+  await liuuta(page, 'Toinen', -110);
+  const poista = page.getByLabel('Remove Toinen from the set');
+  await expect(poista).toBeVisible();
+  await poista.click();
+
   expect(await nimet(page)).toEqual(['Ensimmäinen', 'Kolmas']);
+
+  // Laulu on yhä kirjastossa: setistä poisto ei ole laulun poisto.
+  await page.getByRole('button', { name: 'All songs' }).click();
+  expect(await nimet(page)).toEqual(BIISIT);
+});
+
+test('pitkä liu\'utus poistaa setistä suoraan', async ({ page }) => {
+  await avaaMonta(page, BIISIT);
+  await luoSetti(page, 'Keikka');
+  await lisaaLauluja(page, BIISIT);
+
+  await liuuta(page, 'Toinen', -320);
+  await expect.poll(() => nimet(page)).toEqual(['Ensimmäinen', 'Kolmas']);
 
   await page.getByRole('button', { name: 'All songs' }).click();
   expect(await nimet(page)).toEqual(BIISIT);
+});
+
+test('lyhyt nykäisy ei poista eikä avaa riviä', async ({ page }) => {
+  await avaaMonta(page, BIISIT);
+  await luoSetti(page, 'Keikka');
+  await lisaaLauluja(page, BIISIT);
+
+  await liuuta(page, 'Toinen', -20);
+  expect(await nimet(page)).toEqual(BIISIT);
+  // Painike on DOM:issa mutta sisällön alla, joten avautuminen luetaan rivistä.
+  await expect(page.locator('.swipe-row.open')).toHaveCount(0);
+});
+
+test('pystyveto jää listan vieritykselle', async ({ page }) => {
+  // Muuten listaa ei voisi vierittää rivien päältä ilman että ne lähtevät
+  // liikkeelle – ja settilistassa sormi on juuri rivien päällä.
+  await avaaMonta(page, BIISIT);
+  await luoSetti(page, 'Keikka');
+  await lisaaLauluja(page, BIISIT);
+
+  await liuuta(page, 'Toinen', -60, 90);
+  expect(await nimet(page)).toEqual(BIISIT);
+  await expect(page.locator('.swipe-row.open')).toHaveCount(0);
+});
+
+test('liu\'utus ei avaa laulua', async ({ page }) => {
+  await avaaMonta(page, BIISIT);
+  await luoSetti(page, 'Keikka');
+  await lisaaLauluja(page, BIISIT);
+
+  await liuuta(page, 'Toinen', -110);
+  // Editori ei auennut: laululista on yhä näkyvissä.
+  await expect(page.locator('.setlist-bar')).toBeVisible();
+  await expect(page.locator('.lyrics')).toHaveCount(0);
 });
 
 test('setti säilyy uudelleenlatauksen yli', async ({ page }) => {
