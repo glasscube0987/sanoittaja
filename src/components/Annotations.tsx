@@ -17,10 +17,15 @@ export interface DrawTool {
   color: string;
   eraser: boolean;
   /**
-   * Onko kynää käytetty tällä laitteella. Sen jälkeen sormi ei enää piirrä,
-   * jolloin kämmen ei sotke lappua. Tämä ei ole käyttäjän valinta vaan havainto.
+   * Onko kynää käytetty tällä laitteella. Havainto eikä valinta: sen jälkeen
+   * kosketus ei piirrä, jolloin kämmen ei sotke lappua.
    */
   penSeen: boolean;
+  /**
+   * Sallitaanko sormipiirto kynälaitteella. Kytkin näkyy vasta kun kynä on
+   * havaittu; puhelimessa sormi piirtää ilman mitään valintaa.
+   */
+  fingerDraws: boolean;
 }
 
 interface Props {
@@ -31,13 +36,20 @@ interface Props {
   /** Rivin fonttikoko pikseleinä. Muuttuu kun live-tilassa zoomataan. */
   fontSize?: number;
   onDraw?: (lineId: string, points: number[], color: string) => void;
-  onErase?: (id: string) => void;
+  /** Pyyhkii pyyhkimen alle jäävän osan; loput palautetaan uusina vetoina. */
+  onErase?: (note: Annotation, at: Point) => void;
   /** Kynän havaitseminen: sen jälkeen sormi ei piirrä. */
   onPenSeen?: () => void;
 }
 
 /** Katselutila: ei piirtoa, ei kosketuksia. */
-const KATSELU: DrawTool = { active: false, color: '', eraser: false, penSeen: false };
+const KATSELU: DrawTool = {
+  active: false,
+  color: '',
+  eraser: false,
+  penSeen: false,
+  fingerDraws: false,
+};
 
 /**
  * Yhden rivin merkinnät ja piirtoalusta.
@@ -80,8 +92,8 @@ export default function LineAnnotations({
   function piirtaako(e: React.PointerEvent): boolean {
     if (!tool.active) return false;
     if (e.pointerType === 'pen') return true;
-    // Kynän jälkeen sormi ja kämmen jätetään rauhaan.
-    if (e.pointerType === 'touch') return !tool.penSeen;
+    // Kynän jälkeen kosketus on kämmen, ellei sormipiirto ole erikseen päällä.
+    if (e.pointerType === 'touch') return !tool.penSeen || tool.fingerDraws;
     return true; // hiiri
   }
 
@@ -92,7 +104,7 @@ export default function LineAnnotations({
 
   function pyyhi(at: Point) {
     for (const note of notes) {
-      if (hitsStroke(note.points, at, ERASER_RADIUS)) onErase?.(note.id);
+      if (hitsStroke(note.points, at, ERASER_RADIUS)) onErase?.(note, at);
     }
   }
 

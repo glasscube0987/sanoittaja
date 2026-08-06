@@ -12,7 +12,8 @@ import {
   SPEED_STEP,
   storeLiveSettings,
 } from '../lib/live';
-import { COLORS, STROKE_WIDTH } from '../lib/annotate';
+import { COLORS, eraseAt, ERASER_RADIUS, STROKE_WIDTH } from '../lib/annotate';
+import type { Point } from '../lib/annotate';
 import { deleteAnnotation, saveAnnotation } from '../lib/db';
 import { useAnnotations } from '../lib/useAnnotations';
 import type { Annotation, Song } from '../lib/types';
@@ -55,8 +56,10 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
     active: false,
     color: COLORS[0],
     eraser: false,
-    // Havainto eikä valinta: kynän jälkeen sormi ja kämmen jätetään rauhaan.
+    // Havainto eikä valinta: kynän jälkeen kosketus on kämmen.
     penSeen: initial.penSeen,
+    // Kynälaitteella sormipiirto on erikseen valittava; puhelimessa kytkintä ei näy.
+    fingerDraws: false,
   });
 
   function lisaaVeto(lineId: string, points: number[], color: string) {
@@ -78,6 +81,27 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
   function poistaVeto(id: string) {
     setNotes((prev) => prev.filter((n) => n.id !== id));
     deleteAnnotation(id).catch((err) => console.error('Merkinnän poisto epäonnistui', err));
+  }
+
+  /**
+   * Pyyhkii vedosta pyyhkimen alle jäävän osan. Jäljelle jäävät palat
+   * tallennetaan uusina vetoina, jolloin ympyrästä voi siistiä yhden kohdan
+   * siistimättä koko ympyrää uudelleen.
+   */
+  function pyyhiVedosta(note: Annotation, at: Point) {
+    const palat = eraseAt(note.points, at, ERASER_RADIUS);
+    const uudet: Annotation[] = palat.map((points) => ({
+      ...note,
+      id: uid(),
+      points,
+      createdAt: Date.now(),
+    }));
+
+    setNotes((prev) => [...prev.filter((n) => n.id !== note.id), ...uudet]);
+    deleteAnnotation(note.id).catch((err) => console.error('Merkinnän poisto epäonnistui', err));
+    for (const pala of uudet) {
+      saveAnnotation(pala).catch((err) => console.error('Merkinnän tallennus epäonnistui', err));
+    }
   }
 
   function kumoaVeto() {
@@ -235,7 +259,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
           annotations={notes}
           tool={tool}
           onDraw={lisaaVeto}
-          onErase={poistaVeto}
+          onErase={pyyhiVedosta}
           fontSize={fontSize}
           onPenSeen={() => setTool((prev) => (prev.penSeen ? prev : { ...prev, penSeen: true }))}
         />
@@ -288,6 +312,17 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
             <button onClick={kumoaVeto} disabled={notes.length === 0} aria-label={t('draw.undo')}>
               <Icon name="undo" size={18} />
             </button>
+            {/* Vain kynälaitteella: puhelimessa sormi piirtää ilman valintaa,
+                ja kynän kanssa kosketus on oletuksena kämmen. */}
+            {tool.penSeen && (
+              <button
+                className={tool.fingerDraws ? 'primary' : ''}
+                aria-label={t('draw.finger')}
+                onClick={() => setTool((prev) => ({ ...prev, fingerDraws: !prev.fingerDraws }))}
+              >
+                {t('draw.fingerShort')}
+              </button>
+            )}
           </div>
         )}
         <div className="live-controls">

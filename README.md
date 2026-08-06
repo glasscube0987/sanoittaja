@@ -104,7 +104,10 @@ demoja puhelimella ja vie kaikki pilveen.
   kertoo että halutaan piirtää: sen ollessa päällä vieritys on pois käytöstä, ja
   vierittäminen tapahtuu kytkemällä se pois. **Kämmentuki**: kun kynää on kerran
   käytetty, kosketus ei enää jätä jälkeä, ja tieto muistetaan laitteelle – kämmen
-  osuu lappuun usein ennen kärkeä. **Merkintä kuuluu riviin ja sen yksikkö on
+  osuu lappuun usein ennen kärkeä. Sormipiirron saa silti takaisin päälle
+  «Sormi»-painikkeesta, joka näkyy vain kynälaitteilla. Pyyhekumi pyyhkii
+  vedosta vain koskettamansa kohdan, joten alleviivauksen keskeltä voi siistiä
+  palan ilman että koko veto katoaa. **Merkintä kuuluu riviin ja sen yksikkö on
   rivin fonttikoko**, joten se pysyy kirjainten päällä vaikka laulua muokataan,
   transponoidaan tai tekstikokoa vaihdetaan, ja se seuraa riviään kun ylle
   lisätään rivejä. Merkinnät tulevat mukaan sekä tulosteeseen että

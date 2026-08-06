@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  eraseAt,
   ERASER_RADIUS,
   hitsStroke,
   pathData,
@@ -160,6 +161,63 @@ describe('hitsStroke', () => {
 
   it('ei osu tyhjään vetoon', () => {
     expect(hitsStroke([], { x: 0, y: 0 }, ERASER_RADIUS)).toBe(false);
+  });
+});
+
+describe('eraseAt', () => {
+  /** Alleviivaus: suora veto kahdella pisteellä, kuten simplify sen jättää. */
+  const alleviivaus = [0, 0, 10, 0];
+
+  it('katkaisee alleviivauksen keskeltä kahdeksi', () => {
+    /*
+     * Ratkaiseva tapaus. `simplify` typistää suoran vedon kahdeksi pisteeksi,
+     * joten pistekohtainen pyyhkiminen ei osuisi keskelle lainkaan – ja juuri
+     * alleviivaus on se merkintä jota tulee eniten siistittyä.
+     */
+    const palat = eraseAt(alleviivaus, { x: 5, y: 0 }, 1);
+    expect(palat).toHaveLength(2);
+    expect(palat[0]).toEqual([0, 0, 4, 0]);
+    expect(palat[1]).toEqual([6, 0, 10, 0]);
+  });
+
+  it('lyhentää vetoa kun pyyhitään päästä', () => {
+    const palat = eraseAt(alleviivaus, { x: 0, y: 0 }, 2.5);
+    expect(palat).toHaveLength(1);
+    expect(palat[0]).toEqual([2.5, 0, 10, 0]);
+  });
+
+  it('poistaa koko vedon kun pyyhin peittää sen', () => {
+    expect(eraseAt(alleviivaus, { x: 5, y: 0 }, 20)).toEqual([]);
+  });
+
+  it('ei muuta vetoa kun pyyhin menee ohi', () => {
+    expect(eraseAt(alleviivaus, { x: 5, y: 9 }, 1)).toEqual([alleviivaus]);
+  });
+
+  it('pyyhkii monipisteisestä vedosta vain osuvan kohdan', () => {
+    const mutka = [0, 0, 5, 0, 5, 5, 10, 5];
+    const palat = eraseAt(mutka, { x: 5, y: 0 }, 1);
+    expect(palat).toHaveLength(2);
+    expect(palat[0].slice(0, 2)).toEqual([0, 0]);
+    expect(palat[1].slice(-2)).toEqual([10, 5]);
+  });
+
+  it('karsii yksittäisiksi jäävät tähteet', () => {
+    // Pyyhkimen reunaan jäänyt piste piirtyisi pisteenä keskelle pyyhittyä kohtaa.
+    const palat = eraseAt([0, 0, 0.5, 0], { x: 0.25, y: 0 }, 5);
+    expect(palat).toEqual([]);
+  });
+
+  it('ei muuta alkuperäistä', () => {
+    const kopio = alleviivaus.slice();
+    eraseAt(alleviivaus, { x: 5, y: 0 }, 1);
+    expect(alleviivaus).toEqual(kopio);
+  });
+
+  it('sietää tyhjän ja yksipisteisen vedon', () => {
+    expect(eraseAt([], { x: 0, y: 0 }, 1)).toEqual([]);
+    expect(eraseAt([5, 5], { x: 5, y: 5 }, 1)).toEqual([]);
+    expect(eraseAt([5, 5], { x: 9, y: 9 }, 1)).toEqual([[5, 5]]);
   });
 });
 

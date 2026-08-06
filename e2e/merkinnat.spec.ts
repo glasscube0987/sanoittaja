@@ -66,6 +66,31 @@ async function veda(kerros: Locator, pointerType: 'pen' | 'touch' | 'mouse') {
   await laheta('pointerup', 0.8);
 }
 
+/** Napautus yhteen kohtaan; pyyhkiminen kohdistuu tarkalleen siihen pisteeseen. */
+async function napauta(kerros: Locator, osuus: number, pointerType: 'pen' | 'touch') {
+  const laheta = (nimi: string) =>
+    kerros.evaluate(
+      (el, [tapahtuma, type, x]) => {
+        const box = el.getBoundingClientRect();
+        el.setPointerCapture = () => {};
+        el.dispatchEvent(
+          new PointerEvent(tapahtuma as string, {
+            pointerId: 1,
+            pointerType: type as string,
+            clientX: box.left + box.width * (x as number),
+            clientY: box.top + box.height / 2,
+            buttons: 1,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      },
+      [nimi, pointerType, osuus] as const,
+    );
+  await laheta('pointerdown');
+  await laheta('pointerup');
+}
+
 /* Editorin tulostuslehdellä on oma kerroksensa, joten laskenta rajataan
    esitysnäkymään. Tulostuslehti tarkistetaan erikseen omassa testissään. */
 const vedot = (page: Page) => page.locator('.live-view .annot path').count();
@@ -77,6 +102,35 @@ test('piirtotila avaa työkalut ja kynä jättää jäljen', async ({ page }) =>
   await piirtoTila(page);
   await veda(page.locator('.live-view .annot').first(), 'pen');
 
+  await expect.poll(() => vedot(page)).toBe(1);
+});
+
+test('veto osion otsikon päältä jättää jäljen', async ({ page }) => {
+  /*
+   * Osion otsikko oli `.sheet-section`in suora lapsi, ja piirtokerros on vain
+   * `.sheet-line`-laatikoiden sisällä. Otsikon päällä ei siis ollut kerrosta
+   * lainkaan, eikä sieltä alkava veto osunut mihinkään — juuri sen kohdan yli
+   * vedetään kun kertosäe ympyröidään.
+   */
+  await avaaLive(page);
+  await piirtoTila(page);
+
+  const otsikko = page.locator('.live-view .sheet-section h2').first();
+  await expect(otsikko).toBeVisible();
+  const laatikko = (await otsikko.boundingBox())!;
+
+  /* Ratkaiseva kohta: mikä elementti on otsikon päällä. Selain valitsee
+     kosketukselle päällimmäisen elementin, joten piirtokerroksen on oltava
+     siellä. Tapahtuman lähettäminen otsikolle itselleen ei kertoisi tästä
+     mitään, koska se kuplisi ylöspäin kerroksen ohi. */
+  const paallimmainen = await page.evaluate(
+    ([x, y]) => document.elementFromPoint(x, y)?.closest('.annot') !== null,
+    [laatikko.x + laatikko.width / 2, laatikko.y + laatikko.height / 2],
+  );
+  expect(paallimmainen).toBe(true);
+
+  // Ja veto sen kohdalta jättää jäljen.
+  await veda(page.locator('.live-view .annot').first(), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
 });
 
@@ -145,15 +199,85 @@ test('setin toiselle laululle piirretty jää sille laululle', async ({ page }) 
   await expect.poll(() => vedot(page)).toBe(0);
 });
 
-test('pyyhekumi poistaa vedon', async ({ page }) => {
+test('pyyhkiminen lyhentää vetoa mitattavasti', async ({ page }) => {
+  /*
+   * Pyyhekumi ei enää poista koko vetoa yhdestä kosketuksesta – se oli koko
+   * muutoksen tarkoitus. Vedon on siis lyhennyttävä, ei kadottava.
+   */
+  await avaaLive(page);
+  await piirtoTila(page);
+  await veda(page.locator('.live-view .annot').first(), 'pen');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  const leveys = () =>
+    page
+      .locator('.live-view .annot path')
+      .first()
+      .evaluate((el) => (el as SVGPathElement).getBBox().width);
+  const ennen = await leveys();
+
+  await page.getByRole('button', { name: 'Erase' }).click();
+  await napauta(page.locator('.live-view .annot').first(), 0.2, 'pen');
+
+  await expect.poll(() => vedot(page)).toBe(1);
+  expect(await leveys()).toBeLessThan(ennen);
+});
+
+test('pyyhekumi pyyhkii vedosta osan eikä koko vetoa', async ({ page }) => {
+  /*
+   * Koko vedon poistaminen yhdestä kosketuksesta oli tylsä työkalu: ympyrästä
+   * ei voinut siistiä yhtä kohtaa siistimättä koko ympyrää uudelleen.
+   */
   await avaaLive(page);
   await piirtoTila(page);
   await veda(page.locator('.live-view .annot').first(), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
 
   await page.getByRole('button', { name: 'Erase' }).click();
+  // Napautus vedon keskelle katkaisee sen kahdeksi.
+  await napauta(page.locator('.live-view .annot').first(), 0.5, 'pen');
+
+  await expect.poll(() => vedot(page)).toBe(2);
+});
+
+test('pyyhkiminen vedon päästä lyhentää sitä', async ({ page }) => {
+  await avaaLive(page);
+  await piirtoTila(page);
   await veda(page.locator('.live-view .annot').first(), 'pen');
-  await expect.poll(() => vedot(page)).toBe(0);
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  await page.getByRole('button', { name: 'Erase' }).click();
+  await napauta(page.locator('.live-view .annot').first(), 0.2, 'pen');
+
+  // Veto on yhä olemassa, ei katkennut kahdeksi eikä kadonnut.
+  await expect.poll(() => vedot(page)).toBe(1);
+});
+
+test('sormikytkintä ei ole ennen kuin kynää on käytetty', async ({ page }) => {
+  // Puhelimessa kynää ei ole, eikä sormi tarvitse mitään valintaa.
+  await avaaLive(page);
+  await piirtoTila(page);
+  await expect(page.getByRole('button', { name: 'Finger draws' })).toHaveCount(0);
+});
+
+test('sormikytkin palauttaa sormipiirron kynän jälkeen', async ({ page }) => {
+  await avaaLive(page);
+  await piirtoTila(page);
+  await veda(page.locator('.live-view .annot').first(), 'pen');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  // Kytkin ilmestyy vasta kynän havaitsemisen jälkeen.
+  const sormi = page.getByRole('button', { name: 'Finger draws' });
+  await expect(sormi).toBeVisible();
+  await expect(sormi).not.toHaveClass(/primary/);
+
+  // Ilman kytkintä kosketus on kämmen eikä piirrä.
+  await veda(page.locator('.live-view .annot').nth(1), 'touch');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  await sormi.click();
+  await veda(page.locator('.live-view .annot').nth(1), 'touch');
+  await expect.poll(() => vedot(page)).toBe(2);
 });
 
 test('kumoaminen poistaa viimeisimmän vedon', async ({ page }) => {

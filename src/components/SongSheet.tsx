@@ -2,6 +2,7 @@ import { barRowOf } from '../lib/bars';
 import { useI18n } from '../lib/i18n';
 import { barLineText, chordLineText, meterGutter } from '../lib/render';
 import { getSections, sectionTitle } from '../lib/sections';
+import type { Point } from '../lib/annotate';
 import type { Annotation, Song } from '../lib/types';
 import type { DrawTool } from './Annotations';
 import LineAnnotations from './Annotations';
@@ -16,7 +17,7 @@ interface Props {
   /** Rivien fonttikoko pikseleinä; merkinnät skaalautuvat sen mukana. */
   fontSize?: number;
   onDraw?: (lineId: string, points: number[], color: string) => void;
-  onErase?: (id: string) => void;
+  onErase?: (note: Annotation, at: Point) => void;
   onPenSeen?: () => void;
 }
 
@@ -58,8 +59,12 @@ export default function SongSheet({
 
       {sections.map((block) => (
         <section className="sheet-section" key={block.id}>
-          {block.mark && <h2>{sectionTitle(block, t)}</h2>}
-          {block.lines.map((line) => {
+          {block.lines.map((line, i) => {
+            /* Osion otsikko ensimmäisen rivin sisään, jotta rivin merkintäkerros
+               kattaa myös sen. Otsikon päällä ei aiemmin ollut kerrosta lainkaan,
+               eikä sieltä alkava veto osunut mihinkään – ja juuri sen kohdan yli
+               vedetään kun kertosäe ympyröidään. */
+            const otsikko = i === 0 && block.mark && <h2>{sectionTitle(block, t)}</h2>;
             const merkinnat = piirretaan && (
               <LineAnnotations
                 lineId={line.id}
@@ -75,6 +80,7 @@ export default function SongSheet({
             if (line.bars) {
               return (
                 <div className="sheet-line" key={line.id}>
+                  {otsikko}
                   <pre className="sheet-bars">
                     {barLineText(line.bars, barRowOf(line).meters, gutter)}
                   </pre>
@@ -85,6 +91,7 @@ export default function SongSheet({
             const chords = chordLineText(line);
             return (
               <div className="sheet-line" key={line.id}>
+                {otsikko}
                 {/* Tyhjä rivi tarvitsee sisältöä, jottei se romahda korkeudeltaan. */}
                 {chords && <pre className="sheet-chords">{chords}</pre>}
                 <pre className="sheet-lyric">{line.text || ' '}</pre>

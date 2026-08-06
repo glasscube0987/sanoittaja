@@ -117,6 +117,92 @@ export function simplify(flat: number[], tolerance = 0.03): number[] {
   return toFlat(points.filter((_, i) => keep[i]));
 }
 
+/**
+ * Janan ne osuudet, jotka jäävät ympyrän ulkopuolelle, parametrivälinä 0–1.
+ *
+ * Ratkaistaan toisen asteen yhtälöstä eikä pisteitä poimimalla: `simplify`
+ * typistää suoran vedon kahdeksi pisteeksi, joten pistekohtainen pyyhkiminen ei
+ * osuisi alleviivauksen keskelle lainkaan – ja alleviivaus on juuri se yleisin
+ * merkintä.
+ */
+function outsideSpans(a: Point, b: Point, c: Point, r: number): Array<[number, number]> {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const fx = a.x - c.x;
+  const fy = a.y - c.y;
+  const A = dx * dx + dy * dy;
+  if (A === 0) return Math.hypot(fx, fy) <= r ? [] : [[0, 1]];
+
+  const B = 2 * (fx * dx + fy * dy);
+  const C = fx * fx + fy * fy - r * r;
+  const disc = B * B - 4 * A * C;
+  // Yksikin jana ympyrän sisällä tekee diskriminantista positiivisen, joten
+  // ei-positiivinen tarkoittaa että koko jana on ulkopuolella.
+  if (disc <= 0) return [[0, 1]];
+
+  const juuri = Math.sqrt(disc);
+  const t1 = (-B - juuri) / (2 * A);
+  const t2 = (-B + juuri) / (2 * A);
+
+  const spans: Array<[number, number]> = [];
+  if (t1 > 0) spans.push([0, Math.min(1, t1)]);
+  if (t2 < 1) spans.push([Math.max(0, t2), 1]);
+  return spans.filter(([alku, loppu]) => loppu > alku);
+}
+
+/**
+ * Pyyhkii vedosta pyyhkimen alle jäävän osan ja palauttaa jäljelle jäävät palat.
+ *
+ * Palasia on nolla kun koko veto pyyhkiytyi, yksi kun pyyhittiin päästä ja
+ * kaksi kun keskeltä. Koko vedon poistaminen yhdestä kosketuksesta oli tylsä
+ * työkalu: ympyrästä ei voinut siistiä yhtä kohtaa siistimättä koko ympyrää
+ * uudelleen.
+ */
+export function eraseAt(flat: number[], at: Point, radius: number): number[][] {
+  const points = toPoints(flat);
+  if (points.length === 0) return [];
+  if (points.length === 1) {
+    return Math.hypot(points[0].x - at.x, points[0].y - at.y) <= radius ? [] : [flat.slice()];
+  }
+
+  const palat: Point[][] = [];
+  let kesken: Point[] = [];
+  const lisaa = (p: Point) => {
+    const edellinen = kesken[kesken.length - 1];
+    if (!edellinen || edellinen.x !== p.x || edellinen.y !== p.y) kesken.push(p);
+  };
+  const katkaise = () => {
+    if (kesken.length > 1) palat.push(kesken);
+    kesken = [];
+  };
+
+  let jatkuu = false;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1];
+    const b = points[i];
+    const kohdassa = (t: number): Point => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+
+    const spans = outsideSpans(a, b, at, radius);
+    if (spans.length === 0) {
+      katkaise();
+      jatkuu = false;
+      continue;
+    }
+    for (const [t0, t1] of spans) {
+      // Pala jatkuu vain jos edellinen jana päättyi loppuun asti ja tämä alkaa alusta.
+      if (!jatkuu || t0 > 0) katkaise();
+      lisaa(kohdassa(t0));
+      lisaa(kohdassa(t1));
+      jatkuu = t1 === 1;
+    }
+  }
+  katkaise();
+
+  /* Yksittäiseksi jäänyt piste on pyyhkimen reunaan jäänyt tähde, ei merkintä:
+     se piirtyisi pisteenä keskelle juuri pyyhittyä kohtaa. */
+  return palat.filter((pala) => pala.length > 1).map(toFlat);
+}
+
 /** Osuuko pyyhekumi vetoon: etäisyys mihin tahansa janaan alle säteen. */
 export function hitsStroke(flat: number[], at: Point, radius: number): boolean {
   const points = toPoints(flat);
