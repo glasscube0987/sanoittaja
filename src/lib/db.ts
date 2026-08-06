@@ -117,11 +117,27 @@ export async function deleteSetlist(id: string): Promise<void> {
   await txDone(tx);
 }
 
+/**
+ * Laulun merkinnät, vanhat koordinaatistot siivottuna.
+ *
+ * Ensimmäinen versio suhteutti pisteet rivin leveyteen, jolloin merkinnät eivät
+ * seuranneet tekstikokoa. Yksikkö on nyt rivin fonttikoko, eikä vanhoja vetoja
+ * voi muuntaa – tallennettu leveys ei ole tiedossa jälkikäteen. Ne poistetaan
+ * luettaessa, jolloin siirtymä on itsestään rajoittuva eikä voi koskea uusiin.
+ */
 export async function listAnnotations(songId: string): Promise<Annotation[]> {
   const db = await openDb();
   const index = db.transaction('annotations').objectStore('annotations').index('songId');
-  const rows = await reqResult(index.getAll(songId));
-  return (rows as Annotation[]).sort((a, b) => a.createdAt - b.createdAt);
+  const rows = (await reqResult(index.getAll(songId))) as Annotation[];
+
+  const vanhat = rows.filter((note) => note.unit !== 'em');
+  if (vanhat.length > 0) {
+    const tx = db.transaction('annotations', 'readwrite');
+    for (const note of vanhat) tx.objectStore('annotations').delete(note.id);
+    await txDone(tx);
+  }
+
+  return rows.filter((note) => note.unit === 'em').sort((a, b) => a.createdAt - b.createdAt);
 }
 
 /**

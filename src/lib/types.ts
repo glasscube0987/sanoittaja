@@ -87,10 +87,17 @@ export interface Annotation {
   /** Rivi, jolta veto alkoi. Veto saa ulottua rivin ulkopuolelle. */
   lineId: string;
   color: string;
-  /** Viivan paksuus samassa suhteellisessa yksikössä kuin x. */
+  /** Viivan paksuus samassa yksikössä kuin x. */
   width: number;
   /** Litteä lukulista `[x0, y0, x1, y1, …]`; olio per piste kolminkertaistaisi koon. */
   points: number[];
+  /**
+   * Koordinaattien yksikkö. Ensimmäinen versio suhteutti pisteet rivin
+   * leveyteen, jolloin merkinnät eivät seuranneet tekstikokoa; nykyinen yksikkö
+   * on rivin fonttikoko. Kenttä erottaa nämä toisistaan, jotta vanhat vedot ei
+   * piirry väärään kohtaan väärän kokoisina.
+   */
+  unit: 'em';
   createdAt: number;
 }
 

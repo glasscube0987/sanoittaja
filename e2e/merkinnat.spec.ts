@@ -167,21 +167,70 @@ test('kumoaminen poistaa viimeisimmän vedon', async ({ page }) => {
   await expect.poll(() => vedot(page)).toBe(1);
 });
 
-test('kynän käyttö jättää sormen vierittämiselle', async ({ page }) => {
+test('kynä piirtää ilman mitään sormiasetusta', async ({ page }) => {
+  /*
+   * Aiemmin `touch-action: none` asetettiin vain sormipiirron ollessa päällä.
+   * Apple Pencil on `touch-action`in alainen aivan kuten sormi, joten kynäveto
+   * meni vieritykseksi ja käyttäjän oli pakko pitää sormipiirto päällä – mikä
+   * puolestaan antoi kämmenen piirtää.
+   */
   await avaaLive(page);
   await piirtoTila(page);
-
-  const sormi = page.getByRole('button', { name: 'Finger draws' });
-  await expect(sormi).toHaveClass(/primary/);
-
-  // Kynän havaitseminen kytkee sormipiirron pois: muuten kämmen piirtäisi.
   await veda(page.locator('.live-view .annot').first(), 'pen');
-  await expect(sormi).not.toHaveClass(/primary/);
+  await expect.poll(() => vedot(page)).toBe(1);
+});
 
-  // Sormi ei enää jätä jälkeä.
-  const ennen = await vedot(page);
+test('kämmen ei piirrä sen jälkeen kun kynää on käytetty', async ({ page }) => {
+  await avaaLive(page);
+  await piirtoTila(page);
+  await veda(page.locator('.live-view .annot').first(), 'pen');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  // Kosketus kynän jälkeen on kämmen, ei piirtoaikomus.
   await veda(page.locator('.live-view .annot').nth(1), 'touch');
-  await expect.poll(() => vedot(page)).toBe(ennen);
+  await expect.poll(() => vedot(page)).toBe(1);
+});
+
+test('kynän muistaminen säilyy live-tilan avaamisten yli', async ({ page }) => {
+  // Kämmen osuu lappuun usein ennen kärkeä; ilman muistia joka istunnon
+  // ensimmäinen veto olisi kämmenen jättämä.
+  await avaaLive(page);
+  await piirtoTila(page);
+  await veda(page.locator('.live-view .annot').first(), 'pen');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  await page.getByLabel('Exit live mode').click();
+  await page.getByRole('button', { name: 'Live', exact: true }).click();
+  await piirtoTila(page);
+
+  await veda(page.locator('.live-view .annot').nth(1), 'touch');
+  await expect.poll(() => vedot(page)).toBe(1);
+});
+
+test('merkintä kasvaa tekstikoon mukana', async ({ page }) => {
+  /*
+   * Merkinnät suhteutettiin aiemmin rivin leveyteen, joka ei muutu tekstikoon
+   * mukana – veto jäi paikalleen kun teksti kasvoi. Yksikkö on nyt rivin
+   * fonttikoko, joten vedon on kasvettava samassa suhteessa kuin kirjainten.
+   */
+  await avaaLive(page);
+  await piirtoTila(page);
+  await veda(page.locator('.live-view .annot').first(), 'pen');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  const leveys = () =>
+    page.locator('.live-view .annot path').first().evaluate((el) => {
+      const box = (el as SVGPathElement).getBBox();
+      return box.width;
+    });
+
+  const ennen = await leveys();
+  expect(ennen).toBeGreaterThan(0);
+
+  // Kaksi askelta suuremmaksi: 20 → 24 pikseliä, eli kerroin 1.2.
+  await page.getByLabel('Larger text').click();
+  await page.getByLabel('Larger text').click();
+  await expect.poll(async () => Math.round((await leveys()) / ennen * 100)).toBe(120);
 });
 
 test('sormi piirtää kun kynää ei ole käytetty', async ({ page }) => {
@@ -190,6 +239,58 @@ test('sormi piirtää kun kynää ei ole käytetty', async ({ page }) => {
   await piirtoTila(page);
   await veda(page.locator('.live-view .annot').first(), 'touch');
   await expect.poll(() => vedot(page)).toBe(1);
+});
+
+test('vanhat leveyteen suhteutetut merkinnät poistuvat', async ({ page }) => {
+  await avaaLive(page);
+  await page.getByLabel('Exit live mode').click();
+
+  // Ensimmäisen version veto: ei unit-kenttää, koordinaatit 0–1.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const req = indexedDB.open('sanoittaja');
+        req.onsuccess = () => {
+          const tx = req.result.transaction('annotations', 'readwrite');
+          tx.objectStore('annotations').put({
+            id: 'vanha',
+            songId: 'testi',
+            lineId: 'l1',
+            color: '#e0524f',
+            width: 0.004,
+            points: [0.1, 0.02, 0.8, 0.02],
+            createdAt: 1,
+          });
+          tx.oncomplete = () => {
+            req.result.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
+        };
+        req.onerror = () => reject(req.error);
+      }),
+  );
+
+  await page.getByRole('button', { name: 'Live', exact: true }).click();
+  // Ei piirry väärään kohtaan väärän kokoisena, vaan poistuu kannasta.
+  await expect.poll(() => vedot(page)).toBe(0);
+
+  const jaljella = await page.evaluate(
+    () =>
+      new Promise<number>((resolve, reject) => {
+        const req = indexedDB.open('sanoittaja');
+        req.onsuccess = () => {
+          const get = req.result.transaction('annotations').objectStore('annotations').getAll();
+          get.onsuccess = () => {
+            req.result.close();
+            resolve(get.result.length);
+          };
+          get.onerror = () => reject(get.error);
+        };
+        req.onerror = () => reject(req.error);
+      }),
+  );
+  expect(jaljella).toBe(0);
 });
 
 test('piirtokerros ei ota kosketuksia tavallisessa tilassa', async ({ page }) => {

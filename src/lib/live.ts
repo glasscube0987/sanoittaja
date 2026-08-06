@@ -11,6 +11,12 @@ export interface LiveSettings {
   speed: number;
   /** Sanoitusten tekstikoko pikseleinä. */
   fontSize: number;
+  /**
+   * Onko kynää käytetty tällä laitteella. Muistetaan istuntojen yli, koska
+   * kämmen osuu lappuun usein ennen kärkeä: ilman muistia jokaisen istunnon
+   * ensimmäinen veto olisi kämmenen jättämä.
+   */
+  penSeen: boolean;
 }
 
 export const SPEED_MIN = 4;
@@ -21,7 +27,7 @@ export const FONT_MIN = 14;
 export const FONT_MAX = 40;
 export const FONT_STEP = 2;
 
-export const DEFAULT_LIVE: LiveSettings = { speed: 16, fontSize: 20 };
+export const DEFAULT_LIVE: LiveSettings = { speed: 16, fontSize: 20, penSeen: false };
 
 const STORAGE_KEY = 'sanoittaja.live';
 
@@ -53,6 +59,7 @@ export function loadLiveSettings(): LiveSettings {
     return {
       speed: clamp(Number(parsed.speed) || DEFAULT_LIVE.speed, SPEED_MIN, SPEED_MAX),
       fontSize: clamp(Number(parsed.fontSize) || DEFAULT_LIVE.fontSize, FONT_MIN, FONT_MAX),
+      penSeen: parsed.penSeen === true,
     };
   } catch {
     // Rikkinäinen asetus ei saa estää esiintymistä.

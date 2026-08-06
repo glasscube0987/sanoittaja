@@ -1,7 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Point } from '../lib/annotate';
 import {
-  COLORS,
   ERASER_RADIUS,
   hitsStroke,
   pathData,
@@ -17,8 +16,11 @@ export interface DrawTool {
   active: boolean;
   color: string;
   eraser: boolean;
-  /** Piirtääkö sormi. Kynän kanssa sormi jätetään vierittämiselle. */
-  fingerDraws: boolean;
+  /**
+   * Onko kynää käytetty tällä laitteella. Sen jälkeen sormi ei enää piirrä,
+   * jolloin kämmen ei sotke lappua. Tämä ei ole käyttäjän valinta vaan havainto.
+   */
+  penSeen: boolean;
 }
 
 interface Props {
@@ -26,14 +28,16 @@ interface Props {
   notes: Annotation[];
   /** Piirtotyökalu; ilman sitä kerros vain näyttää merkinnät (tuloste). */
   tool?: DrawTool;
+  /** Rivin fonttikoko pikseleinä. Muuttuu kun live-tilassa zoomataan. */
+  fontSize?: number;
   onDraw?: (lineId: string, points: number[], color: string) => void;
   onErase?: (id: string) => void;
-  /** Kynän havaitseminen: sen jälkeen sormi vierittää eikä piirrä. */
+  /** Kynän havaitseminen: sen jälkeen sormi ei piirrä. */
   onPenSeen?: () => void;
 }
 
 /** Katselutila: ei piirtoa, ei kosketuksia. */
-const KATSELU: DrawTool = { active: false, color: COLORS[0], eraser: false, fingerDraws: false };
+const KATSELU: DrawTool = { active: false, color: '', eraser: false, penSeen: false };
 
 /**
  * Yhden rivin merkinnät ja piirtoalusta.
@@ -47,39 +51,43 @@ const KATSELU: DrawTool = { active: false, color: COLORS[0], eraser: false, fing
  * rivillä, vaikka sormi liikkuisi toisen rivin päälle – muuten veto katkeaisi
  * rivin reunaan.
  *
- * **Skaalaus tehdään viewBoxilla eikä mittaamalla.** Aiemmin polut piirrettiin
- * pikseleinä ResizeObserverin antamasta leveydestä, mutta editorin tulostuslehti
- * on `display: none` kunnes selain siirtyy tulostustilaan – silloin leveys on 0,
- * ja tuloste sai merkinnät nollan mittaisina viivoina (`0 0 m 0 0 l`) origoon.
- * Mittausta ei ehdi tapahtua ennen tulostuksen kuvantamista.
- *
- * Koska x ja y on molemmat suhteutettu rivin leveyteen, muoto skaalautuu
- * tasaisesti: `viewBox="0 0 1 1"` ja `preserveAspectRatio="xMinYMin slice"`
- * antavat mittakaavaksi `max(leveys, korkeus)` = rivin leveys, ilman JavaScriptiä.
- * Tämä nojaa siihen että rivi on leveämpi kuin korkea – sanoitusrivi on
- * tasalevyistä tekstiä eikä rivity, joten se pitää paikkansa.
+ * **Mittakaava on rivin fonttikoko**, ja se luetaan `getComputedStyle`stä.
+ * Laskettu fonttikoko on saatavilla ilman ladontaa, joten se toimii myös
+ * editorin `display: none` -tulostuslehdellä – juuri se seikka, jonka takia
+ * kerros aiemmin skaalattiin mitatulla leveydellä.
  */
 export default function LineAnnotations({
   lineId,
   notes,
   tool = KATSELU,
+  fontSize,
   onDraw,
   onErase,
   onPenSeen,
 }: Props) {
   const ref = useRef<SVGSVGElement>(null);
+  const [em, setEm] = useState(16);
   const [kesken, setKesken] = useState<Point[] | null>(null);
+
+  /* Fonttikoko luetaan uudelleen kun live-tilan tekstikoko muuttuu. */
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const koko = parseFloat(getComputedStyle(el).fontSize);
+    if (koko > 0) setEm(koko);
+  }, [fontSize]);
 
   function piirtaako(e: React.PointerEvent): boolean {
     if (!tool.active) return false;
     if (e.pointerType === 'pen') return true;
-    if (e.pointerType === 'touch') return tool.fingerDraws;
+    // Kynän jälkeen sormi ja kämmen jätetään rauhaan.
+    if (e.pointerType === 'touch') return !tool.penSeen;
     return true; // hiiri
   }
 
   function piste(e: { clientX: number; clientY: number }): Point {
     const box = ref.current!.getBoundingClientRect();
-    return toAnchored({ left: box.left, top: box.top, width: box.width }, e.clientX, e.clientY);
+    return toAnchored({ left: box.left, top: box.top, em }, e.clientX, e.clientY);
   }
 
   function pyyhi(at: Point) {
@@ -128,8 +136,6 @@ export default function LineAnnotations({
     <svg
       ref={ref}
       className={tool.active ? 'annot active' : 'annot'}
-      viewBox="0 0 1 1"
-      preserveAspectRatio="xMinYMin slice"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -139,9 +145,9 @@ export default function LineAnnotations({
       {notes.map((note) => (
         <path
           key={note.id}
-          d={pathData(note.points, 1)}
+          d={pathData(note.points, em)}
           stroke={note.color}
-          strokeWidth={note.width}
+          strokeWidth={Math.max(1, note.width * em)}
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -149,9 +155,9 @@ export default function LineAnnotations({
       ))}
       {kesken && (
         <path
-          d={pathData(toFlat(kesken), 1)}
+          d={pathData(toFlat(kesken), em)}
           stroke={tool.color}
-          strokeWidth={STROKE_WIDTH}
+          strokeWidth={Math.max(1, STROKE_WIDTH * em)}
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"

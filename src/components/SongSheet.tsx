@@ -13,6 +13,8 @@ interface Props {
   /** Rivien päälle piirretyt merkinnät; tyhjä kun niitä ei näytetä. */
   annotations?: Annotation[];
   tool?: DrawTool;
+  /** Rivien fonttikoko pikseleinä; merkinnät skaalautuvat sen mukana. */
+  fontSize?: number;
   onDraw?: (lineId: string, points: number[], color: string) => void;
   onErase?: (id: string) => void;
   onPenSeen?: () => void;
@@ -30,6 +32,7 @@ export default function SongSheet({
   className,
   annotations,
   tool,
+  fontSize,
   onDraw,
   onErase,
   onPenSeen,
@@ -62,6 +65,7 @@ export default function SongSheet({
                 lineId={line.id}
                 notes={rivinMerkinnat(line.id)}
                 tool={tool}
+                fontSize={fontSize}
                 onDraw={onDraw}
                 onErase={onErase}
                 onPenSeen={onPenSeen}

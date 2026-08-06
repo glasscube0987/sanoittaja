@@ -3,19 +3,26 @@
  *
  * Nuottilehti ladotaan uudelleen aina kun laulua muokataan tai tekstikoko
  * vaihtuu, joten näyttöpikselit eivät kelpaa merkinnän paikaksi. Veto kuuluu
- * riviin, ja sen pisteet ovat rivin **leveyteen** suhteutettuja: sekä x että y
- * jaetaan samalla luvulla, jolloin muoto säilyy – ympyrä pysyy ympyränä eikä
- * veny soikioksi rivin korkeuden muuttuessa.
+ * riviin, ja sen pisteet ovat **em-yksiköissä**: yksi yksikkö on rivin
+ * fonttikoko.
  *
- * Origo on rivin vasen yläkulma, joten veto seuraa riviään kun rivejä
- * lisätään, poistetaan tai osioita siirretään. Veto saa ulottua rivin
+ * Fonttikoko eikä rivin leveys, koska lehti on tasalevyistä tekstiä eikä
+ * rivity: silloin jokainen kirjaimen paikka on fonttikoon monikerta, ja
+ * em-yksiköissä piirretty veto seuraa kirjaimia kun tekstikokoa muutetaan.
+ * Leveyteen suhteutettuna veto jäi paikalleen tekstin kasvaessa, koska rivin
+ * leveys on säiliön leveys eikä muutu tekstikoon mukana.
+ *
+ * Sekä x että y jaetaan samalla luvulla, jolloin muoto säilyy – ympyrä pysyy
+ * ympyränä. Origo on rivin vasen yläkulma, joten veto seuraa riviään kun
+ * rivejä lisätään, poistetaan tai osioita siirretään, ja se saa ulottua rivin
  * ulkopuolelle: iso ympyrä kertosäkeen ympärillä on yksi veto eikä katkea.
  */
 
 export interface Box {
   left: number;
   top: number;
-  width: number;
+  /** Rivin fonttikoko pikseleinä; yksi em. */
+  em: number;
 }
 
 export interface Point {
@@ -25,14 +32,14 @@ export interface Point {
 
 /** Näyttöpiste rivin koordinaatistoon. */
 export function toAnchored(box: Box, clientX: number, clientY: number): Point {
-  // Nollaleveys vain ennen ensimmäistä mittausta; ei jaeta nollalla.
-  const scale = box.width || 1;
+  // Nollaa ei tule vastaan oikeasta fonttikoosta; varmistus jakolaskua varten.
+  const scale = box.em || 1;
   return { x: (clientX - box.left) / scale, y: (clientY - box.top) / scale };
 }
 
 /** Rivin koordinaatisto takaisin näyttöpikseleiksi. */
 export function toPixels(box: Box, point: Point): Point {
-  const scale = box.width || 1;
+  const scale = box.em || 1;
   return { x: box.left + point.x * scale, y: box.top + point.y * scale };
 }
 
@@ -54,10 +61,13 @@ export function toFlat(points: Point[]): number[] {
 export function pathData(flat: number[], scale: number): string {
   const points = toPoints(flat);
   if (points.length === 0) return '';
-  const xy = (p: Point) => `${(p.x * scale).toFixed(2)} ${(p.y * scale).toFixed(2)}`;
+  /* Kolme desimaalia: skaala on pikseleitä, joten tämä on selvästi alle
+     näkyvän. Kahdella desimaalilla ja suhdelukuskaalalla veto porrastui
+     näkyvästi ennen kuin karsinta siisti sen. */
+  const xy = (p: Point) => `${(p.x * scale).toFixed(3)} ${(p.y * scale).toFixed(3)}`;
   if (points.length === 1) {
     const p = points[0];
-    return `M${xy(p)}L${((p.x + 0.001) * scale).toFixed(2)} ${(p.y * scale).toFixed(2)}`;
+    return `M${xy(p)}L${((p.x + 0.01) * scale).toFixed(3)} ${(p.y * scale).toFixed(3)}`;
   }
   return `M${xy(points[0])}` + points.slice(1).map((p) => `L${xy(p)}`).join('');
 }
@@ -79,7 +89,7 @@ function distanceToSegment(p: Point, a: Point, b: Point): number {
  * kilotavuja ja koko laulun merkinnät kasvattaisivat varmuuskopiota
  * tarpeettomasti.
  */
-export function simplify(flat: number[], tolerance = 0.002): number[] {
+export function simplify(flat: number[], tolerance = 0.03): number[] {
   const points = toPoints(flat);
   if (points.length < 3) return flat.slice();
 
@@ -127,8 +137,11 @@ export function hitsStroke(flat: number[], at: Point, radius: number): boolean {
  */
 export const COLORS = ['#e0524f', '#4f9de0', '#5fc07a', '#eceef4', '#e5b45f'];
 
-/** Viivan paksuus rivin leveyteen suhteutettuna. */
-export const STROKE_WIDTH = 0.004;
+/**
+ * Viivan paksuus em-yksiköissä: noin 2 pikseliä oletustekstikoolla, ja se
+ * kasvaa tekstin mukana niin kuin muukin lehti.
+ */
+export const STROKE_WIDTH = 0.1;
 
-/** Pyyhekumin säde samassa yksikössä. */
-export const ERASER_RADIUS = 0.02;
+/** Pyyhekumin säde samassa yksikössä, noin kirjaimen korkeuden puolikas. */
+export const ERASER_RADIUS = 0.5;

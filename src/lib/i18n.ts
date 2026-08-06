@@ -78,8 +78,6 @@ const en = {
   'draw.color': 'Colour {color}',
   'draw.eraser': 'Erase',
   'draw.undo': 'Undo stroke',
-  'draw.finger': 'Finger draws',
-  'draw.fingerShort': 'Finger',
   'editor.confirmDeleteSong': 'Delete the song “{title}” and its recordings?',
 
   'line.addChordHere': 'Tap to add a chord here',
@@ -262,8 +260,6 @@ const fi: Record<Key, string> = {
   'draw.color': 'Väri {color}',
   'draw.eraser': 'Pyyhi',
   'draw.undo': 'Kumoa veto',
-  'draw.finger': 'Sormi piirtää',
-  'draw.fingerShort': 'Sormi',
   'editor.confirmDeleteSong': 'Poistetaanko laulu ”{title}” ja sen nauhoitteet?',
 
   'line.addChordHere': 'Napauta lisätäksesi soinnun tähän kohtaan',

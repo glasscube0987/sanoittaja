@@ -146,6 +146,24 @@ test('ohjaimiin pääsee käsiksi piilotuksen jälkeen', async ({ page }) => {
   await expect(palkki).not.toHaveClass(/hidden/);
 });
 
+/*
+ * Himmennyt palkki ei saa niellä napautusta. Aiemmin himmennettynä se oli
+ * `pointer-events: none`, jolloin ensimmäinen painallus meni sen läpi lehteen ja
+ * vain herätti palkin – keikalla se näyttää siltä että painike ei toimi ja
+ * play-nappia joutuu painamaan kolmesti.
+ */
+test('himmennyt ohjainpalkki reagoi ensimmäiseen painallukseen', async ({ page }) => {
+  await avaaLive(page);
+  await expect(page.locator('.live-bar')).toHaveClass(/hidden/);
+
+  const sijaintiEnnen = await sijainti(page);
+  await page.getByLabel('Faster').click();
+  await expect(page.locator('.live-speed')).toContainText('20');
+
+  // Painallus meni painikkeeseen eikä lehteen: vieritys ei käynnistynyt.
+  expect(await sijainti(page)).toBe(sijaintiEnnen);
+});
+
 test('piirtotilassa ohjaimet pysyvät käytettävissä', async ({ page }) => {
   await avaaLive(page);
   await page.locator('.live-scroll').click({ position: { x: 30, y: 200 } });

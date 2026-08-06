@@ -1095,9 +1095,16 @@ button.small {
   transition: opacity 0.25s;
 }
 
+/*
+ * Käyttämättömänä palkki himmenee mutta pysyy paikallaan ja kosketettavana.
+ *
+ * Aiemmin se oli `opacity: 0; pointer-events: none`, jolloin ensimmäinen
+ * painallus meni sen läpi lehteen ja vain herätti palkin. Keikalla se näyttää
+ * siltä että painike ei toimi, ja play-nappia joutuu painamaan kolmesti.
+ * Yksikään napautus ei saa mennä hukkaan silloin kun kädet ovat soittimessa.
+ */
 .live-bar.hidden {
-  opacity: 0;
-  pointer-events: none;
+  opacity: 0.4;
 }
 
 .live-nav {

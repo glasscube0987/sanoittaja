@@ -90,11 +90,12 @@ demoja puhelimella ja vie kaikki pilveen.
   kirjastoon.
 - **Omat merkinnät** – live-tilan kynäpainike avaa piirtotilan, jossa
   sointulapun päälle voi merkitä muistiinpanoja kynällä tai sormella viidellä
-  värillä. Pyyhekumi ja «kumoa veto» ovat samassa rivissä. Kun kynää on kerran
-  käytetty, sormi vierittää eikä piirrä – kämmen ei siis sotke lappua – ja
-  sormipiirron saa takaisin päälle yhdellä napautuksella (puhelimella, jossa
-  kynää ei ole, se on valmiiksi päällä). **Merkintä kuuluu riviin, ei
-  näyttöpikseleihin**, joten se pysyy paikallaan vaikka laulua muokataan,
+  värillä. Pyyhekumi ja «kumoa veto» ovat samassa rivissä. Piirtotila itsessään
+  kertoo että halutaan piirtää: sen ollessa päällä vieritys on pois käytöstä, ja
+  vierittäminen tapahtuu kytkemällä se pois. **Kämmentuki**: kun kynää on kerran
+  käytetty, kosketus ei enää jätä jälkeä, ja tieto muistetaan laitteelle – kämmen
+  osuu lappuun usein ennen kärkeä. **Merkintä kuuluu riviin ja sen yksikkö on
+  rivin fonttikoko**, joten se pysyy kirjainten päällä vaikka laulua muokataan,
   transponoidaan tai tekstikokoa vaihdetaan, ja se seuraa riviään kun ylle
   lisätään rivejä. Merkinnät tulevat mukaan sekä tulosteeseen että
   varmuuskopioon, ja poistuvat laulun mukana.

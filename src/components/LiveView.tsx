@@ -55,9 +55,8 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
     active: false,
     color: COLORS[0],
     eraser: false,
-    // Kynää käytettäessä sormi jätetään vierittämiselle; ilman kynää sormen
-    // on pakko piirtää, muuten ominaisuutta ei voi käyttää puhelimella.
-    fingerDraws: true,
+    // Havainto eikä valinta: kynän jälkeen sormi ja kämmen jätetään rauhaan.
+    penSeen: initial.penSeen,
   });
 
   function lisaaVeto(lineId: string, points: number[], color: string) {
@@ -69,6 +68,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
       color,
       width: STROKE_WIDTH,
       points,
+      unit: 'em',
       createdAt: Date.now(),
     };
     setNotes((prev) => [...prev, note]);
@@ -88,8 +88,8 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
   const wake = useCallback(() => setPoke((p) => p + 1), []);
 
   useEffect(() => {
-    storeLiveSettings({ speed, fontSize });
-  }, [speed, fontSize]);
+    storeLiveSettings({ speed, fontSize, penSeen: tool.penSeen });
+  }, [speed, fontSize, tool.penSeen]);
 
   /*
    * Ohjaimet piiloon, jotta lehti näkyy esiintyessä kokonaan. Piilotettuna
@@ -222,9 +222,11 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
         onPointerDown={wake}
         style={{
           fontSize: `${fontSize}px`,
-          // Sormella piirrettäessä vieritys on estettävä, muuten veto vierittää
-          // näkymää sen sijaan että piirtäisi.
-          touchAction: tool.active && tool.fingerDraws ? 'none' : undefined,
+          /* Piirtotilassa vieritys on estettävä kokonaan. Myös Apple Pencil on
+             `touch-action`in alainen, joten ehdollisena tämä vei kynävedon
+             vieritykseksi – ja pakotti pitämään sormipiirron päällä, jolloin
+             kämmen sotki lapun. Vieritys tapahtuu piirtotilan ulkopuolella. */
+          touchAction: tool.active ? 'none' : undefined,
         }}
       >
         <SongSheet
@@ -234,7 +236,8 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
           tool={tool}
           onDraw={lisaaVeto}
           onErase={poistaVeto}
-          onPenSeen={() => setTool((prev) => (prev.fingerDraws ? { ...prev, fingerDraws: false } : prev))}
+          fontSize={fontSize}
+          onPenSeen={() => setTool((prev) => (prev.penSeen ? prev : { ...prev, penSeen: true }))}
         />
         {/* Loppuun tilaa, jotta viimeinen rivi ehtii ruudun keskelle. */}
         <div className="live-tail" />
@@ -284,13 +287,6 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
                 yhdelle riville: toinen rivi söisi lehteä juuri keikalla. */}
             <button onClick={kumoaVeto} disabled={notes.length === 0} aria-label={t('draw.undo')}>
               <Icon name="undo" size={18} />
-            </button>
-            <button
-              className={tool.fingerDraws ? 'primary' : ''}
-              aria-label={t('draw.finger')}
-              onClick={() => setTool((prev) => ({ ...prev, fingerDraws: !prev.fingerDraws }))}
-            >
-              {t('draw.fingerShort')}
             </button>
           </div>
         )}
