@@ -21,7 +21,8 @@ export type IconName =
   | 'chevronRight'
   | 'lineSettings'
   | 'play'
-  | 'pause';
+  | 'pause'
+  | 'pen';
 
 interface Props {
   name: IconName;
@@ -47,6 +48,8 @@ const PATHS: Record<IconName, string> = {
   chevronRight: 'M9 4l8 8-8 8',
   // Tekstirivit ja niiden edessä merkintäpalkki: rivin asetukset.
   lineSettings: 'M4 5v14M9 6.5h11M9 12h8M9 17.5h10',
+  // Kynä kärki alaviistoon: piirtotila.
+  pen: 'M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5 4 20M13.5 7l3 3',
   play: '',
   pause: '',
 };

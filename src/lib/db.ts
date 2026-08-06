@@ -124,11 +124,27 @@ export async function listAnnotations(songId: string): Promise<Annotation[]> {
   return (rows as Annotation[]).sort((a, b) => a.createdAt - b.createdAt);
 }
 
+/**
+ * Merkintöjen muutoksesta kerrotaan tapahtumalla, koska niitä näyttää kaksi
+ * näkymää yhtä aikaa: live-tila piirtää editorin päällä, eikä taustalle jäävä
+ * editori muuten tietäisi tulostuslehtensä vanhentuneen.
+ *
+ * Tapahtuma herätetään vasta transaktion valmistuttua. Aiemmin herätetty
+ * lukija ehtisi lukea vielä vanhan tilan, ja juuri piirretty veto välähtäisi
+ * pois näkyvistä.
+ */
+export const ANNOTATIONS_EVENT = 'sanoittaja:annotations';
+
+function merkinnatMuuttuivat(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(ANNOTATIONS_EVENT));
+}
+
 export async function saveAnnotation(note: Annotation): Promise<void> {
   const db = await openDb();
   const tx = db.transaction('annotations', 'readwrite');
   tx.objectStore('annotations').put(note);
   await txDone(tx);
+  merkinnatMuuttuivat();
 }
 
 export async function deleteAnnotation(id: string): Promise<void> {
@@ -136,6 +152,7 @@ export async function deleteAnnotation(id: string): Promise<void> {
   const tx = db.transaction('annotations', 'readwrite');
   tx.objectStore('annotations').delete(id);
   await txDone(tx);
+  merkinnatMuuttuivat();
 }
 
 /** Kaikki merkinnät varmuuskopiota varten. */

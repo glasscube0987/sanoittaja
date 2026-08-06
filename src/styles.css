@@ -920,6 +920,69 @@ button.small {
 
 .song-sheet .sheet-line {
   margin-bottom: 0.15em;
+  /* Merkintäkerros asemoituu rivin sisään, jolloin sijainti tulee selaimelta
+     eikä sitä tarvitse laskea rivin siirtyessä. */
+  position: relative;
+}
+
+/*
+ * Merkintäkerros rivin päällä.
+ *
+ * `overflow: visible` sallii vedon ulottua rivin ulkopuolelle: kertosäkeen
+ * ympärille piirretty ympyrä on yksi veto eikä katkea rivin reunaan.
+ * Kosketuksia otetaan vastaan vain piirtotilassa, jotta tavallinen napautus
+ * pysäyttää ja jatkaa vierityksen kuten ennenkin.
+ */
+.annot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.annot.active {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+/* Piirtotilassa sisältöä ei valita vahingossa vedon aikana. */
+.live-scroll.drawing {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.draw-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.draw-tools button {
+  min-height: 38px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.draw-tools .swatch {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+/* Valittu väri erottuu kehyksellä; pelkkä väri ei kertoisi valintaa. */
+.draw-tools .swatch.current {
+  border-color: var(--text);
+  transform: scale(1.1);
 }
 
 .song-sheet .sheet-head {

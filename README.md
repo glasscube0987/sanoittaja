@@ -83,6 +83,16 @@ demoja puhelimella ja vie kaikki pilveen.
   ja **live-tilassa setin läpi pääsee biisistä toiseen** poistumatta
   esitysnäkymästä. Biisin vaihto on aina käyttäjän napautus: automaattinen
   vieritys ei jatku seuraavan biisin päälle itsestään.
+- **Omat merkinnät** – live-tilan kynäpainike avaa piirtotilan, jossa
+  sointulapun päälle voi merkitä muistiinpanoja kynällä tai sormella viidellä
+  värillä. Pyyhekumi ja «kumoa veto» ovat samassa rivissä. Kun kynää on kerran
+  käytetty, sormi vierittää eikä piirrä – kämmen ei siis sotke lappua – ja
+  sormipiirron saa takaisin päälle yhdellä napautuksella (puhelimella, jossa
+  kynää ei ole, se on valmiiksi päällä). **Merkintä kuuluu riviin, ei
+  näyttöpikseleihin**, joten se pysyy paikallaan vaikka laulua muokataan,
+  transponoidaan tai tekstikokoa vaihdetaan, ja se seuraa riviään kun ylle
+  lisätään rivejä. Merkinnät tulevat mukaan sekä tulosteeseen että
+  varmuuskopioon, ja poistuvat laulun mukana.
 - **Live-tila** – esiintymisnäkymä, joka vierittää laulua valitulla nopeudella,
   jolloin kädet pysyvät soittimessa. Tekstikoko ja nopeus säädettävissä, ruudun
   napautus pysäyttää ja jatkaa, ja näyttö pidetään hereillä (Wake Lock). Nopeus ja
@@ -184,6 +194,8 @@ src/
     types.ts        Tietomalli: Song, LyricLine, ChordAnchor, SectionMark, Recording
     chords.ts       Sointusymbolien jäsennys ja transponointi
     anchors.ts      Sointuankkurien siirto tekstimuutoksissa
+    annotate.ts     Omien merkintöjen koordinaatisto, yksinkertaistus ja
+                    pyyhekumin osumatesti (puhtaita funktioita)
     bars.ts         Sointurivin tahdit ja tahtilajit; tahtien muokkausoperaatiot
     history.ts      Peruutuspino ja kirjoitusmuutosten yhdistäminen
     i18n.ts         Käännökset (en/fi), kielen tunnistus ja React-konteksti
@@ -195,6 +207,8 @@ src/
     sections.ts     Osiorakenteen johtaminen riveistä ja osioiden nimeäminen
     setlists.ts     Settilistojen sisältö ja järjestys (puhtaita funktioita)
     songOps.ts      Laulun muokkausoperaatiot (puhtaita funktioita)
+    useAnnotations.ts  Laulun merkinnät kannasta; live-tila ja tulostuslehti
+                    pysyvät synkassa kannan tapahtuman kautta
     db.ts           Paikallinen tallennus (IndexedDB)
     recorder.ts     Ääninauhoitus (MediaRecorder)
     sync/           Pilvikerros: provider-rajapinta, Dropbox, Google Drive,

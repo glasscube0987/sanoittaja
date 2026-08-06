@@ -120,6 +120,22 @@ async function kylvaLaulu(page: Page, song: Song): Promise<void> {
   );
 }
 
+/** Luo setin nimellä; nimi kysytään selaimen kyselyllä. */
+export async function luoSetti(page: Page, nimi: string): Promise<void> {
+  page.once('dialog', (d) => d.accept(nimi));
+  await page.getByRole('button', { name: '+ New set' }).click();
+  await page.getByRole('button', { name: nimi, exact: true }).waitFor();
+}
+
+/** Lisää nimetyt laulut avoinna olevaan settiin valintanäkymästä. */
+export async function lisaaLauluja(page: Page, lauluNimet: string[]): Promise<void> {
+  await page.getByRole('button', { name: 'Add songs' }).first().click();
+  for (const nimi of lauluNimet) {
+    await page.locator('.picker-row', { hasText: nimi }).locator('input').check();
+  }
+  await page.locator('.sheet').getByRole('button', { name: 'Add songs' }).click();
+}
+
 /** Kylvää laulun ja avaa sen editoriin. */
 export async function avaaLaulu(page: Page, song: Song = laulu()): Promise<void> {
   await avaaLista(page, song);

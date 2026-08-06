@@ -23,6 +23,7 @@ import { useI18n } from '../lib/i18n';
 import { getSections, sectionTitle } from '../lib/sections';
 import { barRowOf } from '../lib/bars';
 import { printSheet } from '../lib/print';
+import { useAnnotations } from '../lib/useAnnotations';
 import { isBlankLine, meterGutter } from '../lib/render';
 import ChordSheet from './ChordSheet';
 import Icon from './Icon';
@@ -67,6 +68,8 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
   const focusLineId = useRef<{ id: string; caret: number } | null>(null);
   const blurTimer = useRef<number | null>(null);
+  /* Vain tulostuslehteä varten: merkinnät piirretään live-tilassa. */
+  const [notes] = useAnnotations(song.id);
 
   useEffect(() => () => window.clearTimeout(blurTimer.current ?? undefined), []);
 
@@ -328,7 +331,10 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
         </div>
 
         <RecordingsPanel songId={song.id} />
-        <SongSheet song={song} />
+        {/* Tuloste on tämä lehti, joten live-tilassa piirretyt merkinnät
+            kulkevat PDF:ään mukana. Editorissa niitä ei voi piirtää: sama
+            kosketus ei voi palvella sekä kirjoittamista että piirtämistä. */}
+        <SongSheet song={song} annotations={notes} />
       </main>
 
       {chordTarget && (

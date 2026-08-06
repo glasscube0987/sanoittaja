@@ -12,7 +12,12 @@ import {
   SPEED_STEP,
   storeLiveSettings,
 } from '../lib/live';
-import type { Song } from '../lib/types';
+import { COLORS, STROKE_WIDTH } from '../lib/annotate';
+import { deleteAnnotation, saveAnnotation } from '../lib/db';
+import { useAnnotations } from '../lib/useAnnotations';
+import type { Annotation, Song } from '../lib/types';
+import { uid } from '../lib/types';
+import type { DrawTool } from './Annotations';
 import Icon from './Icon';
 import SongSheet from './SongSheet';
 
@@ -43,6 +48,42 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
   const [showControls, setShowControls] = useState(true);
   const [poke, setPoke] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  /* Merkinnät luetaan laulukohtaisesti: setissä selattaessa vaihtuvat mukana. */
+  const [notes, setNotes] = useAnnotations(song.id);
+  const [tool, setTool] = useState<DrawTool>({
+    active: false,
+    color: COLORS[0],
+    eraser: false,
+    // Kynää käytettäessä sormi jätetään vierittämiselle; ilman kynää sormen
+    // on pakko piirtää, muuten ominaisuutta ei voi käyttää puhelimella.
+    fingerDraws: true,
+  });
+
+  function lisaaVeto(lineId: string, points: number[], color: string) {
+    if (points.length < 2) return;
+    const note: Annotation = {
+      id: uid(),
+      songId: song.id,
+      lineId,
+      color,
+      width: STROKE_WIDTH,
+      points,
+      createdAt: Date.now(),
+    };
+    setNotes((prev) => [...prev, note]);
+    saveAnnotation(note).catch((err) => console.error('Merkinnän tallennus epäonnistui', err));
+  }
+
+  function poistaVeto(id: string) {
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+    deleteAnnotation(id).catch((err) => console.error('Merkinnän poisto epäonnistui', err));
+  }
+
+  function kumoaVeto() {
+    const viimeisin = notes[notes.length - 1];
+    if (viimeisin) poistaVeto(viimeisin.id);
+  }
 
   const wake = useCallback(() => setPoke((p) => p + 1), []);
 
@@ -159,12 +200,27 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
   return (
     <div className="live-view">
       <div
-        className="live-scroll"
+        className={tool.active ? 'live-scroll drawing' : 'live-scroll'}
         ref={scrollRef}
-        onClick={toggle}
-        style={{ fontSize: `${fontSize}px` }}
+        /* Piirtotilassa napautus jättää jäljen; se ei saa myös käynnistää
+           vieritystä, joten toisto kytketään vain tavallisessa tilassa. */
+        onClick={tool.active ? undefined : toggle}
+        style={{
+          fontSize: `${fontSize}px`,
+          // Sormella piirrettäessä vieritys on estettävä, muuten veto vierittää
+          // näkymää sen sijaan että piirtäisi.
+          touchAction: tool.active && tool.fingerDraws ? 'none' : undefined,
+        }}
       >
-        <SongSheet song={song} className="live" />
+        <SongSheet
+          song={song}
+          className="live"
+          annotations={notes}
+          tool={tool}
+          onDraw={lisaaVeto}
+          onErase={poistaVeto}
+          onPenSeen={() => setTool((prev) => (prev.fingerDraws ? { ...prev, fingerDraws: false } : prev))}
+        />
         {/* Loppuun tilaa, jotta viimeinen rivi ehtii ruudun keskelle. */}
         <div className="live-tail" />
       </div>
@@ -189,6 +245,37 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
               aria-label={t('live.nextSong')}
             >
               <Icon name="chevronRight" size={20} />
+            </button>
+          </div>
+        )}
+        {tool.active && (
+          <div className="draw-tools">
+            {COLORS.map((color) => (
+              <button
+                key={color}
+                className={!tool.eraser && tool.color === color ? 'swatch current' : 'swatch'}
+                style={{ background: color }}
+                aria-label={t('draw.color', { color })}
+                onClick={() => setTool((prev) => ({ ...prev, color, eraser: false }))}
+              />
+            ))}
+            <button
+              className={tool.eraser ? 'primary' : ''}
+              onClick={() => setTool((prev) => ({ ...prev, eraser: !prev.eraser }))}
+            >
+              {t('draw.eraser')}
+            </button>
+            {/* Kuvake ja lyhyt teksti, jotta työkalut mahtuvat puhelimessa
+                yhdelle riville: toinen rivi söisi lehteä juuri keikalla. */}
+            <button onClick={kumoaVeto} disabled={notes.length === 0} aria-label={t('draw.undo')}>
+              <Icon name="undo" size={18} />
+            </button>
+            <button
+              className={tool.fingerDraws ? 'primary' : ''}
+              aria-label={t('draw.finger')}
+              onClick={() => setTool((prev) => ({ ...prev, fingerDraws: !prev.fingerDraws }))}
+            >
+              {t('draw.fingerShort')}
             </button>
           </div>
         )}
@@ -220,6 +307,13 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
           aria-label={t('live.largerText')}
         >
           A+
+        </button>
+        <button
+          className={tool.active ? 'primary' : ''}
+          onClick={() => setTool((prev) => ({ ...prev, active: !prev.active }))}
+          aria-label={t('draw.toggle')}
+        >
+          <Icon name="pen" size={20} />
         </button>
         <button className="ghost" onClick={onClose} aria-label={t('live.exit')}>
           ✕

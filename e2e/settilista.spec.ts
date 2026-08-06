@@ -4,7 +4,7 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { avaaMonta } from './apu';
+import { avaaMonta, lisaaLauluja, luoSetti } from './apu';
 
 const BIISIT = ['Ensimmäinen', 'Toinen', 'Kolmas'];
 
@@ -17,21 +17,6 @@ function nimet(page: Page): Promise<string[]> {
       return (kopio.textContent ?? '').trim();
     }),
   );
-}
-
-/** Luo setin nimellä; nimi kysytään selaimen kyselyllä. */
-async function luoSetti(page: Page, nimi: string) {
-  page.once('dialog', (d) => d.accept(nimi));
-  await page.getByRole('button', { name: '+ New set' }).click();
-  await expect(page.getByRole('button', { name: nimi, exact: true })).toBeVisible();
-}
-
-async function lisaaLauluja(page: Page, lauluNimet: string[]) {
-  await page.getByRole('button', { name: 'Add songs' }).first().click();
-  for (const nimi of lauluNimet) {
-    await page.locator('.picker-row', { hasText: nimi }).locator('input').check();
-  }
-  await page.locator('.sheet').getByRole('button', { name: 'Add songs' }).click();
 }
 
 test('setin luonti ja laulujen lisääminen', async ({ page }) => {
