@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   eraseAt,
+  ERASER_RADII,
   ERASER_RADIUS,
   hitsStroke,
   pathData,
   simplify,
   STROKE_WIDTH,
+  STROKE_WIDTHS,
   toAnchored,
   toFlat,
   toPixels,
@@ -227,6 +229,18 @@ describe('mittasuhteet', () => {
     // ilman että se peittää niitä.
     expect(STROKE_WIDTH * 20).toBeGreaterThan(1);
     expect(STROKE_WIDTH * 20).toBeLessThan(4);
+  });
+
+  it('koot ovat nousevia ja oletus on keskellä', () => {
+    // Oletus on keskimmäinen, jottei aiemmin piirrettyjen vetojen paksuus
+    // muutu kun kokovalinta lisätään.
+    for (const koot of [STROKE_WIDTHS, ERASER_RADII]) {
+      expect(koot).toHaveLength(3);
+      expect(koot[0]).toBeLessThan(koot[1]);
+      expect(koot[1]).toBeLessThan(koot[2]);
+    }
+    expect(STROKE_WIDTH).toBe(STROKE_WIDTHS[1]);
+    expect(ERASER_RADIUS).toBe(ERASER_RADII[1]);
   });
 
   it('pyyhekumi on viivaa selvästi leveämpi', () => {

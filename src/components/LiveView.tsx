@@ -12,7 +12,7 @@ import {
   SPEED_STEP,
   storeLiveSettings,
 } from '../lib/live';
-import { COLORS, eraseAt, ERASER_RADIUS, STROKE_WIDTH } from '../lib/annotate';
+import { COLORS, eraseAt, ERASER_RADII, STROKE_WIDTHS } from '../lib/annotate';
 import type { Point } from '../lib/annotate';
 import { deleteAnnotation, saveAnnotation } from '../lib/db';
 import { useAnnotations } from '../lib/useAnnotations';
@@ -60,6 +60,8 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
     penSeen: initial.penSeen,
     // Kynälaitteella sormipiirto on erikseen valittava; puhelimessa kytkintä ei näy.
     fingerDraws: false,
+    strokeSize: initial.strokeSize,
+    eraserSize: initial.eraserSize,
   });
 
   function lisaaVeto(lineId: string, points: number[], color: string) {
@@ -69,7 +71,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
       songId: song.id,
       lineId,
       color,
-      width: STROKE_WIDTH,
+      width: STROKE_WIDTHS[tool.strokeSize],
       points,
       unit: 'em',
       createdAt: Date.now(),
@@ -89,7 +91,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
    * siistimättä koko ympyrää uudelleen.
    */
   function pyyhiVedosta(note: Annotation, at: Point) {
-    const palat = eraseAt(note.points, at, ERASER_RADIUS);
+    const palat = eraseAt(note.points, at, ERASER_RADII[tool.eraserSize]);
     const uudet: Annotation[] = palat.map((points) => ({
       ...note,
       id: uid(),
@@ -112,8 +114,14 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
   const wake = useCallback(() => setPoke((p) => p + 1), []);
 
   useEffect(() => {
-    storeLiveSettings({ speed, fontSize, penSeen: tool.penSeen });
-  }, [speed, fontSize, tool.penSeen]);
+    storeLiveSettings({
+      speed,
+      fontSize,
+      penSeen: tool.penSeen,
+      strokeSize: tool.strokeSize,
+      eraserSize: tool.eraserSize,
+    });
+  }, [speed, fontSize, tool.penSeen, tool.strokeSize, tool.eraserSize]);
 
   /*
    * Ohjaimet piiloon, jotta lehti näkyy esiintyessä kokonaan. Piilotettuna
@@ -260,6 +268,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
           tool={tool}
           onDraw={lisaaVeto}
           onErase={pyyhiVedosta}
+          eraserRadius={ERASER_RADII[tool.eraserSize]}
           fontSize={fontSize}
           onPenSeen={() => setTool((prev) => (prev.penSeen ? prev : { ...prev, penSeen: true }))}
         />
@@ -312,6 +321,31 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
             <button onClick={kumoaVeto} disabled={notes.length === 0} aria-label={t('draw.undo')}>
               <Icon name="undo" size={18} />
             </button>
+            {/* Kolme kokoa, merkitys vaihtuu tilan mukana: piirtäessä kynän
+                paksuus, pyyhkiessä pyyhkimen säde. Rivi ei kasva, ja säätö
+                koskee aina sitä työkalua joka on kädessä. */}
+            <span className="draw-sizes">
+              {[0, 1, 2].map((koko) => {
+                const valittu = tool.eraser ? tool.eraserSize : tool.strokeSize;
+                return (
+                  <button
+                    key={koko}
+                    className={koko === valittu ? 'size current' : 'size'}
+                    aria-label={t(tool.eraser ? 'draw.eraserSize' : 'draw.penSize', {
+                      size: koko + 1,
+                    })}
+                    aria-pressed={koko === valittu}
+                    onClick={() =>
+                      setTool((prev) =>
+                        prev.eraser ? { ...prev, eraserSize: koko } : { ...prev, strokeSize: koko },
+                      )
+                    }
+                  >
+                    <span className="size-dot" style={{ width: 4 + koko * 5, height: 4 + koko * 5 }} />
+                  </button>
+                );
+              })}
+            </span>
             {/* Vain kynälaitteella: puhelimessa sormi piirtää ilman valintaa,
                 ja kynän kanssa kosketus on oletuksena kämmen. */}
             {tool.penSeen && (

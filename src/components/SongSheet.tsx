@@ -1,7 +1,9 @@
+import { useRef } from 'react';
 import { barRowOf } from '../lib/bars';
 import { useI18n } from '../lib/i18n';
 import { barLineText, chordLineText, meterGutter } from '../lib/render';
 import { getSections, sectionTitle } from '../lib/sections';
+import { hitsStroke, toAnchored } from '../lib/annotate';
 import type { Point } from '../lib/annotate';
 import type { Annotation, Song } from '../lib/types';
 import type { DrawTool } from './Annotations';
@@ -18,6 +20,8 @@ interface Props {
   fontSize?: number;
   onDraw?: (lineId: string, points: number[], color: string) => void;
   onErase?: (note: Annotation, at: Point) => void;
+  /** Pyyhkimen säde em-yksiköissä. */
+  eraserRadius?: number;
   onPenSeen?: () => void;
 }
 
@@ -36,9 +40,11 @@ export default function SongSheet({
   fontSize,
   onDraw,
   onErase,
+  eraserRadius = 0,
   onPenSeen,
 }: Props) {
   const { t } = useI18n();
+  const ref = useRef<HTMLElement>(null);
   const sections = getSections(song);
   const gutter = meterGutter(song.lines);
   /* Kerros piirretään aina kun merkintöjä on annettu. Ilman työkalua se on
@@ -48,8 +54,36 @@ export default function SongSheet({
   const rivinMerkinnat = (lineId: string) =>
     (annotations ?? []).filter((note) => note.lineId === lineId);
 
+  /**
+   * Pyyhkiminen ratkaistaan lehden tasolla eikä rivin sisällä.
+   *
+   * Veto kuuluu siihen riviin jolta se alkoi, mutta se saa ulottua rivin
+   * ulkopuolelle – kertosäkeen ympäri piirretty ympyrä näkyy monen rivin
+   * päällä. Kun sitä napautetaan siitä mistä se näkyy, napautus osuu toisen
+   * rivin kerrokseen, jonka merkinnöistä sitä ei löydy. Siksi jokainen merkintä
+   * testataan **oman rivinsä** koordinaatistossa.
+   *
+   * Mittaaminen on tässä turvallista: pyyhkiminen tapahtuu aina näytöllä,
+   * toisin kuin merkintöjen piirtäminen, jonka on toimittava myös
+   * `display: none` -tulostuslehdellä.
+   */
+  function pyyhiKohdasta(clientX: number, clientY: number) {
+    const juuri = ref.current;
+    if (!juuri || !onErase) return;
+
+    for (const note of annotations ?? []) {
+      const rivi = juuri.querySelector<HTMLElement>(`[data-line="${CSS.escape(note.lineId)}"]`);
+      if (!rivi) continue;
+
+      const box = rivi.getBoundingClientRect();
+      const em = parseFloat(getComputedStyle(rivi).fontSize) || 16;
+      const at = toAnchored({ left: box.left, top: box.top, em }, clientX, clientY);
+      if (hitsStroke(note.points, at, eraserRadius)) onErase(note, at);
+    }
+  }
+
   return (
-    <article className={className ? `song-sheet ${className}` : 'song-sheet'}>
+    <article ref={ref} className={className ? `song-sheet ${className}` : 'song-sheet'}>
       <header className="sheet-head">
         <h1>{song.title || t('app.untitled')}</h1>
         {(song.songKey || song.meter) && (
@@ -72,14 +106,14 @@ export default function SongSheet({
                 tool={tool}
                 fontSize={fontSize}
                 onDraw={onDraw}
-                onErase={onErase}
+                onEraseAt={pyyhiKohdasta}
                 onPenSeen={onPenSeen}
               />
             );
 
             if (line.bars) {
               return (
-                <div className="sheet-line" key={line.id}>
+                <div className="sheet-line" data-line={line.id} key={line.id}>
                   {otsikko}
                   <pre className="sheet-bars">
                     {barLineText(line.bars, barRowOf(line).meters, gutter)}
@@ -90,7 +124,7 @@ export default function SongSheet({
             }
             const chords = chordLineText(line);
             return (
-              <div className="sheet-line" key={line.id}>
+              <div className="sheet-line" data-line={line.id} key={line.id}>
                 {otsikko}
                 {/* Tyhjä rivi tarvitsee sisältöä, jottei se romahda korkeudeltaan. */}
                 {chords && <pre className="sheet-chords">{chords}</pre>}

@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Point } from '../lib/annotate';
-import {
-  ERASER_RADIUS,
-  hitsStroke,
-  pathData,
-  simplify,
-  STROKE_WIDTH,
-  toAnchored,
-  toFlat,
-} from '../lib/annotate';
+import { pathData, simplify, STROKE_WIDTHS, toAnchored, toFlat } from '../lib/annotate';
 import type { Annotation } from '../lib/types';
 
 export interface DrawTool {
@@ -26,6 +18,9 @@ export interface DrawTool {
    * havaittu; puhelimessa sormi piirtää ilman mitään valintaa.
    */
   fingerDraws: boolean;
+  /** Kynän ja pyyhkimen kokovalinnat indeksinä; ks. `STROKE_WIDTHS`. */
+  strokeSize: number;
+  eraserSize: number;
 }
 
 interface Props {
@@ -36,8 +31,15 @@ interface Props {
   /** Rivin fonttikoko pikseleinä. Muuttuu kun live-tilassa zoomataan. */
   fontSize?: number;
   onDraw?: (lineId: string, points: number[], color: string) => void;
-  /** Pyyhkii pyyhkimen alle jäävän osan; loput palautetaan uusina vetoina. */
-  onErase?: (note: Annotation, at: Point) => void;
+  /**
+   * Pyyhkiminen näytön koordinaateilla, ei rivin omilla.
+   *
+   * Veto kuuluu siihen riviin jolta se alkoi, mutta se saa ulottua rivin
+   * ulkopuolelle. Kun sitä napautetaan siitä mistä se näkyy, napautus osuu
+   * usein *toisen* rivin kerrokseen — jonka merkinnöistä sitä ei löydy. Siksi
+   * osumatesti tehdään lehden tasolla, jossa kaikki merkinnät ovat tiedossa.
+   */
+  onEraseAt?: (clientX: number, clientY: number) => void;
   /** Kynän havaitseminen: sen jälkeen sormi ei piirrä. */
   onPenSeen?: () => void;
 }
@@ -49,6 +51,8 @@ const KATSELU: DrawTool = {
   eraser: false,
   penSeen: false,
   fingerDraws: false,
+  strokeSize: 1,
+  eraserSize: 1,
 };
 
 /**
@@ -74,7 +78,7 @@ export default function LineAnnotations({
   tool = KATSELU,
   fontSize,
   onDraw,
-  onErase,
+  onEraseAt,
   onPenSeen,
 }: Props) {
   const ref = useRef<SVGSVGElement>(null);
@@ -102,34 +106,27 @@ export default function LineAnnotations({
     return toAnchored({ left: box.left, top: box.top, em }, e.clientX, e.clientY);
   }
 
-  function pyyhi(at: Point) {
-    for (const note of notes) {
-      if (hitsStroke(note.points, at, ERASER_RADIUS)) onErase?.(note, at);
-    }
-  }
-
   function onPointerDown(e: React.PointerEvent<SVGSVGElement>) {
     if (e.pointerType === 'pen') onPenSeen?.();
     if (!piirtaako(e)) return;
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
-    const at = piste(e);
     if (tool.eraser) {
-      pyyhi(at);
+      onEraseAt?.(e.clientX, e.clientY);
       setKesken(null);
       return;
     }
-    setKesken([at]);
+    setKesken([piste(e)]);
   }
 
   function onPointerMove(e: React.PointerEvent<SVGSVGElement>) {
     if (!piirtaako(e)) return;
-    const at = piste(e);
     if (tool.eraser) {
-      if (e.buttons !== 0 || kesken) pyyhi(at);
+      if (e.buttons !== 0) onEraseAt?.(e.clientX, e.clientY);
       return;
     }
     if (!kesken) return;
+    const at = piste(e);
     e.preventDefault();
     /* Kynän väliinjääneet pisteet mukaan: ilman niitä nopea veto on rosoinen. */
     const coalesced = e.nativeEvent.getCoalescedEvents?.() ?? [];
@@ -169,7 +166,7 @@ export default function LineAnnotations({
         <path
           d={pathData(toFlat(kesken), em)}
           stroke={tool.color}
-          strokeWidth={Math.max(1, STROKE_WIDTH * em)}
+          strokeWidth={Math.max(1, STROKE_WIDTHS[tool.strokeSize] * em)}
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"

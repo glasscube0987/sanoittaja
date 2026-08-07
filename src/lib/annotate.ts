@@ -224,10 +224,20 @@ export function hitsStroke(flat: number[], at: Point, radius: number): boolean {
 export const COLORS = ['#e0524f', '#4f9de0', '#5fc07a', '#eceef4', '#e5b45f'];
 
 /**
- * Viivan paksuus em-yksiköissä: noin 2 pikseliä oletustekstikoolla, ja se
- * kasvaa tekstin mukana niin kuin muukin lehti.
+ * Viivan paksuudet em-yksiköissä. Keskimmäinen on oletus ja vastaa noin kahta
+ * pikseliä oletustekstikoolla; kaikki kasvavat tekstin mukana niin kuin muukin
+ * lehti. Vedon paksuus tallentuu merkintään, joten koon vaihto ei muuta
+ * aiemmin piirrettyjä vetoja.
  */
-export const STROKE_WIDTH = 0.1;
+export const STROKE_WIDTHS = [0.05, 0.1, 0.2];
 
-/** Pyyhekumin säde samassa yksikössä, noin kirjaimen korkeuden puolikas. */
-export const ERASER_RADIUS = 0.5;
+/** Oletuspaksuus. Erikseen nimettynä, jotta vanhat vedot piirtyvät ennallaan. */
+export const STROKE_WIDTH = STROKE_WIDTHS[1];
+
+/**
+ * Pyyhkimen säteet samassa yksikössä. Pienin on kirjaimen neljännes tarkkaan
+ * siistimiseen, suurin reilusti rivin korkuinen isojen merkintöjen poistoon.
+ */
+export const ERASER_RADII = [0.25, 0.5, 1.2];
+
+export const ERASER_RADIUS = ERASER_RADII[1];

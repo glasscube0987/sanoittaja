@@ -199,6 +199,84 @@ test('setin toiselle laululle piirretty jää sille laululle', async ({ page }) 
   await expect.poll(() => vedot(page)).toBe(0);
 });
 
+test('rivien yli ulottuva veto pyyhkiytyy siitä mistä se näkyy', async ({ page }) => {
+  /*
+   * Veto kuuluu siihen riviin jolta se alkoi, mutta se saa ulottua rivin
+   * ulkopuolelle – kertosäkeen ympäri piirretty ympyrä näkyy monen rivin
+   * päällä. Pyyhkiminen etsi osumaa vain sen rivin merkinnöistä, jonka
+   * kerrokseen napautus osui, joten vetoa ei saanut pyyhittyä siitä kohdasta
+   * jossa se näkyy. Käytännössä pyyhekumi ei toiminut lainkaan.
+   */
+  await avaaLive(page);
+  await piirtoTila(page);
+
+  // Veto alkaa ensimmäiseltä riviltä ja jatkuu toisen rivin päälle.
+  const eka = page.locator('.live-view .annot').first();
+  const toka = page.locator('.live-view .annot').nth(1);
+  const ekaBox = (await eka.boundingBox())!;
+  const tokaBox = (await toka.boundingBox())!;
+
+  const laheta = (nimi: string, x: number, y: number) =>
+    page.evaluate(
+      ([tapahtuma, cx, cy]) => {
+        const el = document.querySelectorAll('.live-view .annot')[0] as SVGSVGElement;
+        el.setPointerCapture = () => {};
+        el.dispatchEvent(
+          new PointerEvent(tapahtuma as string, {
+            pointerId: 1,
+            pointerType: 'pen',
+            clientX: cx as number,
+            clientY: cy as number,
+            buttons: 1,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      },
+      [nimi, x, y] as const,
+    );
+
+  const x = ekaBox.x + ekaBox.width * 0.4;
+  await laheta('pointerdown', x, ekaBox.y + ekaBox.height / 2);
+  await laheta('pointermove', x, tokaBox.y + tokaBox.height / 2);
+  await laheta('pointerup', x, tokaBox.y + tokaBox.height / 2);
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  const korkeus = () =>
+    page
+      .locator('.live-view .annot path')
+      .first()
+      .evaluate((el) => (el as SVGPathElement).getBBox().height);
+  const ennen = await korkeus();
+  expect(ennen).toBeGreaterThan(0);
+
+  // Pyyhkiminen toisen rivin kohdalta, jossa veto näkyy mutta ei "asu".
+  await page.getByRole('button', { name: 'Erase', exact: true }).click();
+  await page.evaluate(
+    ([cx, cy]) => {
+      const el = document.querySelectorAll('.live-view .annot')[1] as SVGSVGElement;
+      el.setPointerCapture = () => {};
+      for (const nimi of ['pointerdown', 'pointerup']) {
+        el.dispatchEvent(
+          new PointerEvent(nimi, {
+            pointerId: 1,
+            pointerType: 'pen',
+            clientX: cx,
+            clientY: cy,
+            buttons: 1,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      }
+    },
+    [x, tokaBox.y + tokaBox.height / 2] as [number, number],
+  );
+
+  // Veto lyheni: pyyhkiminen osui vaikka napautus tuli toisen rivin kerrokseen.
+  await expect.poll(() => korkeus()).toBeLessThan(ennen);
+});
+
 test('pyyhkiminen lyhentää vetoa mitattavasti', async ({ page }) => {
   /*
    * Pyyhekumi ei enää poista koko vetoa yhdestä kosketuksesta – se oli koko
@@ -216,7 +294,7 @@ test('pyyhkiminen lyhentää vetoa mitattavasti', async ({ page }) => {
       .evaluate((el) => (el as SVGPathElement).getBBox().width);
   const ennen = await leveys();
 
-  await page.getByRole('button', { name: 'Erase' }).click();
+  await page.getByRole('button', { name: 'Erase', exact: true }).click();
   await napauta(page.locator('.live-view .annot').first(), 0.2, 'pen');
 
   await expect.poll(() => vedot(page)).toBe(1);
@@ -233,7 +311,7 @@ test('pyyhekumi pyyhkii vedosta osan eikä koko vetoa', async ({ page }) => {
   await veda(page.locator('.live-view .annot').first(), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
 
-  await page.getByRole('button', { name: 'Erase' }).click();
+  await page.getByRole('button', { name: 'Erase', exact: true }).click();
   // Napautus vedon keskelle katkaisee sen kahdeksi.
   await napauta(page.locator('.live-view .annot').first(), 0.5, 'pen');
 
@@ -246,11 +324,77 @@ test('pyyhkiminen vedon päästä lyhentää sitä', async ({ page }) => {
   await veda(page.locator('.live-view .annot').first(), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
 
-  await page.getByRole('button', { name: 'Erase' }).click();
+  await page.getByRole('button', { name: 'Erase', exact: true }).click();
   await napauta(page.locator('.live-view .annot').first(), 0.2, 'pen');
 
   // Veto on yhä olemassa, ei katkennut kahdeksi eikä kadonnut.
   await expect.poll(() => vedot(page)).toBe(1);
+});
+
+test('kynän koon vaihto muuttaa uuden vedon paksuutta muttei vanhojen', async ({ page }) => {
+  await avaaLive(page);
+  await piirtoTila(page);
+  await veda(page.locator('.live-view .annot').first(), 'pen');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  const paksuudet = () =>
+    page.$$eval('.live-view .annot path', (els) =>
+      els.map((el) => Number(el.getAttribute('stroke-width'))),
+    );
+  const [ohut] = await paksuudet();
+
+  // Suurin koko, ja uusi veto toiselle riville.
+  await page.getByLabel('Pen size 3').click();
+  await veda(page.locator('.live-view .annot').nth(1), 'pen');
+  await expect.poll(() => vedot(page)).toBe(2);
+
+  const kaikki = await paksuudet();
+  // Vanha veto säilyttää paksuutensa: se on tallennettu merkintään.
+  expect(kaikki).toContain(ohut);
+  expect(Math.max(...kaikki)).toBeGreaterThan(ohut);
+});
+
+test('kokopainikkeet vaihtavat merkitystä pyyhkimistilan mukana', async ({ page }) => {
+  await avaaLive(page);
+  await piirtoTila(page);
+  await expect(page.getByLabel('Pen size 1')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Erase', exact: true }).click();
+  await expect(page.getByLabel('Eraser size 1')).toBeVisible();
+  await expect(page.getByLabel('Pen size 1')).toHaveCount(0);
+});
+
+test('suurempi pyyhin pyyhkii enemmän', async ({ page }) => {
+  await avaaLive(page);
+  await piirtoTila(page);
+  await veda(page.locator('.live-view .annot').first(), 'pen');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  const leveys = () =>
+    page
+      .locator('.live-view .annot path')
+      .first()
+      .evaluate((el) => (el as SVGPathElement).getBBox().width);
+  const alku = await leveys();
+
+  await page.getByRole('button', { name: 'Erase', exact: true }).click();
+  await page.getByLabel('Eraser size 1').click();
+  await napauta(page.locator('.live-view .annot').first(), 0.2, 'pen');
+  const pienella = alku - (await leveys());
+
+  // Kumoa ei auta tässä: piirretään uusi veto ja pyyhitään suurimmalla.
+  await page.getByLabel('Undo stroke').click();
+  await expect.poll(() => vedot(page)).toBe(0);
+  await page.getByRole('button', { name: 'Erase', exact: true }).click();
+  await veda(page.locator('.live-view .annot').first(), 'pen');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  await page.getByRole('button', { name: 'Erase', exact: true }).click();
+  await page.getByLabel('Eraser size 3').click();
+  await napauta(page.locator('.live-view .annot').first(), 0.2, 'pen');
+  const isolla = alku - (await leveys());
+
+  expect(isolla).toBeGreaterThan(pienella);
 });
 
 test('sormikytkintä ei ole ennen kuin kynää on käytetty', async ({ page }) => {

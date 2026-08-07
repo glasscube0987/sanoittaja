@@ -107,7 +107,10 @@ demoja puhelimella ja vie kaikki pilveen.
   osuu lappuun usein ennen kärkeä. Sormipiirron saa silti takaisin päälle
   «Sormi»-painikkeesta, joka näkyy vain kynälaitteilla. Pyyhekumi pyyhkii
   vedosta vain koskettamansa kohdan, joten alleviivauksen keskeltä voi siistiä
-  palan ilman että koko veto katoaa. **Merkintä kuuluu riviin ja sen yksikkö on
+  palan ilman että koko veto katoaa, ja pyyhkiminen osuu vetoon siitä kohdasta
+  jossa se näkyy — myös silloin kun veto ulottuu monen rivin päälle. Kynälle ja
+  pyyhkimelle on kolme kokoa; samat kolme painiketta säätävät sitä työkalua joka
+  on kädessä. **Merkintä kuuluu riviin ja sen yksikkö on
   rivin fonttikoko**, joten se pysyy kirjainten päällä vaikka laulua muokataan,
   transponoidaan tai tekstikokoa vaihdetaan, ja se seuraa riviään kun ylle
   lisätään rivejä. Merkinnät tulevat mukaan sekä tulosteeseen että

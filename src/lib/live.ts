@@ -17,6 +17,9 @@ export interface LiveSettings {
    * ensimmäinen veto olisi kämmenen jättämä.
    */
   penSeen: boolean;
+  /** Kynän ja pyyhkimen kokovalinnat indeksinä; ks. lib/annotate.ts. */
+  strokeSize: number;
+  eraserSize: number;
 }
 
 export const SPEED_MIN = 4;
@@ -27,7 +30,13 @@ export const FONT_MIN = 14;
 export const FONT_MAX = 40;
 export const FONT_STEP = 2;
 
-export const DEFAULT_LIVE: LiveSettings = { speed: 16, fontSize: 20, penSeen: false };
+export const DEFAULT_LIVE: LiveSettings = {
+  speed: 16,
+  fontSize: 20,
+  penSeen: false,
+  strokeSize: 1,
+  eraserSize: 1,
+};
 
 const STORAGE_KEY = 'sanoittaja.live';
 
@@ -60,6 +69,8 @@ export function loadLiveSettings(): LiveSettings {
       speed: clamp(Number(parsed.speed) || DEFAULT_LIVE.speed, SPEED_MIN, SPEED_MAX),
       fontSize: clamp(Number(parsed.fontSize) || DEFAULT_LIVE.fontSize, FONT_MIN, FONT_MAX),
       penSeen: parsed.penSeen === true,
+      strokeSize: clamp(Number(parsed.strokeSize) || DEFAULT_LIVE.strokeSize, 0, 2),
+      eraserSize: clamp(Number(parsed.eraserSize) || DEFAULT_LIVE.eraserSize, 0, 2),
     };
   } catch {
     // Rikkinäinen asetus ei saa estää esiintymistä.
