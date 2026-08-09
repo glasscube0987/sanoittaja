@@ -203,6 +203,49 @@ export function eraseAt(flat: number[], at: Point, radius: number): number[][] {
   return palat.filter((pala) => pala.length > 1).map(toFlat);
 }
 
+/**
+ * Pyyhkii kaiken, mikä jää pyyhkimen kulkeman **janan** ympärille jäävän
+ * kapselin sisään. Palauttaa `null` jos mikään ei muuttunut.
+ *
+ * Yhteen pisteeseen kohdistuva pyyhkiminen jätti nopeasti liikkuvan sormen
+ * näytepisteiden väliin aukkoja: veto hajosi paloiksi sen sijaan että olisi
+ * kadonnut sormen alta. Polku näytteistetään säteen puolikkaan välein, jolloin
+ * aukko ei voi kasvaa sädettä suuremmaksi, ja kukin näyte käsitellään jo
+ * testatulla `eraseAt`illa.
+ */
+export function eraseAlong(
+  flat: number[],
+  from: Point,
+  to: Point,
+  radius: number,
+): number[][] | null {
+  const matka = Math.hypot(to.x - from.x, to.y - from.y);
+  const askelia = Math.max(1, Math.ceil(matka / (radius / 2)));
+
+  let palat: number[][] = [flat];
+  let muuttui = false;
+  for (let i = 0; i <= askelia; i++) {
+    const t = askelia === 0 ? 0 : i / askelia;
+    const at = { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
+
+    const seuraava: number[][] = [];
+    for (const pala of palat) {
+      const jaljelle = eraseAt(pala, at, radius);
+      /* Arvot vertailtava, ei pelkkää lukumäärää: vedon lyhentäminen päästä
+         jättää yhtä monta pistettä, jolloin muutos jäisi huomaamatta. */
+      const sama =
+        jaljelle.length === 1 &&
+        jaljelle[0].length === pala.length &&
+        jaljelle[0].every((arvo, i) => arvo === pala[i]);
+      if (!sama) muuttui = true;
+      seuraava.push(...jaljelle);
+    }
+    palat = seuraava;
+    if (palat.length === 0) return [];
+  }
+  return muuttui ? palat : null;
+}
+
 /** Osuuko pyyhekumi vetoon: etäisyys mihin tahansa janaan alle säteen. */
 export function hitsStroke(flat: number[], at: Point, radius: number): boolean {
   const points = toPoints(flat);

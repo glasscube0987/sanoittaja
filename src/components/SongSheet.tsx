@@ -3,11 +3,17 @@ import { barRowOf } from '../lib/bars';
 import { useI18n } from '../lib/i18n';
 import { barLineText, chordLineText, meterGutter } from '../lib/render';
 import { getSections, sectionTitle } from '../lib/sections';
-import { hitsStroke, toAnchored } from '../lib/annotate';
+import { toAnchored } from '../lib/annotate';
 import type { Point } from '../lib/annotate';
 import type { Annotation, Song } from '../lib/types';
-import type { DrawTool } from './Annotations';
+import type { DrawTool, ErasePhase } from './Annotations';
 import LineAnnotations from './Annotations';
+
+/** Pyyhkäisyn jana yhden rivin koordinaatistossa. */
+export interface EraseSegment {
+  from: Point;
+  to: Point;
+}
 
 interface Props {
   song: Song;
@@ -19,9 +25,13 @@ interface Props {
   /** Rivien fonttikoko pikseleinä; merkinnät skaalautuvat sen mukana. */
   fontSize?: number;
   onDraw?: (lineId: string, points: number[], color: string) => void;
-  onErase?: (note: Annotation, at: Point) => void;
-  /** Pyyhkimen säde em-yksiköissä. */
-  eraserRadius?: number;
+  /**
+   * Pyyhkiminen. Lehti muuntaa näytön koordinaatit rivin koordinaatistoon;
+   * merkintöjen läpikäynti kuuluu sille joka omistaa ne, jotta osumatesti
+   * kohdistuu aina tuoreimpaan tilaan eikä kesken pyyhkäisyn vanhentuvaan
+   * propsiin.
+   */
+  onErase?: (phase: ErasePhase, segment: (lineId: string) => EraseSegment | null) => void;
   onPenSeen?: () => void;
 }
 
@@ -40,7 +50,6 @@ export default function SongSheet({
   fontSize,
   onDraw,
   onErase,
-  eraserRadius = 0,
   onPenSeen,
 }: Props) {
   const { t } = useI18n();
@@ -55,31 +64,33 @@ export default function SongSheet({
     (annotations ?? []).filter((note) => note.lineId === lineId);
 
   /**
-   * Pyyhkiminen ratkaistaan lehden tasolla eikä rivin sisällä.
+   * Muuntaa pyyhkäisyn näytön koordinaateista rivin koordinaatistoon.
    *
    * Veto kuuluu siihen riviin jolta se alkoi, mutta se saa ulottua rivin
    * ulkopuolelle – kertosäkeen ympäri piirretty ympyrä näkyy monen rivin
-   * päällä. Kun sitä napautetaan siitä mistä se näkyy, napautus osuu toisen
-   * rivin kerrokseen, jonka merkinnöistä sitä ei löydy. Siksi jokainen merkintä
-   * testataan **oman rivinsä** koordinaatistossa.
+   * päällä. Siksi jokainen merkintä on käsiteltävä **oman rivinsä**
+   * koordinaatistossa, ei sen rivin, jonka kerrokseen kosketus osui.
    *
    * Mittaaminen on tässä turvallista: pyyhkiminen tapahtuu aina näytöllä,
    * toisin kuin merkintöjen piirtäminen, jonka on toimittava myös
    * `display: none` -tulostuslehdellä.
    */
-  function pyyhiKohdasta(clientX: number, clientY: number) {
-    const juuri = ref.current;
-    if (!juuri || !onErase) return;
-
-    for (const note of annotations ?? []) {
-      const rivi = juuri.querySelector<HTMLElement>(`[data-line="${CSS.escape(note.lineId)}"]`);
-      if (!rivi) continue;
+  function pyyhi(phase: ErasePhase, from: Point | null, to: Point | null) {
+    if (!onErase) return;
+    onErase(phase, (lineId) => {
+      const juuri = ref.current;
+      if (!juuri || !from || !to) return null;
+      const rivi = juuri.querySelector<HTMLElement>(`[data-line="${CSS.escape(lineId)}"]`);
+      if (!rivi) return null;
 
       const box = rivi.getBoundingClientRect();
       const em = parseFloat(getComputedStyle(rivi).fontSize) || 16;
-      const at = toAnchored({ left: box.left, top: box.top, em }, clientX, clientY);
-      if (hitsStroke(note.points, at, eraserRadius)) onErase(note, at);
-    }
+      const laatikko = { left: box.left, top: box.top, em };
+      return {
+        from: toAnchored(laatikko, from.x, from.y),
+        to: toAnchored(laatikko, to.x, to.y),
+      };
+    });
   }
 
   return (
@@ -106,7 +117,7 @@ export default function SongSheet({
                 tool={tool}
                 fontSize={fontSize}
                 onDraw={onDraw}
-                onEraseAt={pyyhiKohdasta}
+                onErase={pyyhi}
                 onPenSeen={onPenSeen}
               />
             );

@@ -12,13 +12,13 @@ import {
   SPEED_STEP,
   storeLiveSettings,
 } from '../lib/live';
-import { COLORS, eraseAt, ERASER_RADII, STROKE_WIDTHS } from '../lib/annotate';
-import type { Point } from '../lib/annotate';
+import { COLORS, eraseAlong, ERASER_RADII, STROKE_WIDTHS } from '../lib/annotate';
 import { deleteAnnotation, saveAnnotation } from '../lib/db';
 import { useAnnotations } from '../lib/useAnnotations';
 import type { Annotation, Song } from '../lib/types';
 import { uid } from '../lib/types';
-import type { DrawTool } from './Annotations';
+import type { DrawTool, ErasePhase } from './Annotations';
+import type { EraseSegment } from './SongSheet';
 import Icon from './Icon';
 import SongSheet from './SongSheet';
 
@@ -86,24 +86,59 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
   }
 
   /**
-   * Pyyhkii vedosta pyyhkimen alle jäävän osan. Jäljelle jäävät palat
-   * tallennetaan uusina vetoina, jolloin ympyrästä voi siistiä yhden kohdan
-   * siistimättä koko ympyrää uudelleen.
+   * Pyyhkäisyn työkopio: lähtötilanne ja nykytila.
+   *
+   * Pyyhkiminen tehdään kokonaan muistissa ja kirjoitetaan kantaan vasta kun
+   * ote irtoaa. Kaksi syytä. Ensinnäkin propsina saatu merkintälista ei ehdi
+   * päivittyä kesken pyyhkäisyn, joten jokainen osoitintapahtuma näki saman
+   * alkuperäisen vedon ja loi siitä uudet palat – jo pyyhitty ilmestyi
+   * takaisin ja paloja kertyi kymmeniä. Toiseksi kirjoitus jokaisesta
+   * tapahtumasta luki koko merkintäjoukon uudelleen ja teki pyyhkimisestä
+   * takkuavan.
    */
-  function pyyhiVedosta(note: Annotation, at: Point) {
-    const palat = eraseAt(note.points, at, ERASER_RADII[tool.eraserSize]);
-    const uudet: Annotation[] = palat.map((points) => ({
-      ...note,
-      id: uid(),
-      points,
-      createdAt: Date.now(),
-    }));
+  const pyyhkaisy = useRef<{ alku: Annotation[]; nyt: Annotation[] } | null>(null);
 
-    setNotes((prev) => [...prev.filter((n) => n.id !== note.id), ...uudet]);
-    deleteAnnotation(note.id).catch((err) => console.error('Merkinnän poisto epäonnistui', err));
-    for (const pala of uudet) {
-      saveAnnotation(pala).catch((err) => console.error('Merkinnän tallennus epäonnistui', err));
+  function pyyhi(phase: ErasePhase, segment: (lineId: string) => EraseSegment | null) {
+    if (phase === 'start') pyyhkaisy.current = { alku: notes, nyt: notes };
+
+    const tila = pyyhkaisy.current;
+    if (!tila) return;
+
+    if (phase === 'end') {
+      pyyhkaisy.current = null;
+      // Yksi kirjoitus koko pyyhkäisystä: poistetut pois, syntyneet palat sisään.
+      const ennen = new Set(tila.alku.map((n) => n.id));
+      const jalkeen = new Set(tila.nyt.map((n) => n.id));
+      for (const note of tila.alku) {
+        if (jalkeen.has(note.id)) continue;
+        deleteAnnotation(note.id).catch((err) => console.error('Merkinnän poisto epäonnistui', err));
+      }
+      for (const note of tila.nyt) {
+        if (ennen.has(note.id)) continue;
+        saveAnnotation(note).catch((err) => console.error('Merkinnän tallennus epäonnistui', err));
+      }
+      return;
     }
+
+    const sade = ERASER_RADII[tool.eraserSize];
+    let muuttui = false;
+    const seuraava: Annotation[] = [];
+    for (const note of tila.nyt) {
+      const jana = segment(note.lineId);
+      const palat = jana ? eraseAlong(note.points, jana.from, jana.to, sade) : null;
+      if (!palat) {
+        seuraava.push(note);
+        continue;
+      }
+      muuttui = true;
+      for (const points of palat) {
+        seuraava.push({ ...note, id: uid(), points, createdAt: Date.now() });
+      }
+    }
+
+    if (!muuttui) return;
+    tila.nyt = seuraava;
+    setNotes(seuraava);
   }
 
   function kumoaVeto() {
@@ -267,8 +302,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
           annotations={notes}
           tool={tool}
           onDraw={lisaaVeto}
-          onErase={pyyhiVedosta}
-          eraserRadius={ERASER_RADII[tool.eraserSize]}
+          onErase={pyyhi}
           fontSize={fontSize}
           onPenSeen={() => setTool((prev) => (prev.penSeen ? prev : { ...prev, penSeen: true }))}
         />

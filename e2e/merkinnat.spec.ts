@@ -277,6 +277,106 @@ test('rivien yli ulottuva veto pyyhkiytyy siitä mistä se näkyy', async ({ pag
   await expect.poll(() => korkeus()).toBeLessThan(ennen);
 });
 
+/** Yhtenäinen pyyhkäisy kerroksen yli annetulla määrällä välipisteitä. */
+async function pyyhkaise(page: Page, kerrosIndeksi: number, askelia: number) {
+  const kerros = page.locator('.live-view .annot').nth(kerrosIndeksi);
+  const box = (await kerros.boundingBox())!;
+  const y = box.y + box.height / 2;
+
+  const laheta = (nimi: string, x: number) =>
+    page.evaluate(
+      ([tapahtuma, i, cx, cy]) => {
+        const el = document.querySelectorAll('.live-view .annot')[i as number] as SVGSVGElement;
+        el.setPointerCapture = () => {};
+        el.dispatchEvent(
+          new PointerEvent(tapahtuma as string, {
+            pointerId: 1,
+            pointerType: 'pen',
+            clientX: cx as number,
+            clientY: cy as number,
+            buttons: 1,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      },
+      [nimi, kerrosIndeksi, x, y] as const,
+    );
+
+  await laheta('pointerdown', box.x + 2);
+  for (let i = 1; i <= askelia; i++) {
+    await laheta('pointermove', box.x + 2 + ((box.width - 4) * i) / askelia);
+  }
+  await laheta('pointerup', box.x + box.width - 2);
+}
+
+test('yhtenäinen pyyhkäisy vedon yli poistaa sen kokonaan', async ({ page }) => {
+  /*
+   * Odotus on yksinkertainen: sormen alta pyyhkiytyy kaikki. Aiemmin
+   * pyyhkiminen osui vain näytepisteisiin, joten nopean liikkeen väliin jäi
+   * aukkoja ja veto hajosi paloiksi sen sijaan että olisi kadonnut.
+   */
+  await avaaLive(page);
+  await piirtoTila(page);
+  await veda(page.locator('.live-view .annot').first(), 'pen');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  await page.getByRole('button', { name: 'Erase', exact: true }).click();
+  // Harvat näytepisteet: juuri se tilanne jossa nopea sormi jättää aukkoja.
+  await pyyhkaise(page, 0, 4);
+
+  await expect.poll(() => vedot(page)).toBe(0);
+});
+
+test('pyyhkäisy ei kasvata vetojen määrää', async ({ page }) => {
+  /*
+   * Osumatesti käytti propsina saatua merkintälistaa, joka ei ehdi päivittyä
+   * kesken pyyhkäisyn. Jokainen tapahtuma pyyhki siis samaa alkuperäistä vetoa
+   * ja loi siitä uudet palat, jotka kattoivat juuri pyyhityn kohdan. Palat
+   * kasautuivat päällekkäin ja pyyhkiminen näytti satunnaiselta.
+   */
+  await avaaLive(page);
+  await piirtoTila(page);
+  await veda(page.locator('.live-view .annot').first(), 'pen');
+  await expect.poll(() => vedot(page)).toBe(1);
+
+  await page.getByRole('button', { name: 'Erase', exact: true }).click();
+  // Pyyhkäisy vedon alkupään yli: vetoa saa jäädä jäljelle, mutta enintään yksi.
+  const kerros = page.locator('.live-view .annot').first();
+  const box = (await kerros.boundingBox())!;
+  await page.evaluate(
+    ([x0, y]) => {
+      const el = document.querySelectorAll('.live-view .annot')[0] as SVGSVGElement;
+      el.setPointerCapture = () => {};
+      const laheta = (nimi: string, x: number) =>
+        el.dispatchEvent(
+          new PointerEvent(nimi, {
+            pointerId: 1,
+            pointerType: 'pen',
+            clientX: x,
+            clientY: y,
+            buttons: 1,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      laheta('pointerdown', x0);
+      for (let i = 1; i <= 10; i++) laheta('pointermove', x0 + i * 3);
+      laheta('pointerup', x0 + 30);
+    },
+    [box.x + box.width * 0.25, box.y + box.height / 2] as [number, number],
+  );
+
+  await page.waitForTimeout(400);
+  /*
+   * Yhtenäinen pyyhkäisy voi katkaista yhden vedon enintään yhdestä kohdasta,
+   * joten paloja saa jäädä korkeintaan kaksi. Vanhentuneella listalla jokainen
+   * osoitintapahtuma loi uudet palat alkuperäisestä vedosta: sama pyyhkäisy
+   * tuotti 22 vetoa.
+   */
+  expect(await vedot(page)).toBeLessThanOrEqual(2);
+});
+
 test('pyyhkiminen lyhentää vetoa mitattavasti', async ({ page }) => {
   /*
    * Pyyhekumi ei enää poista koko vetoa yhdestä kosketuksesta – se oli koko

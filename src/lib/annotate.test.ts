@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  eraseAlong,
   eraseAt,
   ERASER_RADII,
   ERASER_RADIUS,
@@ -220,6 +221,52 @@ describe('eraseAt', () => {
     expect(eraseAt([], { x: 0, y: 0 }, 1)).toEqual([]);
     expect(eraseAt([5, 5], { x: 5, y: 5 }, 1)).toEqual([]);
     expect(eraseAt([5, 5], { x: 9, y: 9 }, 1)).toEqual([[5, 5]]);
+  });
+});
+
+describe('eraseAlong', () => {
+  /** Pitkä alleviivaus, kuten simplify sen jättää: kaksi pistettä. */
+  const alleviivaus = [0, 0, 40, 0];
+
+  it('pyyhkii koko matkaltaan eikä jätä aukkoja', () => {
+    /*
+     * Ratkaiseva tapaus. Yhteen pisteeseen kohdistuva pyyhkiminen jätti
+     * näytepisteiden väliin aukkoja, joten veto hajosi paloiksi sen sijaan
+     * että olisi kadonnut sormen alta.
+     */
+    expect(eraseAlong(alleviivaus, { x: -1, y: 0 }, { x: 41, y: 0 }, 1)).toEqual([]);
+  });
+
+  it('katkaisee vedon poikittaisella pyyhkäisyllä', () => {
+    const palat = eraseAlong(alleviivaus, { x: 20, y: -3 }, { x: 20, y: 3 }, 1);
+    expect(palat).toHaveLength(2);
+  });
+
+  it('huomaa lyhentymisen vaikka pisteiden määrä säilyy', () => {
+    /*
+     * Vedon lyhentäminen päästä jättää yhtä monta pistettä. Pelkkään
+     * lukumäärään nojaava vertailu piti sitä muuttumattomana, jolloin
+     * pyyhkiminen ei tehnyt mitään päätä lähestyttäessä.
+     */
+    const palat = eraseAlong(alleviivaus, { x: 40, y: 0 }, { x: 40, y: 0 }, 5);
+    expect(palat).not.toBeNull();
+    expect(palat![0][2]).toBeLessThan(40);
+  });
+
+  it('palauttaa null kun mikään ei muutu', () => {
+    expect(eraseAlong(alleviivaus, { x: 0, y: 20 }, { x: 40, y: 20 }, 1)).toBeNull();
+  });
+
+  it('pistemäinen jana vastaa yhtä pyyhkäisykohtaa', () => {
+    const piste = { x: 20, y: 0 };
+    expect(eraseAlong(alleviivaus, piste, piste, 1)).toEqual(eraseAt(alleviivaus, piste, 1));
+  });
+
+  it('askeltiheys ei riipu janan pituudesta', () => {
+    // Pitkä pyyhkäisy pyyhkii yhtä siististi kuin lyhyt: aukko ei voi kasvaa
+    // sädettä suuremmaksi, koska näytteet ovat säteen puolikkaan välein.
+    const pitka = [0, 0, 400, 0];
+    expect(eraseAlong(pitka, { x: -1, y: 0 }, { x: 401, y: 0 }, 2)).toEqual([]);
   });
 });
 
