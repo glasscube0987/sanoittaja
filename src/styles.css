@@ -1053,22 +1053,185 @@ button.small {
   cursor: crosshair;
 }
 
+/*
+ * Tekstikenttien kerros SVG:n alla.
+ *
+ * HTML eikä SVG-tekstiä: laatikko on täsmälleen kirjoitetun tekstin levyinen ja
+ * selain latoo sen itse. SVG:ssä taustalaatikon koko olisi pitänyt mitata, eikä
+ * tulostuslehdellä voi mitata mitään – se on `display: none`.
+ *
+ * Sijainti ja koko ovat em-yksiköitä, jotka selain suhteuttaa rivin
+ * fonttikokoon. Niin kenttä seuraa riviään ja kasvaa live-tilan tekstikoon
+ * mukana ilman yhtäkään laskutoimitusta.
+ */
+.annot-texts {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Kosketuksia vain tekstitilassa: muuten kenttä nappaisi kynän vedon alleen. */
+.annot-texts.active {
+  pointer-events: auto;
+}
+
+.annot-text {
+  position: absolute;
+  line-height: 1.15;
+}
+
+.annot-texts.active .annot-text {
+  cursor: move;
+}
+
+/*
+ * Sijoitus on ulommassa laatikossa ja koko sisemmässä. Sama elementti ei kelpaa:
+ * `left`in em suhteutuu elementin **omaan** fonttikokoon, joten suurella
+ * tekstillä kenttä olisi hypännyt pois paikaltaan.
+ */
+.annot-text-body {
+  display: inline-block;
+  white-space: pre;
+  line-height: 1.15;
+  padding: 0.05em 0.15em;
+  border: 1px solid transparent;
+  border-radius: 0.2em;
+}
+
+/* Peittävä tausta ja kehys: kenttä luettavaksi myös sanoitusten päällä. */
+.annot-text-body.boxed {
+  background: var(--bg);
+  border-color: currentColor;
+}
+
+.annot-text-body[data-font='sans'] {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.annot-text-body[data-font='mono'] {
+  font-family: var(--mono);
+}
+
+.annot-text-body[data-font='serif'] {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+/* Kirjoituskenttä näyttää samalta kuin valmis teksti: mitä kirjoitat, sitä näet. */
+textarea.annot-text-body {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border-color: var(--accent);
+  color: inherit;
+  resize: none;
+  overflow: hidden;
+  /*
+   * Live-näkymässä tekstin valinta on estetty, koska nopeat kynänapautukset
+   * nostivat iOS:ssä «Leikkaa, kopioi» -valikon. Kirjoituskentässä valinnan ja
+   * kohdistimen on kuitenkin toimittava.
+   */
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+  touch-action: auto;
+}
+
 /* Piirtotilassa sisältöä ei valita vahingossa vedon aikana. */
 .live-scroll.drawing {
   user-select: none;
   -webkit-user-select: none;
 }
 
-.draw-tools {
+/*
+ * Työkalut kahdella rivillä: ylhäällä mitä kädessä on, alhaalla miltä jälki
+ * näyttää. Kaikki yhdellä rivillä kiertyi puhelimessa joka tapauksessa
+ * toiselle riville, mutta mielivaltaisesta kohdasta.
+ */
+.draw-tools,
+.draw-attrs {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  padding: 6px 0;
+  padding: 4px 0;
   border-bottom: 1px solid var(--border);
 }
 
-.draw-tools button {
+.draw-modes {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.draw-modes button {
+  min-width: 44px;
+  justify-content: center;
+}
+
+/*
+ * Tekstitilan vihje omana kaistanaan työkalujen yläpuolella.
+ *
+ * Työkalurivillä se kiersi rivin toiselle riville, koska painikkeet täyttävät
+ * sen kokonaan. Oma kaista on ohut ja katoaa heti kun ensimmäinen kenttä on
+ * olemassa – vihje on tarpeen vain siihen asti.
+ */
+.text-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding: 5px 8px 0;
+}
+
+/*
+ * Asuvalinnat mahtuvat yhdelle riville 393 pikselin leveydellä. Mitat ovat
+ * tiukat tarkoituksella: kaksi riviä työkaluja söi lehteä juuri keikalla, ja
+ * mielivaltaisesta kohdasta kiertyvä rivi näytti rikkinäiseltä.
+ */
+.draw-attrs {
+  gap: 5px;
+}
+
+.draw-attrs button {
+  min-width: 36px;
+  padding: 4px 6px;
+}
+
+.draw-font[data-font='sans'] {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.draw-font[data-font='mono'] {
+  font-family: var(--mono);
+}
+
+.draw-font[data-font='serif'] {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.draw-attrs button.bold {
+  font-weight: 800;
+}
+
+.draw-attrs button.italic {
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+/* Painikkeen sisällä pieni näyte siitä mitä tausta tekee. */
+.boxed-sample {
+  border: 1px solid currentColor;
+  background: var(--surface-2);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+
+.size-letter {
+  font-weight: 700;
+  line-height: 1;
+}
+
+.draw-tools button,
+.draw-attrs button {
   min-height: 38px;
   padding: 4px 10px;
   font-size: 13px;
@@ -1101,18 +1264,18 @@ button.small {
   background: var(--text);
 }
 
-.draw-tools .swatch {
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  min-height: 34px;
+.draw-attrs .swatch {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
   padding: 0;
   border-radius: 50%;
   border: 2px solid transparent;
 }
 
 /* Valittu väri erottuu kehyksellä; pelkkä väri ei kertoisi valintaa. */
-.draw-tools .swatch.current {
+.draw-attrs .swatch.current {
   border-color: var(--text);
   transform: scale(1.1);
 }
@@ -1301,6 +1464,15 @@ button.small {
 
   .song-sheet .sheet-key {
     color: #444;
+  }
+
+  /*
+   * Tekstikentän peittävä tausta on paperilla valkoinen. Selaimet jättävät
+   * taustavärit yleensä tulostamatta, joten kehys on se joka kentän rajaa –
+   * tausta on vain se osa, joka peittää alleen jäävän sanoituksen.
+   */
+  .annot-text-body.boxed {
+    background: #fff;
   }
 }
 

@@ -483,9 +483,9 @@ test('suurempi pyyhin pyyhkii enemmän', async ({ page }) => {
   const pienella = alku - (await leveys());
 
   // Kumoa ei auta tässä: piirretään uusi veto ja pyyhitään suurimmalla.
-  await page.getByLabel('Undo stroke').click();
+  await page.getByLabel('Undo annotation').click();
   await expect.poll(() => vedot(page)).toBe(0);
-  await page.getByRole('button', { name: 'Erase', exact: true }).click();
+  await page.getByRole('button', { name: 'Pen', exact: true }).click();
   await veda(page.locator('.live-view .annot').first(), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
 
@@ -531,7 +531,7 @@ test('kumoaminen poistaa viimeisimmän vedon', async ({ page }) => {
   await veda(page.locator('.live-view .annot').nth(1), 'pen');
   await expect.poll(() => vedot(page)).toBe(2);
 
-  await page.getByRole('button', { name: 'Undo stroke' }).click();
+  await page.getByRole('button', { name: 'Undo annotation' }).click();
   await expect.poll(() => vedot(page)).toBe(1);
 });
 

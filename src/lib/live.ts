@@ -6,6 +6,9 @@
  * yhden pikselin, joten murto-osa on kerättävä talteen – muuten näkymä ei
  * liikkuisi lainkaan.
  */
+import { TEXT_FONTS } from './annotate';
+import type { TextFont } from './types';
+
 export interface LiveSettings {
   /** Vierityksen nopeus pikseleinä sekunnissa. */
   speed: number;
@@ -20,6 +23,15 @@ export interface LiveSettings {
   /** Kynän ja pyyhkimen kokovalinnat indeksinä; ks. lib/annotate.ts. */
   strokeSize: number;
   eraserSize: number;
+  /**
+   * Tekstityökalun oletukset seuraavaa kenttää varten. Jo kirjoitetut kentät
+   * kantavat oman asunsa mukanaan, joten näiden muuttaminen ei koske niihin.
+   */
+  textSize: number;
+  textFont: TextFont;
+  textBold: boolean;
+  textItalic: boolean;
+  textBoxed: boolean;
 }
 
 export const SPEED_MIN = 4;
@@ -36,6 +48,11 @@ export const DEFAULT_LIVE: LiveSettings = {
   penSeen: false,
   strokeSize: 1,
   eraserSize: 1,
+  textSize: 1,
+  textFont: 'sans',
+  textBold: false,
+  textItalic: false,
+  textBoxed: false,
 };
 
 const STORAGE_KEY = 'sanoittaja.live';
@@ -60,17 +77,37 @@ export function scrollStep(
   return { pixels, carry: total - pixels };
 }
 
+/**
+ * Luku tallenteesta rajattuna, oletus vain puuttuvalle tai kelvottomalle.
+ *
+ * `Number(x) || oletus` ei kelpaa: pienin kokovalinta on indeksi 0, joka on
+ * epätosi, jolloin valinta unohtui joka avauksella ja palautui keskikokoon.
+ */
+function luku(arvo: unknown, oletus: number, min: number, max: number): number {
+  const n = Number(arvo);
+  return Number.isFinite(n) ? clamp(n, min, max) : oletus;
+}
+
 export function loadLiveSettings(): LiveSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_LIVE;
     const parsed = JSON.parse(raw) as Partial<LiveSettings>;
     return {
-      speed: clamp(Number(parsed.speed) || DEFAULT_LIVE.speed, SPEED_MIN, SPEED_MAX),
-      fontSize: clamp(Number(parsed.fontSize) || DEFAULT_LIVE.fontSize, FONT_MIN, FONT_MAX),
+      speed: luku(parsed.speed, DEFAULT_LIVE.speed, SPEED_MIN, SPEED_MAX),
+      fontSize: luku(parsed.fontSize, DEFAULT_LIVE.fontSize, FONT_MIN, FONT_MAX),
       penSeen: parsed.penSeen === true,
-      strokeSize: clamp(Number(parsed.strokeSize) || DEFAULT_LIVE.strokeSize, 0, 2),
-      eraserSize: clamp(Number(parsed.eraserSize) || DEFAULT_LIVE.eraserSize, 0, 2),
+      strokeSize: luku(parsed.strokeSize, DEFAULT_LIVE.strokeSize, 0, 2),
+      eraserSize: luku(parsed.eraserSize, DEFAULT_LIVE.eraserSize, 0, 2),
+      /* Tekstin asetukset tulivat myöhemmin: vanhassa tallenteessa niitä ei ole,
+         eikä puuttuva kenttä saa palauttaa muita asetuksia oletuksiin. */
+      textSize: luku(parsed.textSize, DEFAULT_LIVE.textSize, 0, 2),
+      textFont: TEXT_FONTS.includes(parsed.textFont as TextFont)
+        ? (parsed.textFont as TextFont)
+        : DEFAULT_LIVE.textFont,
+      textBold: parsed.textBold === true,
+      textItalic: parsed.textItalic === true,
+      textBoxed: parsed.textBoxed === true,
     };
   } catch {
     // Rikkinäinen asetus ei saa estää esiintymistä.

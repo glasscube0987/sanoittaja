@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DRAG_SLOP,
   eraseAlong,
   eraseAt,
   ERASER_RADII,
   ERASER_RADIUS,
   hitsStroke,
+  isBlank,
   pathData,
   simplify,
   STROKE_WIDTH,
   STROKE_WIDTHS,
+  TEXT_FONTS,
+  TEXT_SIZE,
+  TEXT_SIZES,
   toAnchored,
   toFlat,
   toPixels,
@@ -293,5 +298,41 @@ describe('mittasuhteet', () => {
   it('pyyhekumi on viivaa selvästi leveämpi', () => {
     // Muuten pyyhkiminen vaatisi osumista pikselilleen samaan kohtaan.
     expect(ERASER_RADIUS).toBeGreaterThan(STROKE_WIDTH * 3);
+  });
+});
+
+describe('tekstikentän mitat', () => {
+  it('koot ovat nousevia ja oletus on sanoitusten kokoinen', () => {
+    // Keskimmäinen on 1 em eli täsmälleen rivin koko: oletuskenttä näyttää
+    // samalta kuin laulun teksti, ja poikkeama on aina valinta.
+    expect(TEXT_SIZES).toHaveLength(3);
+    expect(TEXT_SIZES[0]).toBeLessThan(TEXT_SIZES[1]);
+    expect(TEXT_SIZES[1]).toBeLessThan(TEXT_SIZES[2]);
+    expect(TEXT_SIZE).toBe(TEXT_SIZES[1]);
+    expect(TEXT_SIZE).toBe(1);
+  });
+
+  it('kirjasimia on kolme eikä yhtäkään ladata verkosta', () => {
+    expect([...TEXT_FONTS]).toEqual(['sans', 'mono', 'serif']);
+  });
+
+  it('vedon kynnys on murto-osa rivistä muttei häviävän pieni', () => {
+    // Liian pieni kynnys tekisi jokaisesta napautuksesta siirron, liian suuri
+    // vaatisi kentän raahaamista puoli riviä ennen kuin se lähtee mukaan.
+    expect(DRAG_SLOP).toBeGreaterThan(0.1);
+    expect(DRAG_SLOP).toBeLessThan(1);
+  });
+});
+
+describe('isBlank', () => {
+  it('tunnistaa tyhjän ja pelkän tyhjämerkin', () => {
+    expect(isBlank('')).toBe(true);
+    expect(isBlank('   ')).toBe(true);
+    expect(isBlank('\n\t ')).toBe(true);
+  });
+
+  it('ei pidä tyhjänä kenttää jossa on merkkejä', () => {
+    expect(isBlank('capo 3')).toBe(false);
+    expect(isBlank(' 2x ')).toBe(false);
   });
 });

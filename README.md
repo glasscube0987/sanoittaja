@@ -115,6 +115,21 @@ demoja puhelimella ja vie kaikki pilveen.
   transponoidaan tai tekstikokoa vaihdetaan, ja se seuraa riviään kun ylle
   lisätään rivejä. Merkinnät tulevat mukaan sekä tulosteeseen että
   varmuuskopioon, ja poistuvat laulun mukana.
+- **Vapaat tekstikentät** – piirtotilan kolmas työkalu on **T**: napautus
+  lehdelle luo kentän siihen kohtaan ja avaa näppäimistön. «Capo 3», «2x» tai
+  «hiljaa tässä» pysyy luettavana toisin kuin käsin raapustettu. Kenttää
+  siirretään vetämällä ja muokataan napauttamalla; tyhjentäminen poistaa sen.
+  Asuun kuuluu kolme järjestelmäkirjasinta (pääteviivaton, tasalevyinen,
+  antiikva), lihavointi, kursivointi, sama viiden värin paletti kuin kynällä,
+  kolme kokoa ja **peittävä tausta**, joka tekee kentästä luettavan sanoitusten
+  päällä. Valittu asu jää seuraavan kentän oletukseksi. Pyyhekumi **ei** koske
+  tekstikenttiin: kirjoitettua ei voi piirtää takaisin, joten harhainen
+  pyyhkäisy ei saa viedä sitä. Kentät tallentuvat samaan tauluun kuin vedot ja
+  erottuvat niistä `kind`-kentällä, joten vanhat merkinnät ja varmuuskopiot
+  kelpaavat sellaisinaan ilman kannan version nostoa. **Yksikkö on sama rivin
+  fonttikoko kuin vedoilla**, joten kenttä seuraa riviään ja kasvaa tekstikoon
+  mukana — leveyttä ei talleteta lainkaan, vaan laatikko on kirjoitetun tekstin
+  levyinen. Kentät tulevat mukaan tulosteeseen ja varmuuskopioon.
 - **Live-tila** – esiintymisnäkymä, joka vierittää laulua valitulla nopeudella,
   jolloin kädet pysyvät soittimessa. Tekstikoko ja nopeus säädettävissä, ruudun
   napautus pysäyttää ja jatkaa, ja näyttö pidetään hereillä (Wake Lock). Nopeus ja

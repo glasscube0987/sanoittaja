@@ -22,7 +22,10 @@ export type IconName =
   | 'lineSettings'
   | 'play'
   | 'pause'
-  | 'pen';
+  | 'pen'
+  | 'eraser'
+  | 'text'
+  | 'trash';
 
 interface Props {
   name: IconName;
@@ -50,6 +53,12 @@ const PATHS: Record<IconName, string> = {
   lineSettings: 'M4 5v14M9 6.5h11M9 12h8M9 17.5h10',
   // Kynä kärki alaviistoon: piirtotila.
   pen: 'M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5 4 20M13.5 7l3 3',
+  /* Vinossa oleva pyyhekumi ja sen alla pöydän pinta. Kulmikas muoto erottaa
+     sen kynästä, joka on samassa työkalurivissä vieressä. */
+  eraser: 'M8.5 19.5 3.8 14.8a1.8 1.8 0 0 1 0-2.6l8-8a1.8 1.8 0 0 1 2.6 0l4.7 4.7a1.8 1.8 0 0 1 0 2.6l-7.9 8H4M9.8 8.3l6.6 6.6',
+  // Ladontamerkki T: tekstityökalu.
+  text: 'M5 5.5h14M12 5.5v13M9 18.5h6',
+  trash: 'M4.5 7h15M9.5 7V4.8h5V7M6.8 7l.9 12.2a1.5 1.5 0 0 0 1.5 1.3h5.6a1.5 1.5 0 0 0 1.5-1.3L17.2 7',
   play: '',
   pause: '',
 };

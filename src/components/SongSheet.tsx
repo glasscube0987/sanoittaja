@@ -6,7 +6,7 @@ import { getSections, sectionTitle } from '../lib/sections';
 import { toAnchored } from '../lib/annotate';
 import type { Point } from '../lib/annotate';
 import type { Annotation, Song } from '../lib/types';
-import type { DrawTool, ErasePhase } from './Annotations';
+import type { DrawTool, ErasePhase, TextTools } from './Annotations';
 import LineAnnotations from './Annotations';
 
 /** Pyyhkäisyn jana yhden rivin koordinaatistossa. */
@@ -33,6 +33,8 @@ interface Props {
    */
   onErase?: (phase: ErasePhase, segment: (lineId: string) => EraseSegment | null) => void;
   onPenSeen?: () => void;
+  /** Tekstikenttien käsittely; ilman sitä kentät ovat pelkkää tekstiä. */
+  text?: TextTools;
 }
 
 /**
@@ -51,6 +53,7 @@ export default function SongSheet({
   onDraw,
   onErase,
   onPenSeen,
+  text,
 }: Props) {
   const { t } = useI18n();
   const ref = useRef<HTMLElement>(null);
@@ -119,6 +122,7 @@ export default function SongSheet({
                 onDraw={onDraw}
                 onErase={pyyhi}
                 onPenSeen={onPenSeen}
+                text={text}
               />
             );
 

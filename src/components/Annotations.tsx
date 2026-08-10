@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
+import { useT } from '../lib/i18n';
 import type { Point } from '../lib/annotate';
-import { pathData, simplify, STROKE_WIDTHS, toAnchored, toFlat } from '../lib/annotate';
-import type { Annotation } from '../lib/types';
+import { DRAG_SLOP, pathData, simplify, STROKE_WIDTHS, toAnchored, toFlat } from '../lib/annotate';
+import type { Annotation, TextAnnotation } from '../lib/types';
+import { isStroke, isText } from '../lib/types';
 
 export type ErasePhase = 'start' | 'move' | 'end';
+
+/** Mitä lehden kosketus tekee. Yksi tila kerrallaan, ei päällekkäisiä lippuja. */
+export type DrawMode = 'pen' | 'eraser' | 'text';
 
 export interface DrawTool {
   /** Piirtotila päällä; pois päältä kerros ei ota vastaan kosketuksia. */
   active: boolean;
+  mode: DrawMode;
   color: string;
-  eraser: boolean;
   /**
    * Onko kynää käytetty tällä laitteella. Havainto eikä valinta: sen jälkeen
    * kosketus ei piirrä, jolloin kämmen ei sotke lappua.
@@ -23,6 +28,29 @@ export interface DrawTool {
   /** Kynän ja pyyhkimen kokovalinnat indeksinä; ks. `STROKE_WIDTHS`. */
   strokeSize: number;
   eraserSize: number;
+  /** Seuraavan tekstikentän asu; jo kirjoitetut kantavat omansa mukanaan. */
+  textSize: number;
+  textFont: TextAnnotation['font'];
+  textBold: boolean;
+  textItalic: boolean;
+  textBoxed: boolean;
+}
+
+/**
+ * Tekstikenttien käsittely. Kerros kertoo mitä sormi teki; kentät omistaa ja
+ * tallentaa se näkymä, jolla ne ovat – samasta syystä kuin pyyhkiminenkin.
+ */
+export interface TextTools {
+  /** Kenttä, jota parhaillaan kirjoitetaan; muut ovat pelkkää tekstiä. */
+  editingId: string | null;
+  create: (lineId: string, at: Point) => void;
+  edit: (id: string) => void;
+  /** Siirto vedon aikana: näyttöä varten, ei vielä kantaan. */
+  move: (id: string, at: Point) => void;
+  moveEnd: (id: string) => void;
+  change: (id: string, text: string) => void;
+  /** Kirjoitus päättyi: tyhjä kenttä katoaa, muuten se tallennetaan. */
+  commit: (id: string) => void;
 }
 
 interface Props {
@@ -47,17 +75,23 @@ interface Props {
   onErase?: (phase: ErasePhase, from: Point | null, to: Point | null) => void;
   /** Kynän havaitseminen: sen jälkeen sormi ei piirrä. */
   onPenSeen?: () => void;
+  text?: TextTools;
 }
 
 /** Katselutila: ei piirtoa, ei kosketuksia. */
 const KATSELU: DrawTool = {
   active: false,
+  mode: 'pen',
   color: '',
-  eraser: false,
   penSeen: false,
   fingerDraws: false,
   strokeSize: 1,
   eraserSize: 1,
+  textSize: 1,
+  textFont: 'sans',
+  textBold: false,
+  textItalic: false,
+  textBoxed: false,
 };
 
 /**
@@ -76,6 +110,11 @@ const KATSELU: DrawTool = {
  * Laskettu fonttikoko on saatavilla ilman ladontaa, joten se toimii myös
  * editorin `display: none` -tulostuslehdellä – juuri se seikka, jonka takia
  * kerros aiemmin skaalattiin mitatulla leveydellä.
+ *
+ * Tekstikentät ovat omana HTML-kerroksenaan SVG:n alla. Ne asemoidaan
+ * `em`-yksiköin suoraan tyylissä, jolloin selain latoo ne ilman että mitään
+ * mitataan – sama syy kuin yllä: tuloste on `display: none` eikä siellä voi
+ * mitata mitään.
  */
 export default function LineAnnotations({
   lineId,
@@ -85,13 +124,33 @@ export default function LineAnnotations({
   onDraw,
   onErase,
   onPenSeen,
+  text,
 }: Props) {
+  const t = useT();
   const ref = useRef<SVGSVGElement>(null);
   const [em, setEm] = useState(16);
   const [kesken, setKesken] = useState<Point[] | null>(null);
   /* Edellinen pyyhkäisykohta näytön koordinaateissa, jotta liike välitetään
      janana eikä irrallisina pisteinä. */
   const edellinen = useRef<Point | null>(null);
+  /* Kesken oleva tekstikentän veto: mitä tartuttiin, mistä kohtaa laatikkoa ja
+     onko sormi jo liikkunut tarpeeksi jotta napautus muuttuu siirroksi. */
+  const veto = useRef<{
+    id: string;
+    /** Tarttumakohta laatikon vasemmasta yläkulmasta, jottei laatikko hyppää. */
+    dx: number;
+    dy: number;
+    alku: Point;
+    siirretty: boolean;
+  } | null>(null);
+  /* Oliko kenttä kirjoitettavana kun sormi laskettiin. Napautus lehdelle kesken
+     kirjoituksen lopettaa kirjoituksen eikä luo uutta kenttää – muuten jokainen
+     «valmis»-napautus jättäisi jälkeensä tyhjän laatikon. */
+  const kirjoitettiin = useRef(false);
+
+  const vedot = notes.filter(isStroke);
+  const tekstit = notes.filter(isText);
+  const tekstitila = tool.active && tool.mode === 'text';
 
   /* Fonttikoko luetaan uudelleen kun live-tilan tekstikoko muuttuu. */
   useEffect(() => {
@@ -119,7 +178,7 @@ export default function LineAnnotations({
     if (!piirtaako(e)) return;
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
-    if (tool.eraser) {
+    if (tool.mode === 'eraser') {
       const at = { x: e.clientX, y: e.clientY };
       edellinen.current = at;
       // Napautus pyyhkii paikallaan; jana alkaa ja päättyy samaan pisteeseen.
@@ -132,7 +191,7 @@ export default function LineAnnotations({
 
   function onPointerMove(e: React.PointerEvent<SVGSVGElement>) {
     if (!piirtaako(e)) return;
-    if (tool.eraser) {
+    if (tool.mode === 'eraser') {
       if (e.buttons === 0 || !edellinen.current) return;
       /* Väliinjääneet pisteet mukaan myös pyyhkiessä: nopea liike tuottaa
          harvoja pointermove-tapahtumia mutta tiheät coalesced-pisteet. */
@@ -165,37 +224,173 @@ export default function LineAnnotations({
     setKesken(null);
   }
 
+  /* --- Tekstikerros --- */
+
+  function tekstiDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.pointerType === 'pen') onPenSeen?.();
+    if (!piirtaako(e)) return;
+    kirjoitettiin.current = text?.editingId != null;
+  }
+
+  function tekstiUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!piirtaako(e) || !text) return;
+    if (kirjoitettiin.current) {
+      // Kirjoitus loppuu tähän; uusi kenttä syntyy vasta seuraavasta napautuksesta.
+      if (text.editingId) text.commit(text.editingId);
+      kirjoitettiin.current = false;
+      return;
+    }
+    text.create(lineId, piste(e));
+  }
+
+  function laatikkoDown(e: React.PointerEvent<HTMLDivElement>, note: TextAnnotation) {
+    if (!piirtaako(e) || !text) return;
+    // Kenttä käsittelee kosketuksen itse; muuten kerros loisi samalla uuden.
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const at = piste(e);
+    veto.current = { id: note.id, dx: at.x - note.x, dy: at.y - note.y, alku: at, siirretty: false };
+    kirjoitettiin.current = text.editingId != null;
+  }
+
+  function laatikkoMove(e: React.PointerEvent<HTMLDivElement>) {
+    const vedossa = veto.current;
+    if (!vedossa || !text) return;
+    const at = piste(e);
+    /* Napautus muuttuu siirroksi vasta kynnyksen jälkeen: sormi liikkuu aina
+       vähän, eikä kenttä saa karata sen takia että sitä napautettiin. */
+    if (!vedossa.siirretty && Math.hypot(at.x - vedossa.alku.x, at.y - vedossa.alku.y) < DRAG_SLOP) {
+      return;
+    }
+    vedossa.siirretty = true;
+    text.move(vedossa.id, { x: at.x - vedossa.dx, y: at.y - vedossa.dy });
+  }
+
+  /** Kosketus ei jatka kerrokselle. */
+  function pysayta(e: React.PointerEvent<HTMLDivElement>) {
+    e.stopPropagation();
+  }
+
+  function laatikkoUp(e: React.PointerEvent<HTMLDivElement>, note: TextAnnotation) {
+    const vedossa = veto.current;
+    veto.current = null;
+    if (!vedossa || !text) return;
+    e.stopPropagation();
+    if (vedossa.siirretty) {
+      text.moveEnd(note.id);
+      return;
+    }
+    /* Napautus kentän päällä: kesken ollut kirjoitus tallennetaan ensin, jottei
+       kaksi kenttää ole auki yhtä aikaa. */
+    if (text.editingId && text.editingId !== note.id) text.commit(text.editingId);
+    text.edit(note.id);
+  }
+
   return (
-    <svg
-      ref={ref}
-      className={tool.active ? 'annot active' : 'annot'}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      aria-hidden
-    >
-      {notes.map((note) => (
-        <path
-          key={note.id}
-          d={pathData(note.points, em)}
-          stroke={note.color}
-          strokeWidth={Math.max(1, note.width * em)}
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      ))}
-      {kesken && (
-        <path
-          d={pathData(toFlat(kesken), em)}
-          stroke={tool.color}
-          strokeWidth={Math.max(1, STROKE_WIDTHS[tool.strokeSize] * em)}
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
-    </svg>
+    <>
+      <div
+        className={tekstitila ? 'annot-texts active' : 'annot-texts'}
+        onPointerDown={tekstitila ? tekstiDown : undefined}
+        onPointerUp={tekstitila ? tekstiUp : undefined}
+      >
+        {tekstit.map((note) => {
+          const muokataan = text?.editingId === note.id;
+          const asu = {
+            fontSize: `${note.size}em`,
+            color: note.color,
+            fontWeight: note.bold ? 700 : 400,
+            fontStyle: note.italic ? 'italic' : 'normal',
+          } as const;
+          return (
+            <div
+              key={note.id}
+              className={muokataan ? 'annot-text editing' : 'annot-text'}
+              data-text={note.id}
+              style={{ left: `${note.x}em`, top: `${note.y}em` }}
+              /* Kirjoitettavana olevan kentän kosketukset kuuluvat kentälle:
+                 ilman pysäytystä kerros näki ne lopetuksena, eikä kohdistinta
+                 voinut siirtää sanan keskelle koskettamatta samalla «valmis». */
+              onPointerDown={
+                muokataan ? pysayta : tekstitila ? (e) => laatikkoDown(e, note) : undefined
+              }
+              onPointerMove={tekstitila && !muokataan ? laatikkoMove : undefined}
+              onPointerUp={
+                muokataan ? pysayta : tekstitila ? (e) => laatikkoUp(e, note) : undefined
+              }
+            >
+              {muokataan && text ? (
+                <textarea
+                  className={note.boxed ? 'annot-text-body boxed' : 'annot-text-body'}
+                  data-font={note.font}
+                  style={asu}
+                  value={note.text}
+                  rows={note.text.split('\n').length}
+                  cols={leveys(note.text)}
+                  autoFocus
+                  spellCheck={false}
+                  placeholder={t('text.placeholder')}
+                  aria-label={t('text.placeholder')}
+                  onChange={(e) => text.change(note.id, e.target.value)}
+                  onBlur={() => text.commit(note.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') text.commit(note.id);
+                  }}
+                />
+              ) : (
+                <span
+                  className={note.boxed ? 'annot-text-body boxed' : 'annot-text-body'}
+                  data-font={note.font}
+                  style={asu}
+                >
+                  {note.text}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <svg
+        ref={ref}
+        className={tool.active && tool.mode !== 'text' ? 'annot active' : 'annot'}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        aria-hidden
+      >
+        {vedot.map((note) => (
+          <path
+            key={note.id}
+            d={pathData(note.points, em)}
+            stroke={note.color}
+            strokeWidth={Math.max(1, note.width * em)}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        ))}
+        {kesken && (
+          <path
+            d={pathData(toFlat(kesken), em)}
+            stroke={tool.color}
+            strokeWidth={Math.max(1, STROKE_WIDTHS[tool.strokeSize] * em)}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        )}
+      </svg>
+    </>
   );
+}
+
+/**
+ * Kirjoituskentän leveys merkkeinä. Arvio riittää: kenttä saa olla tekstiä
+ * leveämpi, kunhan se ei ole kapeampi – kapea kenttä rivittäisi kesken sanan ja
+ * teksti hyppisi kirjoittaessa.
+ */
+function leveys(text: string): number {
+  const pisin = text.split('\n').reduce((max, rivi) => Math.max(max, rivi.length), 0);
+  return Math.max(6, pisin + 2);
 }

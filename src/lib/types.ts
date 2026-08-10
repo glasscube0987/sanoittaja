@@ -73,24 +73,13 @@ export interface Setlist {
   updatedAt: number;
 }
 
-/**
- * Käsin piirretty merkintä nuottilehdellä.
- *
- * Veto kuuluu riviin ja sen pisteet ovat suhteellisia: x on osuus lehden
- * leveydestä ja y rivin korkeuden monikerta. Näin merkintä seuraa riviä kun
- * laulua muokataan tai tekstikoko vaihtuu – näyttöpikselit eivät kelpaisi,
- * koska lehti ladotaan uudelleen jokaisesta muutoksesta.
- */
-export interface Annotation {
+/** Yhteinen osa kaikille nuottilehden merkinnöille. */
+interface AnnotationBase {
   id: string;
   songId: string;
-  /** Rivi, jolta veto alkoi. Veto saa ulottua rivin ulkopuolelle. */
+  /** Rivi, jolta merkintä alkoi. Se saa ulottua rivin ulkopuolelle. */
   lineId: string;
   color: string;
-  /** Viivan paksuus samassa yksikössä kuin x. */
-  width: number;
-  /** Litteä lukulista `[x0, y0, x1, y1, …]`; olio per piste kolminkertaistaisi koon. */
-  points: number[];
   /**
    * Koordinaattien yksikkö. Ensimmäinen versio suhteutti pisteet rivin
    * leveyteen, jolloin merkinnät eivät seuranneet tekstikokoa; nykyinen yksikkö
@@ -99,6 +88,63 @@ export interface Annotation {
    */
   unit: 'em';
   createdAt: number;
+}
+
+/**
+ * Käsin piirretty veto nuottilehdellä.
+ *
+ * Veto kuuluu riviin ja sen pisteet ovat rivin fonttikoon monikertoja. Näin
+ * merkintä seuraa riviä kun laulua muokataan tai tekstikoko vaihtuu –
+ * näyttöpikselit eivät kelpaisi, koska lehti ladotaan uudelleen jokaisesta
+ * muutoksesta.
+ *
+ * `kind` puuttuu vanhoista tietueista, joten sen puuttuminen tarkoittaa vetoa:
+ * uusi laji merkitään erottelevalla kentällä, jolloin kannassa jo olevat
+ * merkinnät kelpaavat sellaisinaan eikä versiota tarvitse nostaa.
+ */
+export interface StrokeAnnotation extends AnnotationBase {
+  kind?: 'stroke';
+  /** Viivan paksuus samassa yksikössä kuin pisteet. */
+  width: number;
+  /** Litteä lukulista `[x0, y0, x1, y1, …]`; olio per piste kolminkertaistaisi koon. */
+  points: number[];
+}
+
+export type TextFont = 'sans' | 'mono' | 'serif';
+
+/**
+ * Vapaa tekstikenttä nuottilehdellä: «capo 3», «2x», «hiljaa tässä».
+ *
+ * Sijainti ja koko ovat samassa em-yksikössä kuin vedoilla, joten teksti seuraa
+ * riviään ja kasvaa live-tilan tekstikoon mukana. Leveyttä ei talleteta:
+ * laatikko on täsmälleen kirjoitetun tekstin levyinen, ja selain latoo sen –
+ * mitattu leveys vanhenisi heti kun fonttia tai kokoa vaihdetaan, eikä sitä
+ * voisi lukea tulostuslehdeltä joka on `display: none`.
+ */
+export interface TextAnnotation extends AnnotationBase {
+  kind: 'text';
+  /** Laatikon vasen yläkulma rivin koordinaatistossa (em). */
+  x: number;
+  y: number;
+  text: string;
+  /** Tekstin koko rivin fonttikoon monikertana. */
+  size: number;
+  font: TextFont;
+  bold: boolean;
+  italic: boolean;
+  /** Peittävä tausta ja kehys, jotta laatikko erottuu sanoitusten päällä. */
+  boxed: boolean;
+}
+
+export type Annotation = StrokeAnnotation | TextAnnotation;
+
+export function isText(note: Annotation): note is TextAnnotation {
+  return note.kind === 'text';
+}
+
+/** Vanha tietue ilman `kind`-kenttää on veto; ks. `StrokeAnnotation`. */
+export function isStroke(note: Annotation): note is StrokeAnnotation {
+  return note.kind !== 'text';
 }
 
 export interface Recording {

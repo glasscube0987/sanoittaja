@@ -52,6 +52,15 @@ kuuluu riviin mutta saa ulottua sen ulkopuolelle (`overflow: visible`), joten
 mikä tahansa merkintöihin kohdistuva osumatesti kuuluu **lehden tasolle** eikä
 yhden rivin sisään.
 
+**Merkintöjä on kahta lajia** (`Annotation` on erotteleva unioni): veto ja
+tekstikenttä. Vedot piirtyvät SVG-kerrokseen, tekstikentät omaan
+HTML-kerrokseensa sen alle, ja kerroksista **vain yksi ottaa kosketuksia
+kerrallaan** työkalun mukaan – muuten kynällä ei voisi piirtää kentän päälle.
+Kentän sijainti ja koko ovat em-yksiköitä suoraan CSS:ssä, joten selain latoo ne
+eikä mitään mitata; leveyttä ei talleteta. Pyyhekumi koskee **vain vetoihin**:
+kirjoitettua ei voi piirtää takaisin. `kind` puuttuu vanhoista tietueista, ja
+sen puuttuminen tarkoittaa vetoa.
+
 **Versiot.** `DB_VERSION` (`lib/db.ts`) ja `BUNDLE_VERSION`
 (`lib/sync/exportFile.ts`) nousevat erikseen. `importLibrary` hyväksyy myös
 vanhemman paketin: käyttäjillä on oikeita varmuuskopioita, eivätkä ne saa

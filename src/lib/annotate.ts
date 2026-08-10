@@ -18,6 +18,8 @@
  * ulkopuolelle: iso ympyrä kertosäkeen ympärillä on yksi veto eikä katkea.
  */
 
+import type { TextFont } from './types';
+
 export interface Box {
   left: number;
   top: number;
@@ -284,3 +286,30 @@ export const STROKE_WIDTH = STROKE_WIDTHS[1];
 export const ERASER_RADII = [0.25, 0.5, 1.2];
 
 export const ERASER_RADIUS = ERASER_RADII[1];
+
+/**
+ * Tekstikentän koot rivin fonttikoon monikertana. Keskimmäinen on sanoitusten
+ * kokoinen, pienin sivuhuomautus ja suurin näkyy lavalta. Koko tallentuu
+ * merkintään, joten valinnan vaihto ei muuta jo kirjoitettuja kenttiä.
+ */
+export const TEXT_SIZES = [0.7, 1, 1.5];
+
+export const TEXT_SIZE = TEXT_SIZES[1];
+
+/**
+ * Kirjasinvaihtoehdot. Kolme järjestelmäfonttia riittää erottamaan ohjeen
+ * («hiljaa») nuottitiedosta («capo 3»), eikä mitään ladata verkosta – lehden on
+ * latauduttava myös lentokonetilassa.
+ */
+export const TEXT_FONTS: readonly TextFont[] = ['sans', 'mono', 'serif'];
+
+/**
+ * Kuinka kauas sormi saa liikkua ennen kuin napautus on veto. Em-yksiköissä,
+ * jotta raja on sama pienellä ja suurella tekstikoolla.
+ */
+export const DRAG_SLOP = 0.35;
+
+/** Tyhjä tai pelkkää tyhjämerkkiä oleva kenttä ei ole merkintä vaan roska. */
+export function isBlank(text: string): boolean {
+  return text.trim().length === 0;
+}
