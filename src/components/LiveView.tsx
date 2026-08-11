@@ -124,7 +124,20 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
 
   /* --- Tekstikentät --- */
 
-  /** Kenttä syntyy tyhjänä ja kirjoitettavana; tallennus vasta valmiista. */
+  /**
+   * Kenttä syntyy tyhjänä ja kirjoitettavana.
+   *
+   * Se kirjoitetaan kantaan heti, vaikka teksti on vielä tyhjä. Syy on
+   * kilpailutilanne: mikä tahansa muu tallennus herättää kannan tapahtuman,
+   * joka lukee merkinnät uudelleen ja korvaa tilan kannan sisällöllä – ja
+   * pelkästään muistissa elänyt uusi kenttä katosi siinä. Niin kävi juuri
+   * yleisimmässä eleessä: napautus lehdelle kesken kirjoituksen tallentaa
+   * edellisen kentän ja luo uuden samalla kertaa.
+   *
+   * Tyhjä kenttä ei jää roikkumaan: se poistetaan kirjoituksen päättyessä, ja
+   * `listAnnotations` siivoaa lukiessa senkin, joka jäi kannan orvoksi
+   * esimerkiksi sovelluksen sulkeuduttua kesken kirjoituksen.
+   */
   function lisaaTeksti(lineId: string, at: Point) {
     const note: TextAnnotation = {
       kind: 'text',
@@ -148,6 +161,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
     };
     setNotes((prev) => [...prev, note]);
     setEditing(note.id);
+    saveAnnotation(note).catch((err) => console.error('Merkinnän tallennus epäonnistui', err));
   }
 
   /** Muokkaa kenttää näytöllä; kantaan kirjoitetaan vasta kun ote irtoaa. */

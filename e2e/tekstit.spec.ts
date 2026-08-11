@@ -20,12 +20,19 @@ function piirrettavaLaulu() {
   });
 }
 
-async function avaaLive(page: Page) {
+async function avaaLive(page: Page, kynalaite = false) {
   /* Osoittimen kaappaus vaatii oikean osoittimen: synteettisellä id:llä kutsu
      kaataisi käsittelijän ennen kuin se ehtii tehdä mitään. */
   await page.addInitScript(() => {
     Element.prototype.setPointerCapture = () => {};
   });
+  if (kynalaite) {
+    // Kynän havainto muistetaan laitteelle, joten iPadilla se on tosi jo ennen
+    // kuin live-tila avataan. Juuri se tila rikkoi tekstitilan sormikäytön.
+    await page.addInitScript(() => {
+      localStorage.setItem('sanoittaja.live', JSON.stringify({ penSeen: true }));
+    });
+  }
   await avaaLaulu(page, piirrettavaLaulu());
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   await expect(page.locator('.live-view')).toBeVisible();
@@ -487,4 +494,130 @@ test('tallennettu kenttä on vanhalle versiolle vaaraton', async ({ page }) => {
   expect(tallennettu[0].kind).toBe('text');
   expect(tallennettu[0].points).toEqual([]);
   expect(tallennettu[0].width).toBe(0);
+});
+
+test('kynälaitteella sormi luo tekstikentän', async ({ page }) => {
+  /*
+   * Kämmentuki on piirtämisen sääntö: kynän jälkeen kosketus ei jätä jälkeä.
+   * Se koski vahingossa myös tekstitilaa, jolloin iPadilla sormella ei
+   * tapahtunut yhtään mitään — kenttää joutui napauttamaan uudelleen ja
+   * uudelleen. Napautukseen sääntö ei päde: tyhjä kenttä katoaa itsestään.
+   */
+  await avaaLive(page, true);
+  await tekstiTila(page);
+  // Sormikytkin on näkyvissä, eli laite on kynälaite eikä puhelin.
+  await expect(page.getByRole('button', { name: 'Finger draws' })).toBeVisible();
+
+  const { x, y } = await rivinKohta(page);
+  await napauta(page, x, y);
+
+  await expect(kirjoitettava(page)).toBeFocused();
+});
+
+test('kynälaitteella sormi siirtää kenttää', async ({ page }) => {
+  await avaaLive(page, true);
+  await tekstiTila(page);
+  await kirjoita(page, 'capo 3', 0.2);
+
+  const laatikko = (await kentat(page).first().boundingBox())!;
+  const ennen = laatikko.x;
+  const y = laatikko.y + laatikko.height / 2;
+  const alku = laatikko.x + laatikko.width / 2;
+  await veda(kentat(page).first(), alku, alku + 80, y);
+
+  await expect.poll(async () => (await kentat(page).first().boundingBox())!.x).toBeGreaterThan(
+    ennen + 60,
+  );
+});
+
+test('napautus kesken kirjoituksen luo heti uuden kentän', async ({ page }) => {
+  /*
+   * Aiemmin napautus lehdelle kesken kirjoituksen vain lopetti kirjoituksen, ja
+   * uusi kenttä vaati toisen napautuksen. Kirjoitus päättyy jo kohdistuksen
+   * kadotessa, joten napautus kului tyhjään.
+   */
+  await avaaLive(page);
+  await tekstiTila(page);
+
+  // Ensimmäinen kenttä jätetään **kirjoitettavaksi**: juuri se tila kulutti
+  // seuraavan napautuksen pelkkään lopettamiseen.
+  const eka = await rivinKohta(page, 0.2);
+  await napauta(page, eka.x, eka.y);
+  await expect(kirjoitettava(page)).toBeFocused();
+  await page.keyboard.type('capo 3');
+
+  const toka = await rivinKohta(page, 0.7);
+  await napauta(page, toka.x, toka.y);
+  await expect(kirjoitettava(page)).toBeFocused();
+  await page.keyboard.type('2x');
+  await page.keyboard.press('Escape');
+
+  await expect(kentat(page)).toHaveCount(2);
+});
+
+test('kesken jäänyt tyhjä kenttä siivoutuu laulua avattaessa', async ({ page }) => {
+  /*
+   * Kenttä kirjoitetaan kantaan jo syntyessään, joten sovelluksen sulkeutuminen
+   * kesken kirjoituksen voi jättää jälkeensä näkymättömän laatikon. Se olisi
+   * ansa: siihen törmäisi vasta yrittäessään tehdä jotain muuta samassa
+   * kohdassa. Siivous tehdään laulua avattaessa.
+   */
+  await avaaLive(page);
+  await page.getByLabel('Exit live mode').click();
+
+  await page.evaluate(
+    (versio) =>
+      new Promise<void>((resolve, reject) => {
+        const req = indexedDB.open('sanoittaja', versio);
+        req.onsuccess = () => {
+          const tx = req.result.transaction('annotations', 'readwrite');
+          tx.objectStore('annotations').put({
+            kind: 'text',
+            id: 'orpo',
+            songId: 'testi',
+            lineId: 'l1',
+            color: '#e0524f',
+            x: 2,
+            y: 0.2,
+            text: '   ',
+            size: 1,
+            font: 'sans',
+            bold: false,
+            italic: false,
+            boxed: false,
+            points: [],
+            width: 0,
+            unit: 'em',
+            createdAt: 1,
+          });
+          tx.oncomplete = () => {
+            req.result.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
+        };
+        req.onerror = () => reject(req.error);
+      }),
+    DB_VERSION,
+  );
+
+  await page.reload();
+  await page.locator('.song-card').first().click();
+  await page.getByRole('button', { name: 'Live', exact: true }).click();
+
+  await expect(kentat(page)).toHaveCount(0);
+  const jaljella = await page.evaluate(
+    (versio) =>
+      new Promise<number>((resolve, reject) => {
+        const req = indexedDB.open('sanoittaja', versio);
+        req.onsuccess = () => {
+          const get = req.result.transaction('annotations').objectStore('annotations').getAll();
+          get.onsuccess = () => resolve(get.result.length);
+          get.onerror = () => reject(get.error);
+        };
+        req.onerror = () => reject(req.error);
+      }),
+    DB_VERSION,
+  );
+  expect(jaljella).toBe(0);
 });

@@ -125,19 +125,33 @@ export async function deleteSetlist(id: string): Promise<void> {
  * voi muuntaa – tallennettu leveys ei ole tiedossa jälkikäteen. Ne poistetaan
  * luettaessa, jolloin siirtymä on itsestään rajoittuva eikä voi koskea uusiin.
  */
-export async function listAnnotations(songId: string): Promise<Annotation[]> {
+export async function listAnnotations(songId: string, siivoaTyhjat = false): Promise<Annotation[]> {
   const db = await openDb();
   const index = db.transaction('annotations').objectStore('annotations').index('songId');
   const rows = (await reqResult(index.getAll(songId))) as Annotation[];
 
-  const vanhat = rows.filter((note) => note.unit !== 'em');
-  if (vanhat.length > 0) {
+  /*
+   * Tyhjä tekstikenttä on roskaa eikä merkintä: kenttä kirjoitetaan kantaan jo
+   * syntyessään, joten kesken kirjoituksen suljettu sovellus voi jättää
+   * jälkeensä näkymättömän laatikon.
+   *
+   * Siivous tehdään vain laulua avattaessa (`siivoaTyhjat`), ei jokaisella
+   * lukukerralla. Merkintöjen muutos herättää uudelleenluvun, ja juuri
+   * syntynyt kenttä on vielä tyhjä – jokaisella kerralla siivoava luku
+   * poistaisi sen kentän jota käyttäjä parhaillaan kirjoittaa.
+   */
+  const roskat = rows.filter(
+    (note) =>
+      note.unit !== 'em' || (siivoaTyhjat && note.kind === 'text' && note.text.trim() === ''),
+  );
+  if (roskat.length > 0) {
     const tx = db.transaction('annotations', 'readwrite');
-    for (const note of vanhat) tx.objectStore('annotations').delete(note.id);
+    for (const note of roskat) tx.objectStore('annotations').delete(note.id);
     await txDone(tx);
   }
 
-  return rows.filter((note) => note.unit === 'em').sort((a, b) => a.createdAt - b.createdAt);
+  const roska = new Set(roskat.map((note) => note.id));
+  return rows.filter((note) => !roska.has(note.id)).sort((a, b) => a.createdAt - b.createdAt);
 }
 
 /**

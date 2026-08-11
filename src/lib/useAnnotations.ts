@@ -7,7 +7,7 @@
  * tehdyt merkinnät puuttuisivat tulosteesta. Tallennus ja poisto herättävät
  * siksi tapahtuman kannassa, ja kaikki lukijat kuuntelevat sitä.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { ANNOTATIONS_EVENT, listAnnotations } from './db';
 import type { Annotation } from './types';
@@ -19,14 +19,20 @@ import type { Annotation } from './types';
  */
 export function useAnnotations(songId: string): [Annotation[], Dispatch<SetStateAction<Annotation[]>>] {
   const [notes, setNotes] = useState<Annotation[]>([]);
+  /* Ensimmäinen luku laulua kohti siivoaa orvot tyhjät kentät; myöhemmät
+     luvut eivät, koska juuri syntynyt kenttä on vielä tyhjä. */
+  const ensimmainen = useRef(true);
 
   const lue = useCallback(() => {
-    listAnnotations(songId)
+    const siivoa = ensimmainen.current;
+    ensimmainen.current = false;
+    listAnnotations(songId, siivoa)
       .then(setNotes)
       .catch((err) => console.error('Merkintöjen luku epäonnistui', err));
   }, [songId]);
 
   useEffect(() => {
+    ensimmainen.current = true;
     lue();
     window.addEventListener(ANNOTATIONS_EVENT, lue);
     return () => window.removeEventListener(ANNOTATIONS_EVENT, lue);

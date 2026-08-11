@@ -143,10 +143,10 @@ export default function LineAnnotations({
     alku: Point;
     siirretty: boolean;
   } | null>(null);
-  /* Oliko kenttä kirjoitettavana kun sormi laskettiin. Napautus lehdelle kesken
-     kirjoituksen lopettaa kirjoituksen eikä luo uutta kenttää – muuten jokainen
-     «valmis»-napautus jättäisi jälkeensä tyhjän laatikon. */
-  const kirjoitettiin = useRef(false);
+  /* Kenttä, johon kohdistus on jo annettu. Ilman muistia kohdistus siirtyisi
+     takaisin kentän alkuun joka renderillä, eli jokaisen kirjoitetun merkin
+     jälkeen. */
+  const kohdistettu = useRef<string | null>(null);
 
   const vedot = notes.filter(isStroke);
   const tekstit = notes.filter(isText);
@@ -166,6 +166,19 @@ export default function LineAnnotations({
     // Kynän jälkeen kosketus on kämmen, ellei sormipiirto ole erikseen päällä.
     if (e.pointerType === 'touch') return !tool.penSeen || tool.fingerDraws;
     return true; // hiiri
+  }
+
+  /**
+   * Tekstitilassa kämmentuki ei ole voimassa.
+   *
+   * Kämmentuki on piirtämisen sääntö: lappuun nojaava käsi vetäisi viivan yli
+   * koko lehden. Napautukseen se ei päde – vahingossa syntynyt kenttä on tyhjä
+   * ja katoaa itsestään. Sääntö oli kuitenkin yhteinen, joten kynälaitteella
+   * sormi ei tehnyt tekstitilassa yhtään mitään: kenttää joutui napauttamaan
+   * uudelleen ja uudelleen, eikä siirto tarttunut kuin kynällä.
+   */
+  function koskettaako(): boolean {
+    return tool.active;
   }
 
   function piste(e: { clientX: number; clientY: number }): Point {
@@ -226,31 +239,32 @@ export default function LineAnnotations({
 
   /* --- Tekstikerros --- */
 
+  /**
+   * Kenttä syntyy jo sormen laskusta, ei nostosta.
+   *
+   * Kaksi syytä. Napautus tuntuu välittömältä, ja mikä tärkeämpää: iOS avaa
+   * näppäimistön vain kun kohdistus tapahtuu käyttäjän eleen aikana. Mitä
+   * aikaisemmin eleessä kenttä on olemassa, sitä varmemmin kohdistus osuu vielä
+   * eleen sisään.
+   *
+   * Kesken ollut kirjoitus päätetään tässä eikä jätetä kohdistuksen katoamisen
+   * varaan, jotta järjestys on sama joka kerta. Aiemmin napautus lehdelle vain
+   * lopetti kirjoituksen, ja uusi kenttä vaati toisen napautuksen.
+   */
   function tekstiDown(e: React.PointerEvent<HTMLDivElement>) {
     if (e.pointerType === 'pen') onPenSeen?.();
-    if (!piirtaako(e)) return;
-    kirjoitettiin.current = text?.editingId != null;
-  }
-
-  function tekstiUp(e: React.PointerEvent<HTMLDivElement>) {
-    if (!piirtaako(e) || !text) return;
-    if (kirjoitettiin.current) {
-      // Kirjoitus loppuu tähän; uusi kenttä syntyy vasta seuraavasta napautuksesta.
-      if (text.editingId) text.commit(text.editingId);
-      kirjoitettiin.current = false;
-      return;
-    }
+    if (!koskettaako() || !text) return;
+    if (text.editingId) text.commit(text.editingId);
     text.create(lineId, piste(e));
   }
 
   function laatikkoDown(e: React.PointerEvent<HTMLDivElement>, note: TextAnnotation) {
-    if (!piirtaako(e) || !text) return;
+    if (!koskettaako() || !text) return;
     // Kenttä käsittelee kosketuksen itse; muuten kerros loisi samalla uuden.
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
     const at = piste(e);
     veto.current = { id: note.id, dx: at.x - note.x, dy: at.y - note.y, alku: at, siirretty: false };
-    kirjoitettiin.current = text.editingId != null;
   }
 
   function laatikkoMove(e: React.PointerEvent<HTMLDivElement>) {
@@ -269,6 +283,23 @@ export default function LineAnnotations({
   /** Kosketus ei jatka kerrokselle. */
   function pysayta(e: React.PointerEvent<HTMLDivElement>) {
     e.stopPropagation();
+  }
+
+  /**
+   * Kohdistaa juuri syntyneen kentän – kerran, ei joka renderillä.
+   *
+   * `autoFocus` tekee saman mutta ei kerro milloin, ja iOS avaa näppäimistön
+   * vain jos kohdistus tapahtuu käyttäjän eleen aikana. Tämä ajetaan Reactin
+   * commit-vaiheessa eli synkronisesti sen tapahtuman sisällä joka kentän loi.
+   */
+  function kohdista(el: HTMLTextAreaElement | null, id: string) {
+    if (!el) {
+      kohdistettu.current = null;
+      return;
+    }
+    if (kohdistettu.current === id) return;
+    kohdistettu.current = id;
+    el.focus();
   }
 
   function laatikkoUp(e: React.PointerEvent<HTMLDivElement>, note: TextAnnotation) {
@@ -291,7 +322,6 @@ export default function LineAnnotations({
       <div
         className={tekstitila ? 'annot-texts active' : 'annot-texts'}
         onPointerDown={tekstitila ? tekstiDown : undefined}
-        onPointerUp={tekstitila ? tekstiUp : undefined}
       >
         {tekstit.map((note) => {
           const muokataan = text?.editingId === note.id;
@@ -326,7 +356,7 @@ export default function LineAnnotations({
                   value={note.text}
                   rows={note.text.split('\n').length}
                   cols={leveys(note.text)}
-                  autoFocus
+                  ref={(el) => kohdista(el, note.id)}
                   spellCheck={false}
                   placeholder={t('text.placeholder')}
                   aria-label={t('text.placeholder')}
