@@ -140,6 +140,9 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
       bold: tool.textBold,
       italic: tool.textItalic,
       boxed: tool.textBoxed,
+      // Tyhjä vetogeometria vanhempaa versiota varten; ks. TextAnnotation.
+      points: [],
+      width: 0,
       unit: 'em',
       createdAt: Date.now(),
     };

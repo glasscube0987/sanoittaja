@@ -134,6 +134,20 @@ export interface TextAnnotation extends AnnotationBase {
   italic: boolean;
   /** Peittävä tausta ja kehys, jotta laatikko erottuu sanoitusten päällä. */
   boxed: boolean;
+  /**
+   * Tyhjä vetogeometria, jota tekstikenttä ei käytä mihinkään.
+   *
+   * Kenttä on vanhempaa sovellusversiota varten. Varmuuskopio kulkee laitteelta
+   * toiselle, ja vastaanottava laite voi olla vielä vanhassa versiossa, joka ei
+   * tunne tekstikenttiä lainkaan: se piirtää jokaisen merkinnän vetona ja lukee
+   * `points`-kentän. Ilman tätä se lukisi `undefined.length` ja kaatuisi kesken
+   * renderin — koko lehti jäisi valkoiseksi. Tyhjällä listalla `pathData`
+   * palauttaa tyhjän merkkijonon, jolloin vanha versio vain ohittaa kentän.
+   *
+   * Yleinen sääntö: uusi merkintälaji on vanhalle lukijalle vaaraton.
+   */
+  points: number[];
+  width: number;
 }
 
 export type Annotation = StrokeAnnotation | TextAnnotation;

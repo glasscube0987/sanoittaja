@@ -9,7 +9,7 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { avaaLaulu, laulu, vaakaYlivuoto } from './apu';
+import { avaaLaulu, DB_VERSION, laulu, vaakaYlivuoto } from './apu';
 
 function piirrettavaLaulu() {
   return laulu({
@@ -456,4 +456,35 @@ test('työkalurivit eivät vuoda ruudun yli', async ({ page }) => {
   await expect(kirjoitettava(page)).toBeFocused();
   // Roskakori ilmestyy vasta kirjoitettaessa; rivi ei saa silloinkaan levitä.
   expect(await vaakaYlivuoto(page)).toBe(0);
+});
+
+test('tallennettu kenttä on vanhalle versiolle vaaraton', async ({ page }) => {
+  /*
+   * Varmuuskopio kulkee laitteelta toiselle, ja vastaanottava laite voi olla
+   * vielä vanhassa versiossa joka ei tunne tekstikenttiä: se piirtää jokaisen
+   * merkinnän vetona ja lukee `points`-kentän. Tyhjä lista ja nollaleveys
+   * tekevät kentästä sille näkymättömän sen sijaan että se kaataisi renderin.
+   */
+  await avaaLive(page);
+  await tekstiTila(page);
+  await kirjoita(page, 'capo 3');
+
+  const tallennettu = await page.evaluate(
+    (versio) =>
+      new Promise<Record<string, unknown>[]>((resolve, reject) => {
+        const req = indexedDB.open('sanoittaja', versio);
+        req.onsuccess = () => {
+          const get = req.result.transaction('annotations').objectStore('annotations').getAll();
+          get.onsuccess = () => resolve(get.result as Record<string, unknown>[]);
+          get.onerror = () => reject(get.error);
+        };
+        req.onerror = () => reject(req.error);
+      }),
+    DB_VERSION,
+  );
+
+  expect(tallennettu).toHaveLength(1);
+  expect(tallennettu[0].kind).toBe('text');
+  expect(tallennettu[0].points).toEqual([]);
+  expect(tallennettu[0].width).toBe(0);
 });

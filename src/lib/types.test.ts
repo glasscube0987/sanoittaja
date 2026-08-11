@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { pathData } from './annotate';
 import { isStroke, isText } from './types';
 import type { Annotation } from './types';
 
@@ -27,6 +28,8 @@ const teksti: Annotation = {
   bold: false,
   italic: false,
   boxed: false,
+  points: [],
+  width: 0,
   unit: 'em',
   createdAt: 2,
 };
@@ -52,5 +55,17 @@ describe('merkinnän laji', () => {
   it('lukee myös erikseen merkityn vedon vedoksi', () => {
     // Uusi koodi saa kirjoittaa kentän näkyviin; se ei saa muuttaa tulkintaa.
     expect(isStroke({ ...veto, kind: 'stroke' })).toBe(true);
+  });
+
+  it('tekstikentässä on tyhjä vetogeometria vanhaa lukijaa varten', () => {
+    /*
+     * Varmuuskopio kulkee laitteelta toiselle, ja vastaanottava laite voi olla
+     * vanhassa versiossa joka ei tunne tekstikenttiä: se piirtää jokaisen
+     * merkinnän vetona ja lukee `points`-kentän. Ilman tyhjää listaa se lukisi
+     * `undefined.length` ja kaatuisi kesken renderin.
+     */
+    expect(teksti.points).toEqual([]);
+    expect(teksti.width).toBe(0);
+    expect(pathData(teksti.points, 20)).toBe('');
   });
 });

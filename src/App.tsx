@@ -15,6 +15,7 @@ import { pushHistory } from './lib/history';
 import type { Key, Lang, Params } from './lib/i18n';
 import { LangContext, loadLang, storeLang, translate } from './lib/i18n';
 import type { ImportResult } from './lib/importText';
+import { requestPersistence } from './lib/persist';
 import { AUTO_BACKUP_CHECK_MS, markLibraryChanged, maybeAutoBackup } from './lib/sync/autoBackup';
 import type { Setlist, Song } from './lib/types';
 import { newSong } from './lib/types';
@@ -71,6 +72,16 @@ export default function App() {
     setSetlists((prev) => prev.filter((l) => l.id !== id));
     markLibraryChanged();
     dbDeleteSetlist(id).catch((err) => console.error('Setin poisto epäonnistui', err));
+  }, []);
+
+  /*
+   * Pyydetään pysyvää tallennustilaa heti käynnistyksessä. Koko kirjasto on
+   * selaimen kannassa, ja ilman tätä selain saa häätää sen tilan loppuessa.
+   * Kielteinen vastaus ei ole virhe eikä sitä näytetä: varmuuskopio on joka
+   * tapauksessa se oikea suoja, tämä vain vähentää tarvetta turvautua siihen.
+   */
+  useEffect(() => {
+    requestPersistence().catch((err) => console.warn('Pysyvää tallennustilaa ei saatu', err));
   }, []);
 
   // Taustakopio pilveen: tarkistetaan käynnistyessä ja tasaisin välein, sekä

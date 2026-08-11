@@ -86,6 +86,22 @@ export async function importLibrary(file: Blob): Promise<ImportResult> {
   const bundle = JSON.parse(await file.text()) as ExportBundle;
   if (bundle.app !== 'sanoittaja') throw new Error('Tiedosto ei ole Sanoittaja-varmuuskopio');
 
+  /*
+   * Uudempi paketti torjutaan, vanhempi kelpaa.
+   *
+   * Epäsymmetria on tarkoituksellinen. Vanha paketti on tuttua muotoa ja
+   * puuttuvat kentät ovat tyhjiä listoja. Uudessa voi sen sijaan olla tietuelaji
+   * jota tämä versio ei tunne, ja se päätyisi kantaan asti ennen kuin mikään
+   * huomaa mitään — vika näkyisi vasta piirtovaiheessa, väärässä paikassa ja
+   * ilman yhteyttä tuontiin. Selkeä virhe heti on parempi kuin rikkinäinen
+   * kirjasto myöhemmin.
+   */
+  if (typeof bundle.version === 'number' && bundle.version > BUNDLE_VERSION) {
+    throw new Error(
+      `Varmuuskopio on uudemmasta versiosta (${bundle.version}) kuin tämä sovellus (${BUNDLE_VERSION}). Päivitä sovellus ensin.`,
+    );
+  }
+
   const setlists = bundle.setlists ?? [];
   const annotations = bundle.annotations ?? [];
 

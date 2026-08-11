@@ -64,8 +64,17 @@ sen puuttuminen tarkoittaa vetoa.
 **Versiot.** `DB_VERSION` (`lib/db.ts`) ja `BUNDLE_VERSION`
 (`lib/sync/exportFile.ts`) nousevat erikseen. `importLibrary` hyväksyy myös
 vanhemman paketin: käyttäjillä on oikeita varmuuskopioita, eivätkä ne saa
-lakata toimimasta. Tietomallin muutokset merkitään erottelevalla kentällä
-(esim. `Annotation.unit`), jolloin siirtymä on itsestään rajoittuva.
+lakata toimimasta — mutta **uudempi paketti torjutaan**, koska siinä voi olla
+tietuelaji jota tämä versio ei tunne. Tietomallin muutokset merkitään
+erottelevalla kentällä (esim. `Annotation.unit`), jolloin siirtymä on itsestään
+rajoittuva.
+
+**Uusi tietuelaji on vanhalle lukijalle vaaraton.** Varmuuskopio kulkee
+laitteelta toiselle, ja vastaanottava laite voi olla vielä vanhassa versiossa.
+Siksi uusi laji kantaa mukanaan sen verran vanhan mallin kenttiä, ettei vanha
+koodi kaadu niitä lukiessaan: tekstimerkinnässä on `points: []` ja `width: 0`,
+vaikka se ei käytä kumpaakaan. Ilman niitä vanha piirtokerros lukisi
+`undefined.length` ja koko lehti jäisi valkoiseksi.
 
 **i18n.** Kaikki näkyvä teksti kulkee `t()`:n kautta, ja uusi avain lisätään
 **molempiin** kielitauluihin (`lib/i18n.ts`). Osiot tallentuvat kielineutraalina

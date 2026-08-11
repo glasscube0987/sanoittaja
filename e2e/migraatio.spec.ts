@@ -125,3 +125,42 @@ test('uusi varmuuskopio sisältää settilistat ja merkinnät', async ({ page })
   expect(sisalto.setlists).toEqual([]);
   expect(sisalto.annotations).toEqual([]);
 });
+
+test('uudemman version varmuuskopio torjutaan selvällä virheellä', async ({ page }) => {
+  /*
+   * Vanha paketti kelpaa, uusi ei. Uudessa voi olla tietuelaji jota tämä versio
+   * ei tunne, ja se päätyisi kantaan asti ennen kuin mikään huomaa mitään —
+   * vika näkyisi vasta piirtovaiheessa, väärässä paikassa. Aiemmin versiota ei
+   * tarkistettu lainkaan.
+   */
+  await page.goto('/');
+  await page.evaluate(() => localStorage.setItem('sanoittaja.lang', 'en'));
+  await page.reload();
+
+  const tulevaPaketti = JSON.stringify({
+    app: 'sanoittaja',
+    version: 99,
+    exportedAt: 1,
+    songs: [
+      {
+        id: 'tulevaisuudesta',
+        title: 'Tulevasta versiosta',
+        songKey: 'C',
+        lines: [{ id: 'l1', text: 'ei pitäisi näkyä', chords: [] }],
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    ],
+    recordings: [],
+  });
+
+  await page.locator('input[type="file"]').setInputFiles({
+    name: 'uusi.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(tulevaPaketti),
+  });
+
+  // Virhe kerrotaan, eikä laulu päädy kirjastoon.
+  await expect(page.getByText(/uudemmasta versiosta/i)).toBeVisible();
+  await expect(page.locator('.song-card')).toHaveCount(0);
+});
