@@ -4,6 +4,7 @@ import type { BarRow } from './bars';
 import { storedMeters } from './bars';
 import type { Accidental } from './chords';
 import { respellChord, transposeBar, transposeChord } from './chords';
+import type { Notation } from './chords';
 import { getSections } from './sections';
 import type { ChordAnchor, LyricLine, SectionMark, Song } from './types';
 import { uid } from './types';
@@ -280,33 +281,41 @@ export function transposeOffset(song: Song): number {
  * Sävelet palaavat oikeiksi, mutta enharmonista kirjoitusasua ei muisteta:
  * `Bb` voi palata muodossa `A#`. ♭/♯-painikkeet korjaavat asun.
  */
-export function resetTranspose(song: Song): Song {
-  return transposeSong(song, -transposeOffset(song));
+export function resetTranspose(song: Song, notation: Notation = 'B'): Song {
+  return transposeSong(song, -transposeOffset(song), undefined, notation);
 }
 
 /** Transponoi laulun kaikki soinnut pysyvästi ja kirjaa siirtymän. */
-export function transposeSong(song: Song, semitones: number, prefer?: Accidental): Song {
+export function transposeSong(
+  song: Song,
+  semitones: number,
+  prefer?: Accidental,
+  notation: Notation = 'B',
+): Song {
   return touch({
     ...song,
     transpose: transposeOffset(song) + semitones,
-    songKey: song.songKey ? transposeChord(song.songKey, semitones, prefer) : song.songKey,
+    songKey: song.songKey ? transposeChord(song.songKey, semitones, prefer, notation) : song.songKey,
     lines: song.lines.map((line) => ({
       ...line,
-      chords: line.chords.map((c) => ({ ...c, symbol: transposeChord(c.symbol, semitones, prefer) })),
-      ...(line.bars ? { bars: line.bars.map((b) => transposeBar(b, semitones, prefer)) } : {}),
+      chords: line.chords.map((c) => ({
+        ...c,
+        symbol: transposeChord(c.symbol, semitones, prefer, notation),
+      })),
+      ...(line.bars ? { bars: line.bars.map((b) => transposeBar(b, semitones, prefer, notation)) } : {}),
     })),
   });
 }
 
 /** Vaihtaa kaikkien sointujen enharmonisen kirjoitusasun (# <-> b). */
-export function respellSong(song: Song, prefer: Accidental): Song {
+export function respellSong(song: Song, prefer: Accidental, notation: Notation = 'B'): Song {
   return touch({
     ...song,
-    songKey: song.songKey ? respellChord(song.songKey, prefer) : song.songKey,
+    songKey: song.songKey ? respellChord(song.songKey, prefer, notation) : song.songKey,
     lines: song.lines.map((line) => ({
       ...line,
-      chords: line.chords.map((c) => ({ ...c, symbol: respellChord(c.symbol, prefer) })),
-      ...(line.bars ? { bars: line.bars.map((b) => transposeBar(b, 0, prefer)) } : {}),
+      chords: line.chords.map((c) => ({ ...c, symbol: respellChord(c.symbol, prefer, notation) })),
+      ...(line.bars ? { bars: line.bars.map((b) => transposeBar(b, 0, prefer, notation)) } : {}),
     })),
   });
 }

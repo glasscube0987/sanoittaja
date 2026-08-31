@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseChord, respellChord, transposeBar, transposeChord } from './chords';
+import { isChordToken, parseChord, respellChord, transposeBar, transposeChord } from './chords';
 
 describe('parseChord', () => {
   it('jäsentää perussoinnut', () => {
@@ -14,7 +14,9 @@ describe('parseChord', () => {
   });
 
   it('hylkää tunnistamattomat', () => {
-    expect(parseChord('H7')).toBeNull();
+    // H kelpaa nykyään: se on sama sävel kuin B. Tunnistamaton on I ja
+    // eteenpäin — sekä tyhjä ja pelkkä numero.
+    expect(parseChord('I7')).toBeNull();
     expect(parseChord('')).toBeNull();
     expect(parseChord('7')).toBeNull();
   });
@@ -93,5 +95,85 @@ describe('transposeBar', () => {
 
   it('sietää tyhjän tahdin', () => {
     expect(transposeBar('', 2)).toBe('');
+  });
+});
+
+describe('H-merkintä', () => {
+  /*
+   * Suomalais-saksalaisessa perinteessä h-sävel kirjoitetaan H:lla. Sovellus ei
+   * tunnistanut sitä lainkaan, joten H-alkuiset soinnut palautuivat
+   * transponoinnista muuttumattomina — sävellajin vaihto rikkoi lapun hiljaa.
+   */
+  it('tunnistaa H:n samaksi säveleksi kuin B', () => {
+    expect(parseChord('H')).toEqual({ root: 'H', quality: '', bass: undefined });
+    expect(transposeChord('H', 1)).toBe('C');
+    expect(transposeChord('B', 1)).toBe('C');
+    expect(transposeChord('H', -1)).toBe('A#');
+  });
+
+  it('transponoi H-soinnut laatuineen ja bassoineen', () => {
+    expect(transposeChord('Hm', 1)).toBe('Cm');
+    expect(transposeChord('H7', 2)).toBe('C#7');
+    expect(transposeChord('Hm7/F#', 1)).toBe('Cm7/G');
+  });
+
+  it('kirjoittaa h-sävelen valitulla merkinnällä', () => {
+    expect(transposeChord('A', 2, 'sharp', 'H')).toBe('H');
+    expect(transposeChord('A', 2, 'sharp', 'B')).toBe('B');
+    expect(transposeChord('A', 2, 'flat', 'H')).toBe('H');
+    // Oletus on B, jolloin nykyinen käytös säilyy kutsujille jotka eivät välitä.
+    expect(transposeChord('A', 2, 'sharp')).toBe('B');
+  });
+
+  it('ei tuota koskaan pelkkää B:tä H-merkinnässä', () => {
+    /*
+     * Perinteisessä merkinnässä pelkkä B tarkoittaa b-säveltä, joten sen
+     * kirjoittaminen h-sävelen viereen olisi juuri se sekaannus jota tässä
+     * yritetään välttää. Sävelluokka 10 on aina A# tai Bb.
+     */
+    for (let i = 0; i < 12; i++) {
+      for (const prefer of ['sharp', 'flat'] as const) {
+        expect(transposeChord('C', i, prefer, 'H')).not.toBe('B');
+      }
+    }
+    expect(transposeChord('Bb', 0, 'flat', 'H')).toBe('Bb');
+    expect(transposeChord('A#', 0, 'sharp', 'H')).toBe('A#');
+  });
+
+  it('säilyttää merkintätavan myös bassosävelessä ja tahdissa', () => {
+    expect(transposeChord('C/A', 2, 'sharp', 'H')).toBe('D/H');
+    expect(transposeBar('A E', 2, 'sharp', 'H')).toBe('H F#');
+  });
+
+  it('lukee myös Hb:n ja H#:n', () => {
+    // Epätavallisia mutta yksiselitteisiä; sama logiikka kuin B#:lla ja Cb:llä.
+    expect(transposeChord('Hb', 0, 'flat')).toBe('Bb');
+    expect(transposeChord('H#', 0, 'sharp')).toBe('C');
+  });
+
+  it('enharmoninen vaihto muuntaa merkintätavan', () => {
+    // Sivutuote, joka on hyödyllinen: ♯-painike kirjoittaa B:t H:ksi.
+    expect(respellChord('B', 'sharp', 'H')).toBe('H');
+    expect(respellChord('H', 'sharp', 'B')).toBe('B');
+  });
+});
+
+describe('isChordToken H:n kanssa', () => {
+  it('hyväksyy H-soinnut', () => {
+    expect(isChordToken('H')).toBe(true);
+    expect(isChordToken('Hm')).toBe(true);
+    expect(isChordToken('H7')).toBe(true);
+    expect(isChordToken('Hmaj7/D#')).toBe(true);
+  });
+
+  it('ei lue suomen sanoja soinnuiksi', () => {
+    /*
+     * H:n lisääminen tunnistimeen kasvattaa riskiä, että sanoitusrivi luetaan
+     * sointuriviksi ja sanat katoavat. Laatuosa on lueteltu, joten H:lla alkava
+     * sana ei kelpaa soinnuksi ellei loppu ole sointulaatua.
+     */
+    for (const sana of ['Hei', 'Hän', 'Halloween', 'Huomenna', 'Hiljaa']) {
+      expect(isChordToken(sana)).toBe(false);
+    }
   });
 });

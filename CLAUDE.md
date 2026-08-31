@@ -39,6 +39,12 @@ komponenttiin.
 ankkurit tekstin muuttuessa). `songOps.ts` on ainoa paikka joka muokkaa laulua,
 puhtaina funktioina; `App.tsx` kytkee ne peruutuspinoon (`history.ts`).
 
+**H on sama sävel kuin B**, ja se hyväksytään syötteenä aina. `B` sen sijaan
+tarkoittaa syötteenä **aina** h-säveltä, vaikka suomalais-saksalaisessa
+perinteessä se on b-sävel: merkityksen muuttaminen vaihtaisi jokaisen jo
+kirjoitetun B-soinnun korkeutta ilman että käyttäjä huomaisi. Merkintätapa-asetus
+(`lib/notation.ts`) ohjaa siksi vain sitä mitä transponointi **kirjoittaa**.
+
 **`SongSheet` on sama komponentti live-tilassa ja tulosteessa.** Editorissa se
 on `display: none` ja näkyy vain `@media print`issä. Tästä seuraa sääntö, joka
 on jo kerran rikkoutunut julkaisussa asti: **tulosteen on toimittava ilman

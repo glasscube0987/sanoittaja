@@ -20,6 +20,7 @@ import {
   transposeSong,
 } from '../lib/songOps';
 import { useI18n } from '../lib/i18n';
+import { loadNotation } from '../lib/notation';
 import { getSections, sectionTitle } from '../lib/sections';
 import { barRowOf } from '../lib/bars';
 import { printSheet } from '../lib/print';
@@ -232,16 +233,30 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
 
         <div className="transpose-bar">
           <span className="label">{t('editor.transpose')}</span>
-          <button onClick={() => onChange(transposeSong(song, -1))} aria-label={t('editor.semitoneDown')}>
+          {/* Merkintätapa luetaan vasta napautuksessa, jotta asetuksissa tehty
+              vaihto vaikuttaa heti ilman että sitä pitää heijastaa tilaan. */}
+          <button
+            onClick={() => onChange(transposeSong(song, -1, undefined, loadNotation()))}
+            aria-label={t('editor.semitoneDown')}
+          >
             − ½
           </button>
-          <button onClick={() => onChange(transposeSong(song, 1))} aria-label={t('editor.semitoneUp')}>
+          <button
+            onClick={() => onChange(transposeSong(song, 1, undefined, loadNotation()))}
+            aria-label={t('editor.semitoneUp')}
+          >
             + ½
           </button>
-          <button onClick={() => onChange(respellSong(song, 'flat'))} title={t('editor.useFlats')}>
+          <button
+            onClick={() => onChange(respellSong(song, 'flat', loadNotation()))}
+            title={t('editor.useFlats')}
+          >
             ♭
           </button>
-          <button onClick={() => onChange(respellSong(song, 'sharp'))} title={t('editor.useSharps')}>
+          <button
+            onClick={() => onChange(respellSong(song, 'sharp', loadNotation()))}
+            title={t('editor.useSharps')}
+          >
             ♯
           </button>
           {/* Siirtymä ja paluu näkyvät vain kun laulu ei ole alkuperäisessä
@@ -249,7 +264,7 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
           {offset !== 0 && (
             <button
               className="reset-key"
-              onClick={() => onChange(resetTranspose(song))}
+              onClick={() => onChange(resetTranspose(song, loadNotation()))}
               title={t('editor.resetKey')}
               aria-label={t('editor.transposedBy', { offset: offsetLabel })}
             >

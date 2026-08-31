@@ -1,13 +1,38 @@
 /**
  * Sointusymbolien jäsennys ja transponointi.
  *
- * Symboli koostuu perussävelestä (A–G + # tai b), laadusta (m7, sus4, dim, ...)
+ * Symboli koostuu perussävelestä (A–H + # tai b), laadusta (m7, sus4, dim, ...)
  * ja valinnaisesta bassosävelestä ("/G#"). Laatuosaa ei tulkita – se säilyy
  * transponoinnissa sellaisenaan.
+ *
+ * **H on sama sävel kuin englannin B.** Suomalais-saksalaisessa perinteessä
+ * h-sävel kirjoitetaan H:lla, ja se hyväksytään syötteenä aina – H ei tarkoita
+ * missään merkintätavassa mitään muuta. `B` sen sijaan tarkoittaa syötteenä
+ * aina h-säveltä, vaikka perinteisessä merkinnässä se on b-sävel: sen
+ * merkityksen muuttaminen vaihtaisi jokaisen jo kirjoitetun B-soinnun
+ * korkeutta puolisävelaskeleen ilman että käyttäjä huomaisi mitään.
+ * Merkintätapa ohjaa siksi vain **ulostuloa**, ei tulkintaa.
  */
 
 const SHARP_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const FLAT_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+/** Kumpaa kirjainta h-sävelestä kirjoitetaan. */
+export type Notation = 'B' | 'H';
+
+/*
+ * H-merkinnän taulut eroavat vain sävelluokassa 11. Sävelluokka 10 on jo
+ * valmiiksi yksiselitteinen kummassakin taulussa (`A#` tai `Bb`), joten
+ * pelkkää `B`:tä ei tässä merkinnässä synny lainkaan – ja juuri se tekee
+ * tuloksesta luettavan molemmissa perinteissä.
+ */
+const SHARP_NAMES_H = [...SHARP_NAMES.slice(0, 11), 'H'];
+const FLAT_NAMES_H = [...FLAT_NAMES.slice(0, 11), 'H'];
+
+function noteNames(prefer: Accidental, notation: Notation): string[] {
+  if (notation === 'H') return prefer === 'flat' ? FLAT_NAMES_H : SHARP_NAMES_H;
+  return prefer === 'flat' ? FLAT_NAMES : SHARP_NAMES;
+}
 
 const PITCH_CLASS: Record<string, number> = {
   C: 0, 'B#': 0,
@@ -20,8 +45,9 @@ const PITCH_CLASS: Record<string, number> = {
   G: 7,
   'G#': 8, Ab: 8,
   A: 9,
-  'A#': 10, Bb: 10,
-  B: 11, Cb: 11,
+  'A#': 10, Bb: 10, Hb: 10,
+  B: 11, Cb: 11, H: 11,
+  'H#': 0,
 };
 
 export interface ParsedChord {
@@ -30,7 +56,7 @@ export interface ParsedChord {
   bass?: string;
 }
 
-const CHORD_RE = /^([A-G](?:#|b)?)([^/]*)(?:\/([A-G](?:#|b)?))?$/;
+const CHORD_RE = /^([A-H](?:#|b)?)([^/]*)(?:\/([A-H](?:#|b)?))?$/;
 
 export function parseChord(symbol: string): ParsedChord | null {
   const m = CHORD_RE.exec(symbol.trim());
@@ -55,7 +81,7 @@ export function parseChord(symbol: string): ParsedChord | null {
  * käyttäjälle sellaisenaan, toisin päin sanat menetettäisiin.
  */
 const STRICT_CHORD_RE =
-  /^[A-G][#b]?(?:maj|min|aug|dim|sus|add|alt|m|M|Δ|°|ø|\+|-)*\d*(?:[#b]\d+)*(?:(?:sus|add|maj|no)\d+)*(?:\/[A-G][#b]?)?$/;
+  /^[A-H][#b]?(?:maj|min|aug|dim|sus|add|alt|m|M|Δ|°|ø|\+|-)*\d*(?:[#b]\d+)*(?:(?:sus|add|maj|no)\d+)*(?:\/[A-H][#b]?)?$/;
 
 export function isChordToken(token: string): boolean {
   // Sulkeet ovat pelkkää ryhmittelyä: C(add9) on sointu siinä missä Cadd9.
@@ -65,11 +91,16 @@ export function isChordToken(token: string): boolean {
 
 export type Accidental = 'sharp' | 'flat';
 
-export function transposeNote(note: string, semitones: number, prefer: Accidental): string {
+export function transposeNote(
+  note: string,
+  semitones: number,
+  prefer: Accidental,
+  notation: Notation = 'B',
+): string {
   const pc = PITCH_CLASS[note];
   if (pc === undefined) return note;
   const next = ((pc + semitones) % 12 + 12) % 12;
-  return prefer === 'flat' ? FLAT_NAMES[next] : SHARP_NAMES[next];
+  return noteNames(prefer, notation)[next];
 }
 
 /**
@@ -78,19 +109,24 @@ export function transposeNote(note: string, semitones: number, prefer: Accidenta
  * Etumerkki (# / b) valitaan `prefer`-asetuksella; jos sitä ei anneta,
  * käytetään alkuperäisen symbolin etumerkkiä.
  */
-export function transposeChord(symbol: string, semitones: number, prefer?: Accidental): string {
+export function transposeChord(
+  symbol: string,
+  semitones: number,
+  prefer?: Accidental,
+  notation: Notation = 'B',
+): string {
   const parsed = parseChord(symbol);
   if (!parsed) return symbol;
   const accidental: Accidental =
     prefer ?? (parsed.root.includes('b') || (parsed.bass?.includes('b') ?? false) ? 'flat' : 'sharp');
-  const root = transposeNote(parsed.root, semitones, accidental);
-  const bass = parsed.bass ? '/' + transposeNote(parsed.bass, semitones, accidental) : '';
+  const root = transposeNote(parsed.root, semitones, accidental, notation);
+  const bass = parsed.bass ? '/' + transposeNote(parsed.bass, semitones, accidental, notation) : '';
   return root + parsed.quality + bass;
 }
 
 /** Vaihtaa symbolin enharmonisen kirjoitusasun (C# <-> Db) transponoimatta. */
-export function respellChord(symbol: string, prefer: Accidental): string {
-  return transposeChord(symbol, 0, prefer);
+export function respellChord(symbol: string, prefer: Accidental, notation: Notation = 'B'): string {
+  return transposeChord(symbol, 0, prefer, notation);
 }
 
 /**
@@ -102,6 +138,11 @@ export function respellChord(symbol: string, prefer: Accidental): string {
  * jälkimmäinen sointu jäisi transponoimatta. Välit säilyvät sellaisinaan, ja
  * tunnistamaton merkintä palautuu koskemattomana.
  */
-export function transposeBar(bar: string, semitones: number, prefer?: Accidental): string {
-  return bar.replace(/\S+/g, (token) => transposeChord(token, semitones, prefer));
+export function transposeBar(
+  bar: string,
+  semitones: number,
+  prefer?: Accidental,
+  notation: Notation = 'B',
+): string {
+  return bar.replace(/\S+/g, (token) => transposeChord(token, semitones, prefer, notation));
 }

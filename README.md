@@ -15,6 +15,13 @@ demoja puhelimella ja vie kaikki pilveen.
 - **Sointumerkit** – napauta sanoitusrivin yläpuolelta minkä tahansa merkin kohdalta
   lisätäksesi soinnun juuri siihen kohtaan. Soinnut on ankkuroitu merkkipositioihin ja
   ne **siirtyvät automaattisesti tekstin mukana**, kun sanoja muokataan.
+- **H ja B** – h-sävelen voi kirjoittaa kummalla tahansa kirjaimella, ja molemmat
+  transponoituvat. Asetuksista valitaan kumpaa transponointi **kirjoittaa**:
+  `B / Bb` (oletus) tai `H / Bb`. Syötteen tulkinta ei muutu kummassakaan:
+  `H` on aina h-sävel ja `B` on aina h-sävel, joten asetuksen vaihtaminen ei voi
+  muuttaa yhdenkään jo kirjoitetun soinnun korkeutta. H-merkinnässä sovellus ei
+  kirjoita koskaan pelkkää `B`:tä, joten lappu on luettava molemmissa
+  perinteissä. Sivutuote: ♯- ja ♭-painikkeet muuntavat samalla merkintätavan.
 - **Rivin työkalut** – kirjoitettavan rivin alle ilmestyy kapea rivi, josta saa
   lisättyä rivin, liitettyä tekstiä *tähän kohtaan* ja kumottua viimeisimmän
   muutoksen. Työkalut näkyvät niin kauan kuin rivillä on kohdistus, eli katoavat

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { LANG_NAMES, LANGS, useI18n } from '../lib/i18n';
+import { loadNotation, NOTATIONS, storeNotation } from '../lib/notation';
 import { autoBackupEnabled, setAutoBackupEnabled } from '../lib/sync/autoBackup';
 import { DEFAULT_CLIENT_ID, getDropboxClientIdOverride, setDropboxClientId } from '../lib/sync/dropbox';
 import { getGdriveClientId, setGdriveClientId } from '../lib/sync/gdrive';
@@ -31,6 +32,9 @@ export default function SettingsSheet({
   const [dropboxId, setDropboxId] = useState(getDropboxClientIdOverride());
   const [gdriveId, setGdriveId] = useState(getGdriveClientId());
   const [autoBackup, setAutoBackup] = useState(autoBackupEnabled());
+  /* Merkintätapa tallentuu heti valittaessa, kuten kielikin: se ei ole osa
+     tallenna-painikkeen takana olevaa lomaketta vaan välitön valinta. */
+  const [notation, setNotation] = useState(loadNotation);
 
   function save() {
     setDropboxClientId(dropboxId);
@@ -76,6 +80,28 @@ export default function SettingsSheet({
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="field">
+          <label>{t('settings.notation')}</label>
+          {/* Sama chip-rivi kuin kielivalinnassa; vaihto tulee voimaan heti,
+              koska transponointi lukee asetuksen vasta napautuksessa. */}
+          <div className="chip-row">
+            {NOTATIONS.map((option) => (
+              <button
+                type="button"
+                key={option}
+                className={option === notation ? 'primary' : ''}
+                onClick={() => {
+                  setNotation(option);
+                  storeNotation(option);
+                }}
+              >
+                {t(option === 'H' ? 'settings.notationH' : 'settings.notationB')}
+              </button>
+            ))}
+          </div>
+          <small>{t('settings.notationHelp')}</small>
         </div>
 
         <div className="field">

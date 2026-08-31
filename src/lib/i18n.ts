@@ -200,6 +200,11 @@ const en = {
   'settings.preferences': 'General',
   'settings.credentials': 'Cloud credentials',
   'settings.language': 'Language',
+  'settings.notation': 'Chord notation',
+  'settings.notationB': 'B / Bb',
+  'settings.notationH': 'H / Bb',
+  'settings.notationHelp':
+    'Which letter is written for the note B. H is always understood as that note; this only decides what transposing writes. Bb stays Bb either way.',
   'settings.dropboxKey': 'Dropbox app key (optional)',
   'settings.dropboxHelp':
     'Leave this empty to use the built-in Dropbox app — signing in is enough. Fill it in only to use your own app: create one at dropbox.com/developers/apps (Scoped access → App folder), tick files.content.write and files.content.read on the Permissions tab and press Submit, then add this app’s address to the Redirect URIs.',
@@ -410,6 +415,11 @@ const fi: Record<Key, string> = {
   'settings.preferences': 'Yleiset',
   'settings.credentials': 'Pilvitunnukset',
   'settings.language': 'Kieli',
+  'settings.notation': 'Sointumerkintä',
+  'settings.notationB': 'B / Bb',
+  'settings.notationH': 'H / Bb',
+  'settings.notationHelp':
+    'Kummalla kirjaimella h-sävel kirjoitetaan. H ymmärretään aina; tämä ratkaisee vain sen mitä transponointi kirjoittaa. Bb pysyy Bb:nä kummassakin.',
   'settings.dropboxKey': 'Dropbox app key (valinnainen)',
   'settings.dropboxHelp':
     'Jätä tyhjäksi, niin käytössä on sovelluksen oma Dropbox-sovellus – pelkkä kirjautuminen riittää. Täytä vain jos haluat käyttää omaa sovellustasi: luo se osoitteessa dropbox.com/developers/apps (Scoped access → App folder), rastita Permissions-välilehdellä files.content.write ja files.content.read ja paina Submit, ja lisää tämän sovelluksen osoite Redirect URI -listaan.',
