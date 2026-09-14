@@ -226,3 +226,107 @@ export async function kirjauduDropboxiin(page: Page): Promise<void> {
 export function vaakaYlivuoto(page: Page): Promise<number> {
   return page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
 }
+
+/**
+ * Väärentää mikrofonin ja `MediaRecorder`in sivun sisällä.
+ *
+ * Selaimen omia lippuja (`--use-fake-device-for-media-stream`) ei käytetä,
+ * koska WebKit ei tunne niitä ja CI ajaa myös sen. Kutsuttava ennen
+ * ensimmäistä sivunlatausta.
+ */
+export async function vaarennaMikrofoni(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    class TestiNauhuri {
+      mimeType: string;
+      ondataavailable: ((e: { data: Blob }) => void) | null = null;
+      onstop: (() => void) | null = null;
+      private raidat: { stop(): void }[];
+
+      constructor(stream: { getTracks(): { stop(): void }[] }, opts?: { mimeType?: string }) {
+        this.mimeType = opts?.mimeType ?? 'audio/webm';
+        this.raidat = stream.getTracks();
+      }
+
+      static isTypeSupported(): boolean {
+        return true;
+      }
+
+      start(): void {}
+
+      stop(): void {
+        this.ondataavailable?.({ data: new Blob(['aani'], { type: this.mimeType }) });
+        for (const raita of this.raidat) raita.stop();
+        this.onstop?.();
+      }
+    }
+
+    const w = window as unknown as { MediaRecorder: unknown; __mikkiAuki: number };
+    w.MediaRecorder = TestiNauhuri;
+    // Laskuri paljastaa jos mikrofoni jää auki: jokainen avaus kasvattaa,
+    // jokainen raidan sulku vähentää.
+    w.__mikkiAuki = 0;
+    const laite = {
+      getUserMedia: async () => {
+        w.__mikkiAuki += 1;
+        let suljettu = false;
+        return {
+          getTracks: () => [
+            {
+              stop: () => {
+                if (suljettu) return;
+                suljettu = true;
+                w.__mikkiAuki -= 1;
+              },
+            },
+          ],
+        };
+      },
+    };
+    Object.defineProperty(navigator, 'mediaDevices', { value: laite, configurable: true });
+  });
+}
+
+/** Montako mikrofonin avausta on yhä sulkematta. */
+export function mikkiAuki(page: Page): Promise<number> {
+  return page.evaluate(() => (window as unknown as { __mikkiAuki?: number }).__mikkiAuki ?? 0);
+}
+
+/** Kantaan tallennetut nauhoitteet: laulun tunnus ja nauhoitteen nimi. */
+export function nauhoitteet(page: Page): Promise<{ songId: string; name: string }[]> {
+  return page.evaluate(
+    (versio) =>
+      new Promise<{ songId: string; name: string }[]>((resolve, reject) => {
+        const req = indexedDB.open('sanoittaja', versio);
+        req.onsuccess = () => {
+          const all = req.result.transaction('recordings').objectStore('recordings').getAll();
+          all.onsuccess = () =>
+            resolve(
+              (all.result as { songId: string; name: string }[]).map((r) => ({
+                songId: r.songId,
+                name: r.name,
+              })),
+            );
+          all.onerror = () => reject(all.error);
+        };
+        req.onerror = () => reject(req.error);
+      }),
+    DB_VERSION,
+  );
+}
+
+/** Kantaan tallennettujen laulujen nimet. */
+export function laulujenNimet(page: Page): Promise<string[]> {
+  return page.evaluate(
+    (versio) =>
+      new Promise<string[]>((resolve, reject) => {
+        const req = indexedDB.open('sanoittaja', versio);
+        req.onsuccess = () => {
+          const all = req.result.transaction('songs').objectStore('songs').getAll();
+          all.onsuccess = () => resolve((all.result as { title: string }[]).map((s) => s.title));
+          all.onerror = () => reject(all.error);
+        };
+        req.onerror = () => reject(req.error);
+      }),
+    DB_VERSION,
+  );
+}

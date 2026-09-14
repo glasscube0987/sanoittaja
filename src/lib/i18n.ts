@@ -29,6 +29,7 @@ const en = {
   'list.newTitle': 'New song',
   'list.newBlank': 'Blank song',
   'list.newFromText': 'Import from text',
+  'list.newIdea': 'Record an idea',
   'list.emptyTitle': 'No songs yet.',
   'list.emptyHint': 'Tap “New song” to start — lyrics, chords and recordings are stored on your device.',
   'list.meta': '{lines} lines · edited {date}',
@@ -215,6 +216,11 @@ const en = {
   'settings.gdriveHelp':
     'Create an OAuth client id (Web application) at console.cloud.google.com, enable the Drive API and add this app’s address to the allowed JavaScript origins.',
 
+  'idea.record': 'Record an idea',
+  'idea.title': 'Recording an idea',
+  'idea.recording': 'Recording',
+  'idea.stop': 'Stop and save',
+
   'rec.title': 'Recordings',
   'rec.record': '● Record',
   'rec.stop': '■ Stop',
@@ -242,6 +248,7 @@ const fi: Record<Key, string> = {
   'list.newTitle': 'Uusi laulu',
   'list.newBlank': 'Tyhjä laulu',
   'list.newFromText': 'Tuo tekstistä',
+  'list.newIdea': 'Nauhoita idea',
   'list.emptyTitle': 'Ei vielä lauluja.',
   'list.emptyHint':
     'Aloita painamalla ”Uusi laulu” – sanat, soinnut ja nauhoitteet tallentuvat puhelimeesi.',
@@ -429,6 +436,11 @@ const fi: Record<Key, string> = {
   'settings.gdriveKey': 'Google OAuth client id',
   'settings.gdriveHelp':
     'Luo OAuth client id (Web application) osoitteessa console.cloud.google.com, ota Drive API käyttöön ja lisää tämän sovelluksen osoite sallittuihin JavaScript-lähteisiin.',
+
+  'idea.record': 'Nauhoita idea',
+  'idea.title': 'Idea nauhalle',
+  'idea.recording': 'Nauhoitetaan',
+  'idea.stop': 'Lopeta ja tallenna',
 
   'rec.title': 'Nauhoitteet',
   'rec.record': '● Nauhoita',

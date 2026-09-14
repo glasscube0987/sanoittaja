@@ -70,6 +70,14 @@ demoja puhelimella ja vie kaikki pilveen.
 - **Nauhoitteet** – jokaiseen lauluun voi tallentaa ääniluonnoksia suoraan puhelimen
   mikrofonilla (MediaRecorder). Nauhoitteet tallentuvat laitteelle (IndexedDB) ja
   kulkevat laulun mukana pilveen.
+- **Idean talteenotto** – laululistan mikrofonipainike aloittaa nauhoituksen heti,
+  ilman että laulua tarvitsee ensin luoda; sama toiminto löytyy myös
+  «+ Uusi laulu» -lakanasta. **Laulu syntyy vasta kun nauhoitus lopetetaan**, joten
+  peruutus tai kielletty mikrofoni ei jätä kantaan tyhjää tietuetta. Idea saa
+  nimekseen päiväyksen (`2026-09-14 20:41`), jotta se erottuu muista ideoista;
+  muoto on kielineutraali ja paikallisessa ajassa, ja aakkosjärjestys on samalla
+  aikajärjestys. Tyhjänä aloitettu laulu kohdistaa ensimmäisen sanoitusrivin,
+  jotta kirjoittaminen alkaa yhtä nopeasti kuin nauhoittaminen.
 - **Järjestys** – «Kaikki laulut» -näkymän voi järjestää viimeksi muokatun,
   aakkosten (A–Ö) tai käänteisten aakkosten mukaan. Aakkostus on kielikohtainen,
   joten ä ja ö menevät suomessa aakkosten loppuun eivätkä merkistön mukaan.
@@ -243,6 +251,7 @@ src/
     bars.ts         Sointurivin tahdit ja tahtilajit; tahtien muokkausoperaatiot
     history.ts      Peruutuspino ja kirjoitusmuutosten yhdistäminen
     i18n.ts         Käännökset (en/fi), kielen tunnistus ja React-konteksti
+    ideas.ts        Nauhoitetun idean päiväysnimi (puhdas funktio)
     importText.ts   Tekstin tulkinta laulun riveiksi (sointu-, sanoitus- ja
                     osiorivien tunnistus)
     live.ts         Live-tilan vieritysaskel ja asetukset

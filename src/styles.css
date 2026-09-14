@@ -1528,3 +1528,43 @@ textarea.annot-text-body {
 .backup-note.stale {
   color: var(--accent);
 }
+
+/* Nauhoituslakanan kello. Numerot ovat suuret, koska ne ovat ainoa merkki
+   siitä että mikrofoni todella kuulee – ja tabular-nums pitää leveyden
+   vakiona, jottei rivi nykisi sekunnin vaihtuessa. */
+.idea-elapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 8px 0 4px;
+  font-size: 34px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.idea-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: idea-sykki 1.4s ease-in-out infinite;
+}
+
+/* Liike on hienovarainen: se kertoo käynnissä olosta häiritsemättä ideaa. */
+@keyframes idea-sykki {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* Liikeherkkyys: syke pois, väri riittää kertomaan saman. */
+@media (prefers-reduced-motion: reduce) {
+  .idea-dot {
+    animation: none;
+  }
+}
+
+.idea-status {
+  color: var(--danger);
+}

@@ -18,6 +18,8 @@ import {
 import type { ImportResult } from '../lib/importText';
 import CloudSheet from './CloudSheet';
 import Icon from './Icon';
+import IdeaSheet from './IdeaSheet';
+import type { IdeaRecording } from './IdeaSheet';
 import ImportSheet from './ImportSheet';
 import SetlistPicker from './SetlistPicker';
 import SettingsSheet from './SettingsSheet';
@@ -29,6 +31,8 @@ interface Props {
   onOpen: (songId: string) => void;
   onCreate: () => void;
   onImport: (result: ImportResult) => void;
+  /** Nauhoitettu idea: luo laulun ja tallentaa nauhoitteen sen alle. */
+  onIdea: (rec: IdeaRecording) => void;
   onLibraryChanged: () => void;
   onSetlistChange: (list: Setlist) => void;
   onSetlistDelete: (id: string) => void;
@@ -41,6 +45,7 @@ export default function SongList({
   onOpen,
   onCreate,
   onImport,
+  onIdea,
   onLibraryChanged,
   onSetlistChange,
   onSetlistDelete,
@@ -58,6 +63,7 @@ export default function SongList({
   const [avoinId, setAvoinId] = useState<string | null>(null);
   const [sort, setSort] = useState<SortOrder>(loadSortOrder);
   const [newOpen, setNewOpen] = useState(false);
+  const [ideaOpen, setIdeaOpen] = useState(false);
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -151,6 +157,16 @@ export default function SongList({
           aria-label={t('list.settings')}
         >
           <Icon name="settings" />
+        </button>
+        {/* Idea kestää kymmenen sekuntia, joten nauhoitus on yhden napautuksen
+            päässä eikä valikon takana. Sama toiminto on myös luontilakanassa
+            löydettävyyden vuoksi. */}
+        <button
+          className="icon-button"
+          onClick={() => setIdeaOpen(true)}
+          aria-label={t('idea.record')}
+        >
+          <Icon name="mic" />
         </button>
         {/* Valinta eikä suora luonti: tyhjä laulu tallentuu heti, joten
             «luo tyhjä ja tuo sitten» jättäisi keskeytettäessä tyhjän laulun. */}
@@ -355,12 +371,29 @@ export default function SongList({
               >
                 {t('list.newFromText')}
               </button>
+              <button
+                onClick={() => {
+                  setNewOpen(false);
+                  setIdeaOpen(true);
+                }}
+              >
+                {t('list.newIdea')}
+              </button>
               <button className="ghost" onClick={() => setNewOpen(false)}>
                 {t('common.cancel')}
               </button>
             </div>
           </div>
         </div>
+      )}
+      {ideaOpen && (
+        <IdeaSheet
+          onDone={(rec) => {
+            setIdeaOpen(false);
+            onIdea(rec);
+          }}
+          onCancel={() => setIdeaOpen(false)}
+        />
       )}
       {pickerOpen && setlist && (
         <SetlistPicker

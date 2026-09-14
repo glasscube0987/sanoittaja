@@ -44,6 +44,15 @@ interface Props {
   onDelete: () => void;
   /** Live-tila avataan App-tasolla, jotta se voi selata settilistan läpi. */
   onLive: () => void;
+  /**
+   * Kohdistaa ensimmäisen sanoitusrivin heti kun editori aukeaa.
+   *
+   * Vain tyhjästä aloitetulle laululle: siinä ainoa mahdollinen seuraava teko
+   * on kirjoittaa, ja ilman tätä se vaatisi ylimääräisen napautuksen. Avattu
+   * laulu ja nauhoitettu idea aukeavat ilman kohdistusta, jottei näppäimistö
+   * peitä sitä mitä käyttäjä tuli katsomaan.
+   */
+  autoFocusFirstLine?: boolean;
 }
 
 /**
@@ -59,7 +68,16 @@ export interface ChordTarget {
   symbol: string;
 }
 
-export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, onDelete, onLive }: Props) {
+export default function SongEditor({
+  song,
+  onChange,
+  onUndo,
+  canUndo,
+  onBack,
+  onDelete,
+  onLive,
+  autoFocusFirstLine = false,
+}: Props) {
   const { t } = useI18n();
   const [chordTarget, setChordTarget] = useState<ChordTarget | null>(null);
   const [lineTargetId, setLineTargetId] = useState<string | null>(null);
@@ -67,7 +85,11 @@ export default function SongEditor({ song, onChange, onUndo, canUndo, onBack, on
   // null = tuonti laulun loppuun, muuten rivin id jonka perään rivit menevät.
   const [importAfterId, setImportAfterId] = useState<string | null | undefined>(undefined);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
-  const focusLineId = useRef<{ id: string; caret: number } | null>(null);
+  /* Alkuarvo luetaan vain ensimmäisellä piirrolla, mikä on juuri se hetki jota
+     kohdistus koskee: myöhemmin ref elää rakenteellisten muokkausten mukana. */
+  const focusLineId = useRef<{ id: string; caret: number } | null>(
+    autoFocusFirstLine && song.lines[0] ? { id: song.lines[0].id, caret: 0 } : null,
+  );
   const blurTimer = useRef<number | null>(null);
   /* Vain tulostuslehteä varten: merkinnät piirretään live-tilassa. */
   const [notes] = useAnnotations(song.id);

@@ -7,20 +7,26 @@ import {
   deleteSong as dbDeleteSong,
   listSetlists,
   listSongs,
+  saveRecording,
   saveSetlist,
   saveSong,
 } from './lib/db';
 import type { HistoryEntry } from './lib/history';
 import { pushHistory } from './lib/history';
 import type { Key, Lang, Params } from './lib/i18n';
-import { LangContext, loadLang, storeLang, translate } from './lib/i18n';
+import { formatDateTime, LangContext, loadLang, storeLang, translate } from './lib/i18n';
 import type { ImportResult } from './lib/importText';
 import { requestPersistence } from './lib/persist';
 import { AUTO_BACKUP_CHECK_MS, markLibraryChanged, maybeAutoBackup } from './lib/sync/autoBackup';
 import type { Setlist, Song } from './lib/types';
-import { newSong } from './lib/types';
+import { newSong, uid } from './lib/types';
+import { ideaTitle } from './lib/ideas';
+import type { IdeaRecording } from './components/IdeaSheet';
 
-type View = { name: 'list' } | { name: 'editor'; songId: string };
+type View =
+  | { name: 'list' }
+  /** `focus` vain tyhjästä aloitetulle laululle; ks. SongEditorin propsi. */
+  | { name: 'editor'; songId: string; focus?: boolean };
 
 export default function App() {
   const [songs, setSongs] = useState<Song[] | null>(null);
@@ -129,14 +135,39 @@ export default function App() {
     [scheduleSave],
   );
 
-  const startSong = useCallback((song: Song) => {
+  const startSong = useCallback((song: Song, focus = false) => {
     setSongs((prev) => [song, ...(prev ?? [])]);
     markLibraryChanged();
     saveSong(song).catch((err) => console.error('Tallennus epäonnistui', err));
-    setView({ name: 'editor', songId: song.id });
+    setView({ name: 'editor', songId: song.id, focus });
   }, []);
 
-  const createSong = useCallback(() => startSong(newSong()), [startSong]);
+  // Tyhjä laulu kohdistaa ensimmäisen rivin: kirjoittaminen on ainoa jatko.
+  const createSong = useCallback(() => startSong(newSong(), true), [startSong]);
+
+  /*
+   * Nauhoitettu idea. Laulu syntyy vasta tässä, kun nauhoite on jo olemassa:
+   * peruutettu tai epäonnistunut nauhoitus ei siis jätä kantaan mitään.
+   *
+   * Nimeksi tulee päiväys eikä tyhjä, koska pelkkä «Nimetön» tekee kymmenestä
+   * ideasta listalla erottamattomia.
+   */
+  const startIdea = useCallback(
+    (rec: IdeaRecording) => {
+      const song = newSong(ideaTitle());
+      startSong(song);
+      saveRecording({
+        id: uid(),
+        songId: song.id,
+        name: translate(lang, 'rec.defaultName', { date: formatDateTime(Date.now(), lang) }),
+        mimeType: rec.mimeType,
+        durationMs: rec.durationMs,
+        createdAt: Date.now(),
+        blob: rec.blob,
+      }).catch((err) => console.error('Nauhoitteen tallennus epäonnistui', err));
+    },
+    [lang, startSong],
+  );
 
   const importSong = useCallback(
     (result: ImportResult) => {
@@ -203,6 +234,7 @@ export default function App() {
           onBack={() => setView({ name: 'list' })}
           onDelete={() => deleteSong(editing.id)}
           onLive={() => setLive({ ids: [editing.id], index: 0 })}
+          autoFocusFirstLine={view.name === 'editor' && view.focus}
         />
       ) : (
         <SongList
@@ -210,6 +242,7 @@ export default function App() {
           setlists={setlists}
           onOpen={(songId) => setView({ name: 'editor', songId })}
           onCreate={createSong}
+          onIdea={startIdea}
           onImport={importSong}
           onLibraryChanged={reload}
           onSetlistChange={updateSetlist}
