@@ -13,6 +13,12 @@ import {
  *
  * Tärkein sääntö on järjestys – laulu syntyy vasta lopetuksesta – joten
  * peruutustesti on tämän tiedoston ydin eikä reunatapaus.
+ *
+ * **Nauhoitteen tallentumista kantaan ei voi tarkistaa WebKitissä.** Sen
+ * väliaikainen istunto ei ota vastaan blobia lainkaan (`kanta-blob.spec.ts`
+ * mittaa ja dokumentoi sen), joten kantatarkistukset ovat siellä ehdon takana.
+ * Kaikki muu – lakanan avautuminen, peruutuksen tyhjä jälki, päiväysnimi,
+ * kohdistussäännöt ja yläpalkin leveys – ajetaan molemmilla moottoreilla.
  */
 
 const PAIVAYSNIMI = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
@@ -22,7 +28,7 @@ test.beforeEach(async ({ page }) => {
   await avaaLista(page);
 });
 
-test('yläpalkin mikrofoni nauhoittaa idean lauluksi', async ({ page }) => {
+test('yläpalkin mikrofoni nauhoittaa idean lauluksi', async ({ page, browserName }) => {
   await page.getByLabel('Record an idea').click();
   await expect(page.locator('.idea-elapsed')).toBeVisible();
 
@@ -36,11 +42,14 @@ test('yläpalkin mikrofoni nauhoittaa idean lauluksi', async ({ page }) => {
   await expect(nimi).not.toBeFocused();
   await expect(page.locator('.lyrics input').first()).not.toBeFocused();
 
-  await expect
-    .poll(() => nauhoitteet(page))
-    .toEqual([expect.objectContaining({ name: expect.any(String) })]);
-  const tallennetut = await nauhoitteet(page);
-  expect(tallennetut[0].songId).not.toBe('testi');
+  // Kanta ei ota vastaan blobia WebKitissä; ks. tiedoston yläkommentti.
+  if (browserName !== 'webkit') {
+    await expect
+      .poll(() => nauhoitteet(page))
+      .toEqual([expect.objectContaining({ name: expect.any(String) })]);
+    const tallennetut = await nauhoitteet(page);
+    expect(tallennetut[0].songId).not.toBe('testi');
+  }
 
   expect(await laulujenNimet(page)).toHaveLength(2);
   expect(await mikkiAuki(page)).toBe(0);
@@ -62,7 +71,7 @@ test('peruutus ei luo laulua eikä nauhoitetta', async ({ page }) => {
   await expect.poll(() => mikkiAuki(page)).toBe(0);
 });
 
-test('luontilakanan rivi tekee saman kuin yläpalkin painike', async ({ page }) => {
+test('luontilakanan rivi tekee saman kuin yläpalkin painike', async ({ page, browserName }) => {
   await page.getByRole('button', { name: '+ New song' }).click();
   // Rajattu lakanaan: sama teksti on myös yläpalkin painikkeen nimenä.
   await page.locator('.sheet').getByRole('button', { name: 'Record an idea' }).click();
@@ -71,7 +80,8 @@ test('luontilakanan rivi tekee saman kuin yläpalkin painike', async ({ page }) 
   await page.getByRole('button', { name: 'Stop and save' }).click();
 
   await expect(page.getByPlaceholder('Song title')).toHaveValue(PAIVAYSNIMI);
-  expect(await nauhoitteet(page)).toHaveLength(1);
+  // Kanta ei ota vastaan blobia WebKitissä; ks. tiedoston yläkommentti.
+  if (browserName !== 'webkit') expect(await nauhoitteet(page)).toHaveLength(1);
 });
 
 test('tyhjä laulu kohdistaa ensimmäisen rivin', async ({ page }) => {

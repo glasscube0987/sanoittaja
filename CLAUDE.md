@@ -116,6 +116,17 @@ Osoitintapahtumat syntetisoidaan `pointerType`-arvoineen ja **yksi tapahtuma
 per kierros**: kesken oleva veto elää Reactin tilassa, joten saman kierroksen
 sisällä lähetetty `pointermove` näkisi vielä vanhan arvon.
 
+**Blobia ei voi tallentaa kantaan WebKit-testissä.** Playwrightin WebKit ajaa
+IndexedDB:n väliaikaisessa istunnossa ilman levytallennusta, ja WebKit
+tallentaa blobin tiedostona, joten kirjoitus katkeaa virheeseen «Error
+preparing Blob/File data to be stored in object store». Sama tietue ilman
+blobia menee läpi. Nauhoite on ainoa tietue jossa on blobi, joten sen
+kantatarkistukset ovat `idea.spec.ts`:ssä ehdon takana;
+`kanta-blob.spec.ts` mittaa rajoitteen ja **väittää sen molemmille
+moottoreille**, jotta testi kaatuu jos WebKit joskus alkaa ottaa blobin
+vastaan. Rajoite on tiedossa vain tästä ympäristöstä — oikealla
+iOS-Safarilla sitä ei ole todennettu kumpaankaan suuntaan.
+
 Kuvakaappaukset ovat löytäneet toistuvasti vikoja, joita testit eivät näe
 (päällekkäinen väri­hierarkia, ruudun ulkopuolelle valuva painike, kahdelle
 riville kiertyvä työkalurivi). Käyttöliittymää muuttaessa kannattaa ottaa
