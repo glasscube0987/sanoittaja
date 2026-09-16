@@ -30,8 +30,10 @@ demoja puhelimella ja vie kaikki pilveen.
   soinnut merkitään tahteina: `| Am | F | C | G |`. Rivillä jo olevat soinnut
   siirtyvät tahdeiksi, yksi sointu tahtia kohti — myös silloin kun ne ovat
   rivin **tekstinä**, eli kun tuonti on tulkinnut sointurivin sanoitukseksi.
-  Tekstiä luetaan vain jos jokainen sana on sointu, jottei sanoitusrivi katoaisi
-  tahtien sekaan. Yhteen tahtiin mahtuu useampi
+  Valmiiksi tahtiviivoin kirjoitettu rivi (`|Am D7 |G |`) siirtyy sellaisenaan,
+  tyhjät tahdit ja lisämerkinnät mukaan lukien. Rivi tunnistetaan samalla
+  säännöllä kuin tuonnissa, jottei sama rivi tulkittaisi kahdessa paikassa eri
+  tavalla — eikä sanoitusrivi katoaisi tahtien sekaan. Yhteen tahtiin mahtuu useampi
   sointu (`Am F`) tai muu merkintä (`%`), pikavalinnat lisäävät soinnun tahtiin
   entistä hävittämättä, ja ”Jaa tahti” pilkkoo tahdin kahdeksi. Tahdit tasataan
   saman levyisiksi niin että tahtiviivat ovat allekkain, ja transponointi

@@ -262,6 +262,38 @@ describe('barsFromLine', () => {
     expect(barsFromLine({ id: 'l', text: '| Am F | C |', chords: [] })).toEqual(['Am F', 'C']);
   });
 
+  /*
+   * Tahtiviiva kirjoitetaan usein kiinni sointuun. Oma merkintöihin perustuva
+   * tunnistus luki `|Am`:n sanaksi ja koko rivi putosi oletustahteihin, vaikka
+   * tuonti olisi lukenut saman rivin sointuriviksi.
+   */
+  it('tunnistaa sointuun kiinni kirjoitetun tahtiviivan', () => {
+    expect(barsFromLine({ id: 'l', text: '|Am D7 |G   |', chords: [] })).toEqual(['Am D7', 'G']);
+  });
+
+  it('tunnistaa rivin jossa ei ole välilyöntejä lainkaan', () => {
+    expect(barsFromLine({ id: 'l', text: '|Am|F|C|G|', chords: [] })).toEqual([
+      'Am',
+      'F',
+      'C',
+      'G',
+    ]);
+  });
+
+  /* Tyhjä tahti keskellä tarkoittaa edellisen soinnun jatkumista. */
+  it('säilyttää tyhjän tahdin rivin keskeltä', () => {
+    expect(barsFromLine({ id: 'l', text: '| Am | | G |', chords: [] })).toEqual(['Am', '', 'G']);
+  });
+
+  /* Sama sääntö kuin tuonnissa: sointurivin lisämerkinnät säilyvät. */
+  it('säilyttää tahdin lisämerkinnät', () => {
+    expect(barsFromLine({ id: 'l', text: '| Am | % | G x2 |', chords: [] })).toEqual([
+      'Am',
+      '%',
+      'G x2',
+    ]);
+  });
+
   it('ankkuroidut soinnut voittavat tekstin', () => {
     const line = { id: 'l', text: 'Am F C G', chords: [{ id: 'c1', pos: 0, symbol: 'Dm' }] };
     expect(barsFromLine(line)).toEqual(['Dm']);

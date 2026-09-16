@@ -3,8 +3,9 @@ import { adjustPositions, chordSpan } from './anchors';
 import type { BarRow } from './bars';
 import { splitBars, storedMeters } from './bars';
 import type { Accidental } from './chords';
-import { isChordToken, respellChord, transposeBar, transposeChord } from './chords';
+import { respellChord, transposeBar, transposeChord } from './chords';
 import type { Notation } from './chords';
+import { classifyLine } from './importText';
 import { getSections } from './sections';
 import type { ChordAnchor, LyricLine, SectionMark, Song } from './types';
 import { uid } from './types';
@@ -178,16 +179,25 @@ export function barsFromLine(line: LyricLine): string[] {
  * Sointuriviksi kirjoitettu teksti tahdeiksi, tai `null` jos se ei ole
  * sointurivi.
  *
- * Tahtiviivat kertovat tahdituksen itse (`| Am F | C |`), jolloin niitä
- * noudatetaan sellaisenaan – muuten yksi sointu tahtia kohti, sama sääntö kuin
- * ankkuroiduilla.
+ * Kysymys «onko tämä rivi sointurivi» on jo ratkaistu `classifyLine`ssa, jolla
+ * tuonti päättää saman asian. Sitä käytetään tässä sellaisenaan eikä
+ * kirjoiteta uudelleen: kaksi rinnakkaista sääntöä erkanisivat toisistaan, ja
+ * silloin sama rivi tulkittaisiin tuonnissa ja editorissa eri tavalla.
+ *
+ * Aiempi oma tunnistus luki merkinnät välilyönneistä ja tiputti vain erillään
+ * olevat tahtiviivat, joten kiinni kirjoitettu `|Am` jäi tunnistamatta ja koko
+ * rivi putosi oletustahteihin.
+ *
+ * Tahtiviivat kertovat tahdituksen itse, jolloin niitä noudatetaan
+ * sellaisenaan – myös tyhjää tahtia, joka tarkoittaa edellisen soinnun
+ * jatkumista. Ilman tahtiviivoja tulee yksi merkintä tahtia kohti, sama sääntö
+ * kuin ankkuroiduilla soinnuilla.
  */
 function barsFromText(text: string): string[] | null {
-  const tokens = text.split(/\s+/).filter((t) => t && t !== '|');
-  if (tokens.length === 0 || !tokens.every(isChordToken)) return null;
-  if (!text.includes('|')) return tokens;
-  const bars = splitBars(text).filter(Boolean);
-  return bars.length > 0 ? bars : tokens;
+  const laji = classifyLine(text);
+  if (laji === 'bars') return splitBars(text);
+  if (laji === 'chords') return text.trim().split(/\s+/).filter(Boolean);
+  return null;
 }
 
 /**

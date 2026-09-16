@@ -307,6 +307,24 @@ test('tekstinä olevat soinnut siirtyvät tahdeiksi muunnettaessa', async ({ pag
   );
 });
 
+/* Tahtiviiva kirjoitetaan usein kiinni sointuun, ja juuri se jäi tunnistamatta. */
+test('tahtiviivoin kirjoitettu rivi siirtyy tahdeiksi sellaisenaan', async ({ page }) => {
+  await avaaLaulu(
+    page,
+    laulu({
+      lines: [
+        { id: 'l1', text: '|Am D7 |G   |', section: { kind: 'verse' }, chords: [] },
+        { id: 'l2', text: 'sanoitettu rivi', chords: [] },
+      ],
+    }),
+  );
+
+  await teeSointurivi(page);
+  await page.getByRole('button', { name: 'Cancel' }).click();
+
+  expect(await teksti(page.locator('.line').first().locator('.bar-row'))).toBe('| Am D7 | G     |');
+});
+
 /*
  * Vaarallinen suunta: sanoitusrivi luettaisiin soinnuiksi ja sanat katoaisivat
  * tahtien sekaan. «Am» rivin alussa on juuri se tapaus joka houkuttelee.
