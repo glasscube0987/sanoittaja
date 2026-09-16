@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { Song } from '../lib/types';
 import {
   addLineAfter,
@@ -21,6 +22,14 @@ import {
 } from '../lib/songOps';
 import { useI18n } from '../lib/i18n';
 import { loadNotation } from '../lib/notation';
+import {
+  clampLyricSize,
+  loadLyricSize,
+  LYRIC_SIZE_MAX,
+  LYRIC_SIZE_MIN,
+  LYRIC_SIZE_STEP,
+  storeLyricSize,
+} from '../lib/lyricSize';
 import { getSections, sectionTitle } from '../lib/sections';
 import { barRowOf } from '../lib/bars';
 import { printSheet } from '../lib/print';
@@ -85,6 +94,7 @@ export default function SongEditor({
   // null = tuonti laulun loppuun, muuten rivin id jonka perään rivit menevät.
   const [importAfterId, setImportAfterId] = useState<string | null | undefined>(undefined);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
+  const [lyricSize, setLyricSize] = useState(loadLyricSize);
   /* Alkuarvo luetaan vain ensimmäisellä piirrolla, mikä on juuri se hetki jota
      kohdistus koskee: myöhemmin ref elää rakenteellisten muokkausten mukana. */
   const focusLineId = useRef<{ id: string; caret: number } | null>(
@@ -95,6 +105,12 @@ export default function SongEditor({
   const [notes] = useAnnotations(song.id);
 
   useEffect(() => () => window.clearTimeout(blurTimer.current ?? undefined), []);
+
+  function muutaKokoa(askel: number) {
+    const koko = clampLyricSize(lyricSize + askel);
+    setLyricSize(koko);
+    storeLyricSize(koko);
+  }
 
   const offset = transposeOffset(song);
   const offsetLabel = offset > 0 ? `+${offset}` : String(offset);
@@ -222,6 +238,26 @@ export default function SongEditor({
         >
           <Icon name="undo" />
         </button>
+        {/* Tekstikoko kuuluu yläpalkkiin eikä transponointiriville: palkki on
+            sticky, joten koko on säädettävissä myös keskellä laulua, siinä
+            kohtaa jossa rivi ei mahdu – ja transponointirivi oli jo ennestään
+            niin täysi, että paluupainike kiertyi toiselle riville. */}
+        <button
+          className="icon-button size"
+          onClick={() => muutaKokoa(-LYRIC_SIZE_STEP)}
+          disabled={lyricSize <= LYRIC_SIZE_MIN}
+          aria-label={t('editor.textSmaller')}
+        >
+          A−
+        </button>
+        <button
+          className="icon-button size"
+          onClick={() => muutaKokoa(LYRIC_SIZE_STEP)}
+          disabled={lyricSize >= LYRIC_SIZE_MAX}
+          aria-label={t('editor.textLarger')}
+        >
+          A+
+        </button>
         {/* Yläpalkki on sticky, joten live-tila on käytettävissä heti biisin
             avatessa ilman että näkymää tarvitsee rullata alas. */}
         <button className="live-open" onClick={onLive}>
@@ -295,7 +331,10 @@ export default function SongEditor({
           )}
         </div>
 
-        <div className="lyrics">
+        {/* Tekstikoko yhtenä muuttujana: sointurivi, teksti ja tahtirivi
+            lukevat sen samasta paikasta, jolloin ch-yksikkö pysyy samana
+            eivätkä soinnut irtoa kirjaimistaan. */}
+        <div className="lyrics" style={{ '--lyric-size': `${lyricSize}px` } as CSSProperties}>
           {sections.map((block, i) => (
             <section className="section" key={block.id}>
               {block.mark && (

@@ -67,6 +67,14 @@ eikä mitään mitata; leveyttä ei talleteta. Pyyhekumi koskee **vain vetoihin*
 kirjoitettua ei voi piirtää takaisin. `kind` puuttuu vanhoista tietueista, ja
 sen puuttuminen tarkoittaa vetoa.
 
+**Sanoitusrivin ja sointurivin fonttikoko on yksi ja sama.** Sointujen sijainti
+lasketaan `ch`-yksiköllä, joka on elementin oman fontin merkkileveys, joten eri
+koot irrottaisivat soinnut kirjaimistaan rivin edetessä. Koko tulee siksi
+yhdestä CSS-muuttujasta (`--lyric-size`, `lib/lyricSize.ts`), jonka editori
+asettaa `.lyrics`-laatikkoon. Samasta syystä tekstikenttä saa leveytensä samasta
+`chordSpan`-laskennasta kuin sointurivi: rivi ja sen soinnut vierittyvät yhtenä,
+eikä pitkän rivin loppupäästä puutu tekstiä.
+
 **Versiot.** `DB_VERSION` (`lib/db.ts`) ja `BUNDLE_VERSION`
 (`lib/sync/exportFile.ts`) nousevat erikseen. `importLibrary` hyväksyy myös
 vanhemman paketin: käyttäjillä on oikeita varmuuskopioita, eivätkä ne saa

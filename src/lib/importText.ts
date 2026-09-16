@@ -14,6 +14,7 @@
  * yhdessä paikassa.
  */
 import { chordSpan } from './anchors';
+import { splitBars } from './bars';
 import { isChordToken } from './chords';
 import type { ChordAnchor, LyricLine, SectionKind, SectionMark } from './types';
 import { uid } from './types';
@@ -155,14 +156,6 @@ function chordsAt(raw: string, span: number): ChordAnchor[] {
   return anchors;
 }
 
-function barsFrom(raw: string): string[] {
-  const parts = raw.split('|').map((part) => part.trim());
-  // Uloimmat tahtiviivat tuottavat tyhjät päät, jotka eivät ole tahteja.
-  if (parts[0] === '') parts.shift();
-  if (parts[parts.length - 1] === '') parts.pop();
-  return parts;
-}
-
 export interface ImportResult {
   /** Otsikoksi tulkittu rivi, jos sellainen löytyi. */
   title?: string;
@@ -226,7 +219,7 @@ export function buildLines(
         break;
 
       case 'bars':
-        push({ text: '', chords: [], bars: barsFrom(raw) });
+        push({ text: '', chords: [], bars: splitBars(raw) });
         break;
 
       case 'chords': {

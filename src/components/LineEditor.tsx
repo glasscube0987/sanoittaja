@@ -127,9 +127,14 @@ export default function LineEditor({
             </button>
           ))}
         </div>
+        {/* Sama leveys kuin sointurivillä, samasta laskennasta: rivi ja sen
+            soinnut vierittyvät yhtenä .lyrics-laatikon sisällä. Ilman tätä
+            sointurivi kasvatti vieritysleveyttä yksin, ja rivin loppusointujen
+            alta puuttui teksti. */}
         <input
           ref={inputRef}
           className="text"
+          style={{ width: `calc(${chordSpan(line.text)}ch + 8px)` }}
           value={line.text}
           placeholder="…"
           autoCapitalize="sentences"

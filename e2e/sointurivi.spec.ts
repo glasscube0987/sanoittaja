@@ -282,3 +282,51 @@ test('transponointi ei koske tahtilajiin', async ({ page }) => {
   await page.getByLabel('Up a semitone').click();
   expect(await teksti(page.locator('.bar-row'))).toBe('3/4 | A#m |     |     |     |');
 });
+
+/*
+ * Väärin tulkittu rivi: tuonti luki sointurivin sanoitukseksi, joten soinnut
+ * ovat rivin tekstinä eivätkä ankkureina. Neljä tyhjää tahtia pakottaisi
+ * kirjoittamaan ne uudelleen.
+ */
+test('tekstinä olevat soinnut siirtyvät tahdeiksi muunnettaessa', async ({ page }) => {
+  await avaaLaulu(
+    page,
+    laulu({
+      lines: [
+        { id: 'l1', text: 'Am  F   C  G', section: { kind: 'verse' }, chords: [] },
+        { id: 'l2', text: 'sanoitettu rivi', chords: [] },
+      ],
+    }),
+  );
+
+  await teeSointurivi(page);
+  await page.getByRole('button', { name: 'Cancel' }).click();
+
+  expect(await teksti(page.locator('.line').first().locator('.bar-row'))).toBe(
+    '| Am | F  | C  | G  |',
+  );
+});
+
+/*
+ * Vaarallinen suunta: sanoitusrivi luettaisiin soinnuiksi ja sanat katoaisivat
+ * tahtien sekaan. «Am» rivin alussa on juuri se tapaus joka houkuttelee.
+ */
+test('sanoitusrivi ei muutu soinnuiksi vaikka alkaisi soinnun näköisesti', async ({ page }) => {
+  await avaaLaulu(
+    page,
+    laulu({
+      lines: [
+        { id: 'l1', text: 'Am I the only one', section: { kind: 'verse' }, chords: [] },
+        { id: 'l2', text: 'sanoitettu rivi', chords: [] },
+      ],
+    }),
+  );
+
+  await teeSointurivi(page);
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  // Tahdit jäävät tyhjiksi: rivillä ei ole yhtään kirjainta, vain tahtiviivat.
+  const rivi = (await teksti(page.locator('.line').first().locator('.bar-row'))) ?? '';
+  expect(rivi).toMatch(/^[|\s]+$/);
+  expect(rivi.split('|').length - 1).toBe(5);
+});

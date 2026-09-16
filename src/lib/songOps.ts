@@ -1,9 +1,9 @@
 /** Laulun muokkausoperaatiot – puhtaita funktioita, jotka palauttavat uuden laulun. */
 import { adjustPositions, chordSpan } from './anchors';
 import type { BarRow } from './bars';
-import { storedMeters } from './bars';
+import { splitBars, storedMeters } from './bars';
 import type { Accidental } from './chords';
-import { respellChord, transposeBar, transposeChord } from './chords';
+import { isChordToken, respellChord, transposeBar, transposeChord } from './chords';
 import type { Notation } from './chords';
 import { getSections } from './sections';
 import type { ChordAnchor, LyricLine, SectionMark, Song } from './types';
@@ -152,15 +152,42 @@ export function setChord(song: Song, lineId: string, pos: number, symbol: string
 export const DEFAULT_BARS = ['', '', '', ''];
 
 /**
- * Rivin ankkuroidut soinnut tahdeiksi, yksi sointu tahtia kohti.
+ * Rivin soinnut tahdeiksi, yksi sointu tahtia kohti.
  *
  * Sointurivin voi tehdä valmiiksi merkityn rivin päälle, ja silloin soinnut
  * ovat jo tiedossa: neljä tyhjää tahtia pakottaisi kirjoittamaan ne uudelleen.
- * Ilman sointuja palataan oletustahteihin.
+ *
+ * Soinnut voivat olla rivillä kahdella tavalla. Ankkuroituna ne ovat
+ * `line.chords`issa, ja se on ensisijainen lähde. Mutta kun tuonti on
+ * tulkinnut sointurivin sanoitusriviksi, soinnut ovat rivin **tekstinä** –
+ * juuri se rivi jonka käyttäjä haluaa muuntaa, ja juuri se tapaus jossa
+ * tyhjät tahdit tuntuvat siltä että sovellus hukkasi työn.
+ *
+ * Tekstiä luetaan vain jos **jokainen** sana on sointu. `isChordToken` on
+ * tarkoituksella tiukka, koska väärä suunta on tässä kohtalokas: sanoitusrivi
+ * joka luettaisiin soinnuiksi katoaisi tahtien sekaan. Yksikin tunnistamaton
+ * sana palauttaa oletustahteihin, jolloin käyttäjä näkee rivinsä ennallaan.
  */
 export function barsFromLine(line: LyricLine): string[] {
   const symbols = [...line.chords].sort((a, b) => a.pos - b.pos).map((c) => c.symbol);
-  return symbols.length > 0 ? symbols : DEFAULT_BARS;
+  if (symbols.length > 0) return symbols;
+  return barsFromText(line.text) ?? DEFAULT_BARS;
+}
+
+/**
+ * Sointuriviksi kirjoitettu teksti tahdeiksi, tai `null` jos se ei ole
+ * sointurivi.
+ *
+ * Tahtiviivat kertovat tahdituksen itse (`| Am F | C |`), jolloin niitä
+ * noudatetaan sellaisenaan – muuten yksi sointu tahtia kohti, sama sääntö kuin
+ * ankkuroiduilla.
+ */
+function barsFromText(text: string): string[] | null {
+  const tokens = text.split(/\s+/).filter((t) => t && t !== '|');
+  if (tokens.length === 0 || !tokens.every(isChordToken)) return null;
+  if (!text.includes('|')) return tokens;
+  const bars = splitBars(text).filter(Boolean);
+  return bars.length > 0 ? bars : tokens;
 }
 
 /**

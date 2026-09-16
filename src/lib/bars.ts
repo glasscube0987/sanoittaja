@@ -31,6 +31,20 @@ export function barRowOf(line: Pick<LyricLine, 'bars' | 'meters' | 'meter'>): Ba
   return { bars: [...bars], meters: padMeters(bars, meters) };
 }
 
+/**
+ * Tahtiviivoin kirjoitettu rivi tahdeiksi: `| Am | F |` -> `['Am', 'F']`.
+ *
+ * Uloimmat tahtiviivat tuottavat tyhjät päät, jotka eivät ole tahteja.
+ * Sama jäsennys tarvitaan kahdessa paikassa – tekstin tuonnissa ja rivin
+ * sointurivimuunnoksessa – joten se asuu täällä eikä kummassakaan niistä.
+ */
+export function splitBars(raw: string): string[] {
+  const parts = raw.split('|').map((part) => part.trim());
+  if (parts[0] === '') parts.shift();
+  if (parts[parts.length - 1] === '') parts.pop();
+  return parts;
+}
+
 /** Tallennettava muoto: tyhjät merkinnät jätetään kokonaan pois. */
 export function storedMeters(meters: string[]): string[] | null {
   const trimmed = meters.map((m) => m.trim());

@@ -239,6 +239,49 @@ describe('barsFromLine', () => {
     barsFromLine({ id: 'l', text: 'sanoja', chords });
     expect(chords.map((c) => c.symbol)).toEqual(['F', 'Am']);
   });
+
+  /*
+   * Väärin tulkittu sointurivi: tuonti luki sen sanoitukseksi, joten soinnut
+   * ovat tekstinä eivätkä ankkureina. Juuri tässä tyhjät tahdit tuntuvat
+   * siltä että sovellus hukkasi työn.
+   */
+  it('lukee soinnut myös rivin tekstistä kun ankkureita ei ole', () => {
+    expect(barsFromLine({ id: 'l', text: 'Am  F   C  G', chords: [] })).toEqual([
+      'Am',
+      'F',
+      'C',
+      'G',
+    ]);
+  });
+
+  it('lukee H-soinnun tekstistä siinä missä B:n', () => {
+    expect(barsFromLine({ id: 'l', text: 'H7 Em Hb', chords: [] })).toEqual(['H7', 'Em', 'Hb']);
+  });
+
+  it('noudattaa tahtiviivoja kun teksti on jo tahditettu', () => {
+    expect(barsFromLine({ id: 'l', text: '| Am F | C |', chords: [] })).toEqual(['Am F', 'C']);
+  });
+
+  it('ankkuroidut soinnut voittavat tekstin', () => {
+    const line = { id: 'l', text: 'Am F C G', chords: [{ id: 'c1', pos: 0, symbol: 'Dm' }] };
+    expect(barsFromLine(line)).toEqual(['Dm']);
+  });
+
+  /*
+   * Tämän erän vaarallisin virhe: sanoitusrivi luettaisiin soinnuiksi ja sanat
+   * katoaisivat tahtien sekaan. Yksikin tunnistamaton sana riittää estämään sen.
+   */
+  it('ei lue sanoitusriviä soinnuiksi vaikka se alkaisi soinnun näköisesti', () => {
+    expect(barsFromLine({ id: 'l', text: 'Am I the only one', chords: [] })).toEqual(DEFAULT_BARS);
+  });
+
+  it('ei lue riviä jossa on yksikin tunnistamaton sana', () => {
+    expect(barsFromLine({ id: 'l', text: 'Am F kuu G', chords: [] })).toEqual(DEFAULT_BARS);
+  });
+
+  it('jättää tyhjän rivin oletustahteihin', () => {
+    expect(barsFromLine({ id: 'l', text: '   ', chords: [] })).toEqual(DEFAULT_BARS);
+  });
 });
 
 describe('setLineBarRow', () => {

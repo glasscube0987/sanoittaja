@@ -28,7 +28,10 @@ demoja puhelimella ja vie kaikki pilveen.
   kun näppäimistön sulkee.
 - **Sointurivit** – rivin voi muuttaa sointuriviksi rivin §-painikkeesta, jolloin
   soinnut merkitään tahteina: `| Am | F | C | G |`. Rivillä jo olevat soinnut
-  siirtyvät tahdeiksi, yksi sointu tahtia kohti. Yhteen tahtiin mahtuu useampi
+  siirtyvät tahdeiksi, yksi sointu tahtia kohti — myös silloin kun ne ovat
+  rivin **tekstinä**, eli kun tuonti on tulkinnut sointurivin sanoitukseksi.
+  Tekstiä luetaan vain jos jokainen sana on sointu, jottei sanoitusrivi katoaisi
+  tahtien sekaan. Yhteen tahtiin mahtuu useampi
   sointu (`Am F`) tai muu merkintä (`%`), pikavalinnat lisäävät soinnun tahtiin
   entistä hävittämättä, ja ”Jaa tahti” pilkkoo tahdin kahdeksi. Tahdit tasataan
   saman levyisiksi niin että tahtiviivat ovat allekkain, ja transponointi
@@ -78,6 +81,12 @@ demoja puhelimella ja vie kaikki pilveen.
   muoto on kielineutraali ja paikallisessa ajassa, ja aakkosjärjestys on samalla
   aikajärjestys. Tyhjänä aloitettu laulu kohdistaa ensimmäisen sanoitusrivin,
   jotta kirjoittaminen alkaa yhtä nopeasti kuin nauhoittaminen.
+- **Tekstikoko** – editorin yläpalkin `A−`/`A+` säätää sanoitusten ja
+  sointurivien kokoa (12–24 px). Pienempi näyttää enemmän pitkästä rivistä,
+  suurempi on luettavampi hämärässä. Koko koskee molempia yhtä aikaa, joten
+  soinnut pysyvät kirjaintensa kohdalla. Valinta muistetaan laitekohtaisesti.
+  Pitkä rivi vierittyy sivusuunnassa sanoituslaatikon sisällä, teksti ja
+  soinnut yhdessä.
 - **Järjestys** – «Kaikki laulut» -näkymän voi järjestää viimeksi muokatun,
   aakkosten (A–Ö) tai käänteisten aakkosten mukaan. Aakkostus on kielikohtainen,
   joten ä ja ö menevät suomessa aakkosten loppuun eivätkä merkistön mukaan.
