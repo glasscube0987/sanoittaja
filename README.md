@@ -31,7 +31,10 @@ demoja puhelimella ja vie kaikki pilveen.
   siirtyvät tahdeiksi, yksi sointu tahtia kohti — myös silloin kun ne ovat
   rivin **tekstinä**, eli kun tuonti on tulkinnut sointurivin sanoitukseksi.
   Valmiiksi tahtiviivoin kirjoitettu rivi (`|Am D7 |G |`) siirtyy sellaisenaan,
-  tyhjät tahdit ja lisämerkinnät mukaan lukien. Rivi tunnistetaan samalla
+  tyhjät tahdit ja lisämerkinnät mukaan lukien. Tahtiviivan tilalla kelpaa myös
+  `I` tai `l` (`IAm D7 IG I`), koska niitä tulee puhelimella kirjoitettaessa
+  helposti `|`:n sijaan — mutta vain kun rivi ei muuten ole sointurivi ja
+  tahteja tulee vähintään kaksi, joten sanoitus ei muutu tahdeiksi. Rivi tunnistetaan samalla
   säännöllä kuin tuonnissa, jottei sama rivi tulkittaisi kahdessa paikassa eri
   tavalla — eikä sanoitusrivi katoaisi tahtien sekaan. Yhteen tahtiin mahtuu useampi
   sointu (`Am F`) tai muu merkintä (`%`), pikavalinnat lisäävät soinnun tahtiin

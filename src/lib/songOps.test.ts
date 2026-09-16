@@ -285,6 +285,22 @@ describe('barsFromLine', () => {
     expect(barsFromLine({ id: 'l', text: '| Am | | G |', chords: [] })).toEqual(['Am', '', 'G']);
   });
 
+  /* Sama sääntö kuin tuonnissa: I ja l kelpaavat tahtiviivan tilalle. */
+  it('lukee tahtiviivan näköiset merkit tahtiviivoiksi', () => {
+    expect(barsFromLine({ id: 'l', text: 'IAm D7 IG I', chords: [] })).toEqual(['Am D7', 'G']);
+    expect(barsFromLine({ id: 'l', text: 'lAm lF lC lG l', chords: [] })).toEqual([
+      'Am',
+      'F',
+      'C',
+      'G',
+    ]);
+  });
+
+  it('ei lue sanoitusta tahdeiksi I:n takia', () => {
+    expect(barsFromLine({ id: 'l', text: "I'll be there", chords: [] })).toEqual(DEFAULT_BARS);
+    expect(barsFromLine({ id: 'l', text: 'Am I', chords: [] })).toEqual(DEFAULT_BARS);
+  });
+
   /* Sama sääntö kuin tuonnissa: sointurivin lisämerkinnät säilyvät. */
   it('säilyttää tahdin lisämerkinnät', () => {
     expect(barsFromLine({ id: 'l', text: '| Am | % | G x2 |', chords: [] })).toEqual([

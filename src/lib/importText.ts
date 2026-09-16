@@ -134,10 +134,64 @@ function looksLikeBarRow(raw: string): boolean {
     filled.some((segment) => segment.split(/\s+/).some(isChordToken));
 }
 
+/**
+ * Tahtiviivan näköiset merkit.
+ *
+ * `|` on puhelimen näppäimistöllä hankalassa paikassa, ja nopeassa
+ * merkinnässä sen tilalle tulee helposti `I` tai `l` – ne näyttävät
+ * paperilla samalta. Kirjoittajan tarkoitus on selvä, joten se luetaan.
+ */
+const BAR_LOOKALIKES = /[Il]/g;
+
+/**
+ * Sama rivi tahtiviivan näköiset merkit tahtiviivoiksi vaihdettuna, jos se
+ * vasta silloin on sointurivi.
+ *
+ * Tämä on **vara eikä sääntö**, ja järjestys on koko turvallisuus: vaihtoa
+ * kokeillaan vasta kun rivi ei ole sointurivi sellaisenaan. Siksi `Calt`
+ * säilyy sointuna eikä pilkkoudu, ja tahtiviivoilla jo kirjoitettu rivi
+ * luetaan sellaisenaan.
+ *
+ * Vaihto ei silti yksin riitä: `looksLikeBarRow` vaatii, että **jokaisen**
+ * tahdin sisältö on pelkkiä sointuja. Juuri se estää sanoitusta katoamasta –
+ * «Am I the only one» pilkkoutuisi muotoon `Am | the on|y one`, jossa sanat
+ * eivät ole sointuja, joten rivi jää sanoitukseksi.
+ */
+function barLookalikeRow(raw: string): string | null {
+  const swapped = raw.replace(BAR_LOOKALIKES, '|');
+  if (swapped === raw || !looksLikeBarRow(swapped)) return null;
+  /*
+   * Vähintään kaksi tahtia. Yhden tahdin rivi on varatulkinnalle liian ohut
+   * todiste: «Am I» täyttäisi kaikki muut ehdot mutta voi hyvin olla
+   * sanoitusta. Tahtiviivoilla kirjoitettuun riviin tämä ei päde, koska
+   * silloin merkintä on jo yksiselitteinen.
+   */
+  return splitBars(swapped).filter(Boolean).length >= 2 ? swapped : null;
+}
+
+/**
+ * Teksti, josta rivin tahdit luetaan, tai `null` jos rivi ei ole tahtirivi.
+ *
+ * Tuonti ja editorin sointurivimuunnos käyttävät molemmat tätä, jottei sama
+ * rivi tulkittaisi kahdessa paikassa eri tavalla.
+ */
+export function barRowText(raw: string): string | null {
+  if (looksLikeBarRow(raw)) return raw;
+  /*
+   * Tahtiviivaton sointurivi on oma lajinsa, eikä sitä pilkota varatulkinnalla.
+   * Yhtään syötettä joka tarvitsisi tämän vahdin ei ole löytynyt – `Calt`
+   * torjuu itsensä jo sillä, ettei `Ca` ole sointu – joten tämä on
+   * järjestyksen takuu eikä korjaus tunnettuun vikaan. Ilman sitä lajien
+   * keskinäinen järjestys jäisi riippumaan sointujen laatuosien sisällöstä.
+   */
+  if (looksLikeChordRow(raw)) return null;
+  return barLookalikeRow(raw);
+}
+
 export function classifyLine(raw: string): ImportKind {
   if (raw.trim() === '') return 'blank';
   if (sectionFromHeading(raw)) return 'section';
-  if (looksLikeBarRow(raw)) return 'bars';
+  if (barRowText(raw)) return 'bars';
   if (looksLikeChordRow(raw)) return 'chords';
   return 'lyrics';
 }
@@ -219,7 +273,7 @@ export function buildLines(
         break;
 
       case 'bars':
-        push({ text: '', chords: [], bars: splitBars(raw) });
+        push({ text: '', chords: [], bars: splitBars(barRowText(raw) ?? raw) });
         break;
 
       case 'chords': {

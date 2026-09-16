@@ -5,7 +5,7 @@ import { splitBars, storedMeters } from './bars';
 import type { Accidental } from './chords';
 import { respellChord, transposeBar, transposeChord } from './chords';
 import type { Notation } from './chords';
-import { classifyLine } from './importText';
+import { barRowText, classifyLine } from './importText';
 import { getSections } from './sections';
 import type { ChordAnchor, LyricLine, SectionMark, Song } from './types';
 import { uid } from './types';
@@ -195,7 +195,7 @@ export function barsFromLine(line: LyricLine): string[] {
  */
 function barsFromText(text: string): string[] | null {
   const laji = classifyLine(text);
-  if (laji === 'bars') return splitBars(text);
+  if (laji === 'bars') return splitBars(barRowText(text) ?? text);
   if (laji === 'chords') return text.trim().split(/\s+/).filter(Boolean);
   return null;
 }

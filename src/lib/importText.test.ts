@@ -31,6 +31,62 @@ describe('isChordToken', () => {
   });
 });
 
+describe('classifyLine: tahtiviivan näköiset merkit', () => {
+  /*
+   * `|` on puhelimen näppäimistöllä hankalassa paikassa, ja nopeassa
+   * merkinnässä sen tilalle tulee helposti I tai l.
+   */
+  it('lukee I:n ja l:n tahtiviivoiksi', () => {
+    expect(classifyLine('IAm D7 IG I')).toBe('bars');
+    expect(classifyLine('lAm lF lC lG l')).toBe('bars');
+    expect(classifyLine('Am I Am')).toBe('bars');
+  });
+
+  it('antaa tahdit samoin kuin oikeilla tahtiviivoilla', () => {
+    expect(parseSongText('IAm D7 IG I').lines[0].bars).toEqual(['Am D7', 'G']);
+    expect(parseSongText('|Am D7 |G |').lines[0].bars).toEqual(['Am D7', 'G']);
+  });
+
+  /*
+   * Vaarallinen suunta. Sanoitus ei saa muuttua tahdeiksi, ja suoja on se että
+   * jokaisen tahdin sisällön on oltava pelkkiä sointuja.
+   */
+  it('ei lue sanoitusta tahdeiksi', () => {
+    for (const rivi of [
+      'I love you',
+      "I'll be there",
+      'All I am',
+      'Am I the only one',
+      'Lonely I call',
+      'Little lies',
+      'I will always love you',
+    ]) {
+      expect(classifyLine(rivi)).toBe('lyrics');
+    }
+  });
+
+  /*
+   * Yhden tahdin rivi on varatulkinnalle liian ohut todiste: «Am I» täyttäisi
+   * muut ehdot mutta voi hyvin olla sanoitusta.
+   */
+  it('vaatii vähintään kaksi tahtia', () => {
+    expect(classifyLine('Am I')).toBe('lyrics');
+    expect(classifyLine('Em I')).toBe('lyrics');
+    // Oikealla tahtiviivalla merkintä on yksiselitteinen, joten yksi riittää.
+    expect(classifyLine('|Am|')).toBe('bars');
+  });
+
+  /* Järjestys on turvallisuus: sointu joka sisältää l:n säilyy sointuna. */
+  it('ei pilko sointua jonka laatuosassa on l', () => {
+    expect(classifyLine('Am F Calt')).toBe('chords');
+    expect(parseSongText('Am F Calt').lines[0].chords.map((c) => c.symbol)).toEqual([
+      'Am',
+      'F',
+      'Calt',
+    ]);
+  });
+});
+
 describe('classifyLine', () => {
   it('tunnistaa sointurivin', () => {
     expect(classifyLine('Am      F       C')).toBe('chords');
