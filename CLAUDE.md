@@ -75,6 +75,16 @@ asettaa `.lyrics`-laatikkoon. Samasta syystä tekstikenttä saa leveytensä sama
 `chordSpan`-laskennasta kuin sointurivi: rivi ja sen soinnut vierittyvät yhtenä,
 eikä pitkän rivin loppupäästä puutu tekstiä.
 
+**Rivin toiminnot asuvat `LineSheet`issä**, eivät kohdistetun rivin
+työkalurivissä: sointurivi on painike ilman tekstikenttää, joten se ei voi
+saada kohdistusta, eikä keskellä olevaan pelkistä sointuriveistä koostuvaan
+osioon päässyt käsiksi mitenkään. Toiminto kulkee **tallennuksen mukana**
+(`onSave(settings, action?)`), koska erillinen kutsu laskisi muutoksensa
+vanhasta laulusta ja ylikirjoittaisi juuri tallennetut asetukset. Kopion
+sisällön tietää yksi funktio (`copyLine`), ja yksittäisen rivin kopio
+pudottaa `section`-merkinnän – muuten osion ensimmäisen rivin monistus
+katkaisisi osion kahtia.
+
 **Versiot.** `DB_VERSION` (`lib/db.ts`) ja `BUNDLE_VERSION`
 (`lib/sync/exportFile.ts`) nousevat erikseen. `importLibrary` hyväksyy myös
 vanhemman paketin: käyttäjillä on oikeita varmuuskopioita, eivätkä ne saa

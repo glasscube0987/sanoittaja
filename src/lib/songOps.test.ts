@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   barsFromLine,
+  duplicateLine,
+  insertLineAfter,
   DEFAULT_BARS,
   editLineText,
   insertLinesAfter,
@@ -376,5 +378,99 @@ describe('tahtilaji ja transponointi', () => {
   it('ei muuta tahtilajia kirjoitusasua vaihdettaessa', () => {
     const lahto: Song = { ...makeSong(), meter: '6/8' };
     expect(respellSong(lahto, 'flat').meter).toBe('6/8');
+  });
+});
+
+describe('duplicateLine', () => {
+  const laulu = (): Song => ({
+    id: 's',
+    title: '',
+    songKey: '',
+    createdAt: 1,
+    updatedAt: 1,
+    lines: [
+      {
+        id: 'l1',
+        text: 'älä katso taakse',
+        section: { kind: 'chorus' },
+        chords: [{ id: 'c1', pos: 0, symbol: 'G' }],
+      },
+      { id: 'l2', text: '', chords: [], bars: ['Am', 'F'], meters: ['4/4', ''] },
+    ],
+  });
+
+  it('kopio tulee heti alkuperäisen alle', () => {
+    const next = duplicateLine(laulu(), 'l1');
+    expect(next.lines.map((l) => l.text)).toEqual(['älä katso taakse', 'älä katso taakse', '']);
+  });
+
+  it('kopiolla on omat tunnisteet riville ja soinnuille', () => {
+    const next = duplicateLine(laulu(), 'l1');
+    expect(next.lines[1].id).not.toBe('l1');
+    expect(next.lines[1].chords[0].id).not.toBe('c1');
+    expect(next.lines[1].chords[0].symbol).toBe('G');
+  });
+
+  /*
+   * Jos merkintä tulisi mukana, kertosäkeen ensimmäisen rivin monistus
+   * katkaisisi osion kahtia ja lehdelle ilmestyisi toinen «Kertosäe».
+   */
+  it('kopio ei aloita uutta osiota', () => {
+    const next = duplicateLine(laulu(), 'l1');
+    expect(next.lines[0].section).toEqual({ kind: 'chorus' });
+    expect(next.lines[1].section).toBeUndefined();
+  });
+
+  it('sointurivin tahdit ja tahtilajit kopioituvat omiksi taulukoikseen', () => {
+    const song = laulu();
+    const next = duplicateLine(song, 'l2');
+    expect(next.lines[2].bars).toEqual(['Am', 'F']);
+    expect(next.lines[2].meters).toEqual(['4/4', '']);
+    expect(next.lines[2].bars).not.toBe(song.lines[1].bars);
+    expect(next.lines[2].meters).not.toBe(song.lines[1].meters);
+  });
+
+  it('tuntematon rivi jättää laulun ennalleen', () => {
+    const song = laulu();
+    expect(duplicateLine(song, 'ei-ole')).toBe(song);
+  });
+});
+
+describe('insertLineAfter', () => {
+  const song = (): Song => ({
+    id: 's',
+    title: '',
+    songKey: '',
+    createdAt: 1,
+    updatedAt: 1,
+    lines: [
+      { id: 'l1', text: 'ensimmäinen', section: { kind: 'verse' }, chords: [] },
+      { id: 'l2', text: 'toinen', chords: [] },
+    ],
+  });
+
+  const tuotu = { id: 'muu', text: 'muualta', section: { kind: 'chorus' as const }, chords: [] };
+
+  it('liittää kopion annetun rivin jälkeen', () => {
+    const next = insertLineAfter(song(), 'l1', tuotu);
+    expect(next.lines.map((l) => l.text)).toEqual(['ensimmäinen', 'muualta', 'toinen']);
+  });
+
+  it('liitetty rivi saa oman tunnisteen eikä aloita osiota', () => {
+    const next = insertLineAfter(song(), 'l1', tuotu);
+    expect(next.lines[1].id).not.toBe('muu');
+    expect(next.lines[1].section).toBeUndefined();
+  });
+
+  it('lähderivi ei muutu, joten saman voi liittää uudelleen', () => {
+    const next = insertLineAfter(song(), 'l1', tuotu);
+    expect(tuotu.id).toBe('muu');
+    // Liitetään toistamiseen, tällä kertaa viimeisen rivin perään.
+    expect(insertLineAfter(next, 'l2', tuotu).lines.map((l) => l.text)).toEqual([
+      'ensimmäinen',
+      'muualta',
+      'toinen',
+      'muualta',
+    ]);
   });
 });

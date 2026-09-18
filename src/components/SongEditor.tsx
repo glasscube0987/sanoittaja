@@ -4,6 +4,8 @@ import type { Song } from '../lib/types';
 import {
   addLineAfter,
   barsFromLine,
+  duplicateLine,
+  insertLineAfter,
   duplicateSection,
   editLineText,
   insertLinesAfter,
@@ -21,6 +23,7 @@ import {
   transposeSong,
 } from '../lib/songOps';
 import { useI18n } from '../lib/i18n';
+import { loadLine, storeLine } from '../lib/lineClipboard';
 import { loadNotation } from '../lib/notation';
 import {
   clampLyricSize,
@@ -95,6 +98,8 @@ export default function SongEditor({
   const [importAfterId, setImportAfterId] = useState<string | null | undefined>(undefined);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
   const [lyricSize, setLyricSize] = useState(loadLyricSize);
+  /* Leikepöytä elää localStoragessa, jotta kopio kestää laulusta toiseen. */
+  const [clipboard, setClipboard] = useState(loadLine);
   /* Alkuarvo luetaan vain ensimmäisellä piirrolla, mikä on juuri se hetki jota
      kohdistus koskee: myöhemmin ref elää rakenteellisten muokkausten mukana. */
   const focusLineId = useRef<{ id: string; caret: number } | null>(
@@ -429,11 +434,12 @@ export default function SongEditor({
         <LineSheet
           line={lineTarget}
           canDelete={song.lines.length > 1}
+          canPaste={clipboard !== null}
           onDelete={() => {
             onChange(removeLine(song, lineTarget.id));
             setLineTargetId(null);
           }}
-          onSave={({ section, bars }) => {
+          onSave={({ section, bars }, action) => {
             // Tahtien sisältö säilyy, jos rivi on jo sointurivi; muuten rivin
             // omat soinnut siirtyvät tahdeiksi eikä niitä tarvitse kirjoittaa
             // uudelleen.
@@ -442,9 +448,39 @@ export default function SongEditor({
               lineTarget.id,
               bars ? (lineTarget.bars ?? barsFromLine(lineTarget)) : null,
             );
-            onChange(setLineSection(withBars, lineTarget.id, section));
+            /*
+             * Asetukset ensin, toiminto niiden päälle, ja vasta sitten yksi
+             * onChange. Kaksi peräkkäistä kutsua laskisivat molemmat samasta
+             * vanhasta laulusta, jolloin jälkimmäinen pyyhkisi ensimmäisen.
+             */
+            let next = setLineSection(withBars, lineTarget.id, section);
+            if (action === 'addBelow') next = addLineAfter(next, lineTarget.id);
+            else if (action === 'duplicate') next = duplicateLine(next, lineTarget.id);
+            else if (action === 'pasteBelow' && clipboard) {
+              next = insertLineAfter(next, lineTarget.id, clipboard);
+            } else if (action === 'copy') {
+              // Kopioidaan rivi sellaisena kuin se on asetusten jälkeen.
+              const copied = next.lines.find((l) => l.id === lineTarget.id);
+              if (copied) {
+                storeLine(copied);
+                setClipboard(copied);
+              }
+            }
+
+            // Syntynyt rivi kohdistetaan, jotta kirjoittaminen alkaa heti.
+            // Sointurivillä ei ole kenttää, joten sitä ei voi kohdistaa.
+            if (action === 'addBelow' || action === 'duplicate' || action === 'pasteBelow') {
+              const idx = next.lines.findIndex((l) => l.id === lineTarget.id);
+              const syntynyt = next.lines[idx + 1];
+              if (syntynyt && !syntynyt.bars) {
+                focusLineId.current = { id: syntynyt.id, caret: syntynyt.text.length };
+              }
+            }
+
+            onChange(next);
             setLineTargetId(null);
-            if (bars && !lineTarget.bars) setBarsTargetId(lineTarget.id);
+            // Tahtinäkymä avautuu vain kun käyttäjä ei pyytänyt muuta.
+            if (bars && !lineTarget.bars && !action) setBarsTargetId(lineTarget.id);
           }}
           onClose={() => setLineTargetId(null)}
         />

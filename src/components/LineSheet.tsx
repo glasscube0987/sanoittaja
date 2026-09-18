@@ -3,6 +3,13 @@ import { useT } from '../lib/i18n';
 import { SECTION_KINDS, sectionName } from '../lib/sections';
 import type { LyricLine, SectionKind, SectionMark } from '../lib/types';
 
+/**
+ * Rivitoiminnot asuvat täällä eivätkä kohdistetun rivin työkalurivissä, koska
+ * sointurivillä ei ole tekstikenttää eikä se voi saada kohdistusta – rivin
+ * asetukset on ainoa paikka joka on kaikilla rivityypeillä.
+ */
+export type LineAction = 'addBelow' | 'duplicate' | 'copy' | 'pasteBelow';
+
 export interface LineSettings {
   /** null = rivi ei aloita osiota. */
   section: SectionMark | null;
@@ -14,7 +21,14 @@ interface Props {
   line: LyricLine;
   /** Viimeistä riviä ei voi poistaa: laulussa on aina oltava jotain. */
   canDelete: boolean;
-  onSave: (settings: LineSettings) => void;
+  /** Onko leikepöydällä riviä liitettäväksi. */
+  canPaste: boolean;
+  /**
+   * Toiminto kulkee tallennuksen mukana eikä omana kutsunaan: erillinen kutsu
+   * laskisi muutoksensa vanhasta laulusta ja ylikirjoittaisi juuri tallennetut
+   * asetukset.
+   */
+  onSave: (settings: LineSettings, action?: LineAction) => void;
   onDelete: () => void;
   onClose: () => void;
 }
@@ -24,18 +38,28 @@ interface Props {
  * sanoitus- vai sointurivi. Molemmat ovat rivin ominaisuuksia, ja välisoitto
  * merkitään käytännössä aina molemmiksi kerralla.
  */
-export default function LineSheet({ line, canDelete, onSave, onDelete, onClose }: Props) {
+export default function LineSheet({
+  line,
+  canDelete,
+  canPaste,
+  onSave,
+  onDelete,
+  onClose,
+}: Props) {
   const t = useT();
   const [bars, setBars] = useState(Boolean(line.bars));
   const [kind, setKind] = useState<SectionKind | null>(line.section?.kind ?? null);
   const [label, setLabel] = useState(line.section?.label ?? '');
 
-  function save() {
+  function save(action?: LineAction) {
     const trimmed = label.trim();
-    onSave({
-      section: kind ? (trimmed ? { kind, label: trimmed } : { kind }) : null,
-      bars,
-    });
+    onSave(
+      {
+        section: kind ? (trimmed ? { kind, label: trimmed } : { kind }) : null,
+        bars,
+      },
+      action,
+    );
   }
 
   return (
@@ -94,6 +118,24 @@ export default function LineSheet({ line, canDelete, onSave, onDelete, onClose }
             <small>{t('section.numberingHint')}</small>
           </div>
         )}
+
+        <div className="field">
+          <label>{t('line.actions')}</label>
+          <div className="chip-row">
+            <button type="button" onClick={() => save('addBelow')}>
+              {t('line.addBelow')}
+            </button>
+            <button type="button" onClick={() => save('duplicate')}>
+              {t('line.duplicate')}
+            </button>
+            <button type="button" onClick={() => save('copy')}>
+              {t('line.copy')}
+            </button>
+            <button type="button" disabled={!canPaste} onClick={() => save('pasteBelow')}>
+              {t('line.pasteBelow')}
+            </button>
+          </div>
+        </div>
 
         <div className="button-row">
           <button type="submit" className="primary">

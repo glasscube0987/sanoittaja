@@ -838,6 +838,15 @@ button.small {
   color: var(--text-dim);
 }
 
+/*
+ * Pois käytöstä oleva painike ei saa näyttää painettavalta. Lakanoissa on
+ * kaksi ehdollista: «Liitä rivi alle» ilman leikepöytää ja «Poista rivi»
+ * laulun viimeisellä rivillä. Ilman tätä ne erottuivat vain kokeilemalla.
+ */
+.sheet button:disabled {
+  opacity: 0.35;
+}
+
 .sheet .context {
   position: relative;
   font-family: var(--mono);

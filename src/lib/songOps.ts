@@ -291,19 +291,73 @@ export function moveSection(song: Song, blockId: string, direction: -1 | 1): Son
  * Rivit ja sointuankkurit saavat uudet tunnukset: yhteiset tunnukset sotkisivat
  * sekä Reactin avaimet että rivikohtaiset operaatiot.
  */
-export function duplicateSection(song: Song, blockId: string): Song {
-  const block = getSections(song).find((b) => b.id === blockId);
-  if (!block) return song;
-
-  const copies: LyricLine[] = block.lines.map((line) => ({
+/**
+ * Rivin kopio omilla tunnisteillaan.
+ *
+ * Taulukot irrotetaan omiksi kappaleikseen, jottei kopio ja alkuperäinen jaa
+ * samaa `bars`- tai `meters`-taulukkoa. Operaatiot ovat puhtaita eivätkä
+ * muokkaa niitä paikallaan, joten jaettu viite ei riko mitään tänään – mutta
+ * se on ansa joka laukeaisi vasta ensimmäisestä paikallaan muokkaavasta
+ * rivistä, eikä sellaista vikaa löydä lukemalla kopiointia.
+ *
+ * Tämä on ainoa paikka joka tietää mitä rivin kopioon kuuluu. Jos uusi kenttä
+ * unohtuisi täältä, se katoaisi hiljaa jokaisesta kopiosta.
+ */
+function copyLine(line: LyricLine): LyricLine {
+  return {
     ...line,
     id: uid(),
     chords: line.chords.map((chord) => ({ ...chord, id: uid() })),
     ...(line.bars ? { bars: [...line.bars] } : {}),
-  }));
+    ...(line.meters ? { meters: [...line.meters] } : {}),
+  };
+}
+
+/**
+ * Kopio ilman osiomerkintää.
+ *
+ * Yksittäisen rivin kopio kuuluu siihen osioon johon se laskeutuu. Jos
+ * merkintä tulisi mukana, kertosäkeen ensimmäisen rivin monistus katkaisisi
+ * osion kahtia ja lehdelle ilmestyisi toinen «Kertosäe». Osion monistuksessa
+ * merkintä sen sijaan säilyy – siellä se on koko tarkoitus.
+ */
+function copyIntoSection(line: LyricLine): LyricLine {
+  const copy = copyLine(line);
+  delete copy.section;
+  return copy;
+}
+
+export function duplicateSection(song: Song, blockId: string): Song {
+  const block = getSections(song).find((b) => b.id === blockId);
+  if (!block) return song;
+
+  const copies = block.lines.map(copyLine);
 
   const lines = [...song.lines];
   lines.splice(block.end, 0, ...copies);
+  return touch({ ...song, lines });
+}
+
+/** Rivin kopio heti sen alle. */
+export function duplicateLine(song: Song, lineId: string): Song {
+  const idx = song.lines.findIndex((l) => l.id === lineId);
+  if (idx === -1) return song;
+  const lines = [...song.lines];
+  lines.splice(idx + 1, 0, copyIntoSection(song.lines[idx]));
+  return touch({ ...song, lines });
+}
+
+/**
+ * Muualta kopioidun rivin kopio annetun rivin jälkeen.
+ *
+ * Kopio eikä siirto: sama rivi voi tulla useaan kohtaan, ja lähde voi olla jo
+ * toisessa laulussa tai poistettu.
+ */
+export function insertLineAfter(song: Song, lineId: string, line: LyricLine): Song {
+  const idx = song.lines.findIndex((l) => l.id === lineId);
+  if (idx === -1) return song;
+  const lines = [...song.lines];
+  lines.splice(idx + 1, 0, copyIntoSection(line));
   return touch({ ...song, lines });
 }
 

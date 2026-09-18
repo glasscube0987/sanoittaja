@@ -22,6 +22,14 @@ demoja puhelimella ja vie kaikki pilveen.
   muuttaa yhdenkään jo kirjoitetun soinnun korkeutta. H-merkinnässä sovellus ei
   kirjoita koskaan pelkkää `B`:tä, joten lappu on luettava molemmissa
   perinteissä. Sivutuote: ♯- ja ♭-painikkeet muuntavat samalla merkintätavan.
+- **Rivin toiminnot** – rivin §-painikkeen takana on «Lisää rivi alle»,
+  «Monista rivi», «Kopioi rivi» ja «Liitä rivi alle». Ne asuvat siellä, koska
+  rivin asetukset on ainoa paikka joka on **kaikilla** rivityypeillä:
+  sointurivillä ei ole tekstikenttää, joten se ei voi saada kohdistusta eikä
+  näyttää rivin alle ilmestyvää työkaluriviä. Kopioitu rivi säilyy laulusta
+  toiseen ja sovelluksen sulkemisen yli, ja sen voi liittää useaan kohtaan.
+  Monistettu tai liitetty rivi **ei** aloita osiota, joten kertosäkeen rivin
+  monistus ei katkaise osiota kahtia.
 - **Rivin työkalut** – kirjoitettavan rivin alle ilmestyy kapea rivi, josta saa
   lisättyä rivin, liitettyä tekstiä *tähän kohtaan* ja kumottua viimeisimmän
   muutoksen. Työkalut näkyvät niin kauan kuin rivillä on kohdistus, eli katoavat
