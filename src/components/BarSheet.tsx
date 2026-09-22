@@ -5,10 +5,12 @@ import {
   removeBarAt,
   setBarAt,
   setMeterAt,
+  setRepeatAt,
   splitBarAt,
   splitCount,
 } from '../lib/bars';
 import { useT } from '../lib/i18n';
+import type { BarRepeat } from '../lib/types';
 import Icon from './Icon';
 
 interface Props {
@@ -23,16 +25,24 @@ const DEFAULT_SUGGESTIONS = ['C', 'G', 'Am', 'F', 'D', 'Em', 'E', 'A', 'Dm', 'B7
 /** Tavallisimmat tahtilajit; kenttään voi kirjoittaa minkä tahansa muun. */
 const METERS = ['4/4', '3/4', '6/8', '2/4', '12/8'];
 
+/** Tavallisimmat kertaluvut; kenttään voi kirjoittaa minkä tahansa muun. */
+const TIMES = [3, 4, 8];
+
 /**
  * Sointurivin muokkaus: valittu tahti kerrallaan, samalla vuorovaikutuksella
  * kuin sointuponnahduksessa. Tahtiin voi kirjoittaa useamman soinnun ("Am F")
  * tai muun merkinnän ("%"), joten kenttä on vapaata tekstiä. Myös tahtilaji
  * kohdistuu valittuun tahtiin, koska laji voi vaihtua kesken rivin.
  */
+/** Kertaluku näkyviin vain kun se on yli kaksi – kuten ladonnassakin. */
+function repeatTimes(mark: BarRepeat | undefined): string {
+  return mark?.end && mark.times && mark.times > 2 ? `x${mark.times}` : '';
+}
+
 export default function BarSheet({ row: initial, suggestions, onSave, onClose }: Props) {
   const t = useT();
   const [row, setRow] = useState<BarRow>(
-    initial.bars.length ? initial : { bars: [''], meters: [''] },
+    initial.bars.length ? initial : { bars: [''], meters: [''], repeats: [{}] },
   );
   const [index, setIndex] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
@@ -40,6 +50,7 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
 
   const bar = row.bars[index] ?? '';
   const meter = row.meters[index] ?? '';
+  const repeat = row.repeats[index] ?? {};
 
   /* Kohdistus lomakkeeseen eikä kenttään: kenttä avaisi näppäimistön ja
      laukaisisi iOS:n zoomin, joka jää päälle ponnahduksen sulkeuduttua. */
@@ -53,6 +64,20 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
 
   function setMeter(value: string) {
     setRow((prev) => setMeterAt(prev, index, value));
+  }
+
+  function setRepeat(muutos: Partial<BarRepeat>) {
+    setRow((prev) => {
+      const nyt = prev.repeats[index] ?? {};
+      const next: BarRepeat = { ...nyt, ...muutos };
+      if (!next.start) delete next.start;
+      // Kertaluku kuuluu sulkevaan merkkiin, joten se katoaa sen mukana.
+      if (!next.end) {
+        delete next.end;
+        delete next.times;
+      }
+      return setRepeatAt(prev, index, next);
+    });
   }
 
   function move(step: number) {
@@ -114,12 +139,16 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
           {row.bars.map((content, i) => (
             <span key={i} className={i === index ? 'bar current' : 'bar'}>
               {i === 0 && row.meters[0]?.trim() ? `${row.meters[0].trim()} ` : ''}
-              {`| `}
+              {/* Sulkeva merkki tulee edellisestä tahdista, avaava tästä. */}
+              {`${i > 0 && row.repeats[i - 1]?.end ? ':' : ''}|${row.repeats[i]?.start ? ':' : ''} `}
               {i > 0 && row.meters[i]?.trim() ? `${row.meters[i].trim()} ` : ''}
               {`${content.trim() || ' '} `}
             </span>
           ))}
-          <span className="bar">|</span>
+          <span className="bar">
+            {`${row.repeats[row.bars.length - 1]?.end ? ':' : ''}|`}
+            {repeatTimes(row.repeats[row.bars.length - 1])}
+          </span>
         </div>
 
         <div className="nudge-row">
@@ -193,6 +222,64 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
             autoComplete="off"
             spellCheck={false}
           />
+        </div>
+
+        {/* Kertausmerkit kuuluvat tahtiin eivätkä koko riville: kertauksen voi
+            avata ja sulkea mistä tahansa tahdista, myös rivien yli. */}
+        <div className="field">
+          <label>{t('bars.repeat', { index: index + 1 })}</label>
+          <div className="chip-row">
+            <button
+              type="button"
+              className={repeat.start ? 'primary' : ''}
+              onClick={() => setRepeat({ start: !repeat.start })}
+            >
+              {t('bars.repeatOpen')}
+            </button>
+            <button
+              type="button"
+              className={repeat.end ? 'primary' : ''}
+              onClick={() => setRepeat({ end: !repeat.end })}
+            >
+              {t('bars.repeatClose')}
+            </button>
+          </div>
+          {/* Kertaluku on mielekäs vain sulkevalle merkille. */}
+          {repeat.end && (
+            <>
+              <div className="chip-row">
+                <button
+                  type="button"
+                  className={!repeat.times || repeat.times === 2 ? 'primary' : ''}
+                  onClick={() => setRepeat({ times: undefined })}
+                >
+                  ×2
+                </button>
+                {TIMES.map((option) => (
+                  <button
+                    type="button"
+                    key={option}
+                    className={repeat.times === option ? 'primary' : ''}
+                    onClick={() => setRepeat({ times: option })}
+                  >
+                    ×{option}
+                  </button>
+                ))}
+              </div>
+              <input
+                id="bar-times"
+                type="number"
+                min={2}
+                inputMode="numeric"
+                value={repeat.times ?? 2}
+                onChange={(e) => {
+                  const luku = Number(e.target.value);
+                  setRepeat({ times: Number.isFinite(luku) && luku > 2 ? luku : undefined });
+                }}
+                aria-label={t('bars.repeatTimes')}
+              />
+            </>
+          )}
         </div>
 
         <div className="button-row">

@@ -19,6 +19,8 @@ interface Props {
   onBarsTap: () => void;
   /** Yhteinen sarakeleveys johtaville tahtilajeille, jotta tahtiviivat ovat allekkain. */
   meterGutter: number;
+  /** Sama avaavalle kertausmerkille, joka on tavallista tahtiviivaa leveämpi. */
+  repeatGutter: number;
   /** Kohdistuksen tulo ja lähtö; ohjaa rivin työkalurivin näkymistä. */
   onActive: (active: boolean) => void;
   /** Työkalurivi, joka piirretään rivin alle kun se on kohdistettuna. */
@@ -36,6 +38,7 @@ export default function LineEditor({
   onSectionTap,
   onBarsTap,
   meterGutter,
+  repeatGutter,
   onActive,
   tools,
 }: Props) {
@@ -90,7 +93,10 @@ export default function LineEditor({
           // Sointurivillä ei ole sanoja eikä sijoitettuja sointuja, joten se on
           // yksi napautettava rivi eikä sointumerkkien ja tekstikentän pari.
           <button className="bar-row" onClick={onBarsTap} title={t('line.editBars')}>
-            {barLineText(line.bars, barRowOf(line).meters, meterGutter)}
+            {barLineText(line.bars, barRowOf(line).meters, meterGutter, {
+              marks: line.repeats,
+              gutter: repeatGutter,
+            })}
           </button>
         ) : (
           <>

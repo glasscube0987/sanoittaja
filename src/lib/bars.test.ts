@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BarRow } from './bars';
+import type { BarRepeat } from './types';
 import {
   barRowOf,
   insertBarAfter,
@@ -7,13 +8,16 @@ import {
   setBarAt,
   setMeterAt,
   splitBarAt,
+  setRepeatAt,
   splitCount,
   storedMeters,
+  storedRepeats,
 } from './bars';
 
-const row = (bars: string[], meters: string[] = []): BarRow => ({
+const row = (bars: string[], meters: string[] = [], repeats: BarRepeat[] = []): BarRow => ({
   bars,
   meters: bars.map((_, i) => meters[i] ?? ''),
+  repeats: bars.map((_, i) => repeats[i] ?? {}),
 });
 
 describe('barRowOf', () => {
@@ -21,6 +25,7 @@ describe('barRowOf', () => {
     expect(barRowOf({ bars: ['Am', 'F', 'C'], meters: ['3/4'] })).toEqual({
       bars: ['Am', 'F', 'C'],
       meters: ['3/4', '', ''],
+      repeats: [{}, {}, {}],
     });
   });
 
@@ -29,11 +34,12 @@ describe('barRowOf', () => {
     expect(barRowOf({ bars: ['Am', 'F'], meter: '4/4' })).toEqual({
       bars: ['Am', 'F'],
       meters: ['4/4', ''],
+      repeats: [{}, {}],
     });
   });
 
   it('sietää rivin ilman tahteja', () => {
-    expect(barRowOf({})).toEqual({ bars: [], meters: [] });
+    expect(barRowOf({})).toEqual({ bars: [], meters: [], repeats: [] });
   });
 });
 
@@ -84,5 +90,41 @@ describe('tahtien muokkaus pitää tahtilajit paikoillaan', () => {
     tulos = setMeterAt(tulos, 1, ' 6/8 ');
     expect(tulos.bars).toEqual(['Am', 'Dm7']);
     expect(tulos.meters).toEqual(['', '6/8']);
+  });
+});
+
+describe('kertausmerkkien indeksikirjanpito', () => {
+  const kertaava = () =>
+    row(['Am', 'F', 'C'], [], [{ start: true }, {}, { end: true, times: 4 }]);
+
+  it('setRepeatAt kirjoittaa vain valittuun tahtiin', () => {
+    const next = setRepeatAt(row(['Am', 'F']), 1, { end: true });
+    expect(next.repeats).toEqual([{}, { end: true }]);
+    expect(next.bars).toEqual(['Am', 'F']);
+  });
+
+  it('uusi tahti syntyy merkittömänä eikä siirrä naapurin merkkiä', () => {
+    const next = insertBarAfter(kertaava(), 0);
+    expect(next.bars).toEqual(['Am', '', 'F', 'C']);
+    expect(next.repeats).toEqual([{ start: true }, {}, {}, { end: true, times: 4 }]);
+  });
+
+  it('poistetun tahdin merkki katoaa sen mukana', () => {
+    const next = removeBarAt(kertaava(), 0);
+    expect(next.bars).toEqual(['F', 'C']);
+    expect(next.repeats).toEqual([{}, { end: true, times: 4 }]);
+  });
+
+  /* Kertaus kehystää edelleen saman musiikin, joten avaus jää alkuun ja
+     sulku siirtyy loppuun. */
+  it('jaettaessa avaus jää ensimmäiseen ja sulku siirtyy viimeiseen osaan', () => {
+    const next = splitBarAt(row(['Am F G'], [], [{ start: true, end: true, times: 3 }]), 0);
+    expect(next.bars).toEqual(['Am', 'F', 'G']);
+    expect(next.repeats).toEqual([{ start: true }, {}, { end: true, times: 3 }]);
+  });
+
+  it('storedRepeats jättää merkitsemättömän rivin tallentamatta', () => {
+    expect(storedRepeats([{}, {}])).toBeNull();
+    expect(storedRepeats([{}, { end: true }])).toEqual([{}, { end: true }]);
   });
 });

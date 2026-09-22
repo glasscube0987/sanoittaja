@@ -126,6 +126,10 @@ const en = {
   'bars.add': '+ Bar',
   'bars.remove': '− Bar',
   'bars.split': 'Split bar',
+  'bars.repeat': 'Repeat marks on bar {index}',
+  'bars.repeatOpen': 'Open |:',
+  'bars.repeatClose': 'Close :|',
+  'bars.repeatTimes': 'Number of times',
   'bars.meter': 'Time signature from bar {index} on',
   'bars.meterPlaceholder': 'e.g. 3/4',
 
@@ -353,6 +357,10 @@ const fi: Record<Key, string> = {
   'bars.add': '+ Tahti',
   'bars.remove': '− Tahti',
   'bars.split': 'Jaa tahti',
+  'bars.repeat': 'Kertausmerkit tahdissa {index}',
+  'bars.repeatOpen': 'Avaa |:',
+  'bars.repeatClose': 'Sulje :|',
+  'bars.repeatTimes': 'Kertojen määrä',
   'bars.meter': 'Tahtilaji tahdista {index} alkaen',
   'bars.meterPlaceholder': 'esim. 3/4',
 

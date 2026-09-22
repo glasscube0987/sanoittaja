@@ -85,6 +85,15 @@ sisällön tietää yksi funktio (`copyLine`), ja yksittäisen rivin kopio
 pudottaa `section`-merkinnän – muuten osion ensimmäisen rivin monistus
 katkaisisi osion kahtia.
 
+**Kertausmerkit ovat tahtikohtaisia** (`LyricLine.repeats`, rinnakkainen
+taulukko `bars`in ja `meters`in kanssa): tahti voi avata kertauksen, sulkea sen
+tai molemmat. Sovellus **ei parita** merkkejä – ne ovat nuottikuvaa, ja juuri
+siksi kertaus voi ulottua rivien yli. Jokainen tahteja siirtävä operaatio
+(`bars.ts`) pitää taulukon mukana; jaettaessa avaus jää ensimmäiseen osaan ja
+sulku siirtyy viimeiseen. Avaava `|:` on tavallista tahtiviivaa leveämpi, joten
+sille varataan sarake (`repeatGutter`) samoin kuin johtavalle tahtilajille –
+muuten kertaava rivi liukuisi sivuun muista sointuriveistä.
+
 **Versiot.** `DB_VERSION` (`lib/db.ts`) ja `BUNDLE_VERSION`
 (`lib/sync/exportFile.ts`) nousevat erikseen. `importLibrary` hyväksyy myös
 vanhemman paketin: käyttäjillä on oikeita varmuuskopioita, eivätkä ne saa

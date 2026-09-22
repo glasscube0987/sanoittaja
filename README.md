@@ -49,6 +49,13 @@ demoja puhelimella ja vie kaikki pilveen.
   entistä hävittämättä, ja ”Jaa tahti” pilkkoo tahdin kahdeksi. Tahdit tasataan
   saman levyisiksi niin että tahtiviivat ovat allekkain, ja transponointi
   käsittelee jokaisen tahdin soinnun erikseen.
+- **Kertausmerkit** – tahdin voi merkitä avaamaan (`|:`) tai sulkemaan (`:|`)
+  kertauksen, ja sulkevalle merkille voi antaa kertaluvun (`:|x4`; pelkkä merkki
+  tarkoittaa kahdesti). Merkit ovat tahtikohtaisia, joten kertaus voi kattaa
+  koko rivin, osan siitä tai ulottua rivien yli — ne ovat nuottikuvaa, eikä
+  sovellus parita niitä eikä toista mitään live-tilassa. Avaavalle merkille
+  varataan oma sarake, joten kertaava ja kertaamaton sointurivi pysyvät
+  allekkain.
 - **Tahtilaji** – laulun tahtilaji (esim. `4/4`) otsikkorivillä sävellajin
   vieressä. Jos laji vaihtuu kesken laulun, merkintä tehdään siihen **tahtiin**
   josta laji vaihtuu, myös keskelle riviä: `| Am | F | 3/4 Dm |`. Rivin alussa

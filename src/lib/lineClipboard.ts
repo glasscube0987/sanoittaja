@@ -28,6 +28,7 @@ function onRivi(value: unknown): value is LyricLine {
   if (typeof rivi.text !== 'string' || !Array.isArray(rivi.chords)) return false;
   if (rivi.bars !== undefined && !Array.isArray(rivi.bars)) return false;
   if (rivi.meters !== undefined && !Array.isArray(rivi.meters)) return false;
+  if (rivi.repeats !== undefined && !Array.isArray(rivi.repeats)) return false;
   return true;
 }
 

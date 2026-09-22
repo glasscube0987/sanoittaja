@@ -37,7 +37,7 @@ import { getSections, sectionTitle } from '../lib/sections';
 import { barRowOf } from '../lib/bars';
 import { printSheet } from '../lib/print';
 import { useAnnotations } from '../lib/useAnnotations';
-import { isBlankLine, meterGutter } from '../lib/render';
+import { isBlankLine, meterGutter, repeatGutter } from '../lib/render';
 import ChordSheet from './ChordSheet';
 import Icon from './Icon';
 import ImportSheet from './ImportSheet';
@@ -122,6 +122,7 @@ export default function SongEditor({
   const sections = useMemo(() => getSections(song), [song]);
   // Yhteinen sarakeleveys johtaville tahtilajeille pitää tahtiviivat allekkain.
   const gutter = useMemo(() => meterGutter(song.lines), [song.lines]);
+  const kertaus = useMemo(() => repeatGutter(song.lines), [song.lines]);
   const lineTarget = song.lines.find((l) => l.id === lineTargetId) ?? null;
   const barsTarget = song.lines.find((l) => l.id === barsTargetId) ?? null;
 
@@ -385,6 +386,7 @@ export default function SongEditor({
                   onSectionTap={() => setLineTargetId(line.id)}
                   onBarsTap={() => setBarsTargetId(line.id)}
                   meterGutter={gutter}
+                  repeatGutter={kertaus}
                   onActive={(active) => setActive(line.id, active)}
                   tools={activeLineId === line.id ? lineTools(line.id) : undefined}
                 />

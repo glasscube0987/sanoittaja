@@ -6,7 +6,7 @@
  * kumpaankaan: tulostuksessa rivit katkeavat sivun mukaan ja live-tilassa
  * tekstikoko muuttuu, ja molemmissa pelkkä teksti käyttäytyy ennustettavammin.
  */
-import type { LyricLine } from './types';
+import type { BarRepeat, LyricLine } from './types';
 
 /**
  * Sointurivi välilyönteineen. Päällekkäin osuvat soinnut työnnetään oikealle
@@ -31,8 +31,38 @@ const MIN_BAR_WIDTH = 2;
  * Tahdit tasataan rivin leveimmän mukaan, jotta tahtiviivat asettuvat
  * allekkain ja tahtien kesto on luettavissa silmäyksellä.
  */
-export function barLineText(bars: string[], meters: string[] = [], gutter = 0): string {
+/** Kertausmerkkien ladonta-asetukset. */
+export interface RepeatLayout {
+  marks?: BarRepeat[];
+  /** Varattu tila avaavalle merkille, jotta rivit pysyvät allekkain. */
+  gutter?: number;
+}
+
+/**
+ * Tahtiviiva kertausmerkkeineen.
+ *
+ * Sulkeva merkki tulee edellisestä tahdista ja avaava seuraavasta. Kun ne
+ * osuvat samalle viivalle, ne kirjoitetaan yhteen (`:||:`) niin kuin nuotissa.
+ * Kertaluku kirjoitetaan sulkevan merkin perään vain kun se on yli kaksi:
+ * kertausmerkki tarkoittaa perinteen mukaan jo kahdesti soittamista.
+ */
+function barLine(before: BarRepeat | undefined, after: BarRepeat | undefined): string {
+  const close = before?.end ? ':|' : '';
+  const times = before?.end && before.times && before.times > 2 ? `x${before.times}` : '';
+  const open = after?.start ? '|:' : '';
+  if (close && open) return `:||:${times}`;
+  if (close) return `:|${times}`;
+  return open || '|';
+}
+
+export function barLineText(
+  bars: string[],
+  meters: string[] = [],
+  gutter = 0,
+  repeats: RepeatLayout = {},
+): string {
   if (bars.length === 0) return '';
+  const marks = repeats.marks ?? [];
 
   /*
    * Tahtilaji kuuluu siihen tahtiin josta laji vaihtuu, joten se kirjoitetaan
@@ -50,7 +80,27 @@ export function barLineText(bars: string[], meters: string[] = [], gutter = 0): 
   // Johtava merkintä omassa sarakkeessaan: ilman varattua tilaa merkitty rivi
   // liukuisi sivuun muiden sointurivien tahtiviivoista.
   const prefix = (lead ? `${lead} ` : '').padStart(gutter);
-  return `${prefix}| ${cells.map((cell) => cell.padEnd(width)).join(' | ')} |`;
+
+  /*
+   * Avaava `|:` on merkin leveämpi kuin `|`, joten kertaava rivi liukuisi
+   * sivuun muista sointuriveistä. Sama ratkaisu kuin johtavalla tahtilajilla:
+   * merkille varataan kiinteä tila, jos laulussa on yksikin avaava kertaus.
+   */
+  const head = barLine(undefined, marks[0]).padEnd(1 + (repeats.gutter ?? 0));
+
+  const inner = cells
+    .map((cell, i) => (i === 0 ? '' : barLine(marks[i - 1], marks[i])) + ` ${cell.padEnd(width)} `)
+    .join('');
+
+  return `${prefix}${head}${inner}${barLine(marks[bars.length - 1], undefined)}`;
+}
+
+/**
+ * Kuinka leveä sarake avaavalle kertausmerkille on varattava. Nolla kun
+ * laulussa ei ole yhtään avausta.
+ */
+export function repeatGutter(lines: LyricLine[]): number {
+  return lines.some((line) => line.repeats?.some((mark) => mark.start)) ? 1 : 0;
 }
 
 /**

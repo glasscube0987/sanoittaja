@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { barLineText, chordLineText, isBlankLine, meterGutter } from './render';
+import { barLineText, chordLineText, isBlankLine, meterGutter, repeatGutter } from './render';
+import type { BarRepeat } from './types';
 import type { ChordAnchor, LyricLine } from './types';
 
 function line(text: string, chords: [number, string][]): LyricLine {
@@ -119,5 +120,68 @@ describe('meterGutter', () => {
 
   it('lukee myös vanhan rivikohtaisen kentän', () => {
     expect(meterGutter([bars('a', undefined, '4/4')])).toBe(4);
+  });
+});
+
+describe('barLineText kertausmerkeillä', () => {
+  const rivi = (marks: BarRepeat[], gutter = 0) =>
+    barLineText(['Am', 'F'], [], 0, { marks, gutter });
+
+  it('avaa kertauksen tahdin edestä', () => {
+    expect(rivi([{ start: true }, {}])).toBe('|: Am | F  |');
+  });
+
+  it('sulkee kertauksen tahdin jälkeen', () => {
+    expect(rivi([{}, { end: true }])).toBe('| Am | F  :|');
+  });
+
+  it('sama tahti voi avata ja sulkea', () => {
+    expect(barLineText(['Am'], [], 0, { marks: [{ start: true, end: true }] })).toBe('|: Am :|');
+  });
+
+  /* Vierekkäin osuvat sulku ja avaus ovat yksi tahtiviiva, kuten nuotissa. */
+  it('yhdistää vierekkäisen sulun ja avauksen', () => {
+    expect(barLineText(['Am', 'F', 'C'], [], 0, { marks: [{}, { end: true }, { start: true }] })).toBe(
+      '| Am | F  :||: C  |',
+    );
+  });
+
+  /* Kertausmerkki tarkoittaa perinteen mukaan jo kahdesti soittamista. */
+  it('kirjoittaa kertaluvun vain yli kahdella', () => {
+    expect(rivi([{}, { end: true, times: 2 }])).toBe('| Am | F  :|');
+    expect(rivi([{}, { end: true, times: 4 }])).toBe('| Am | F  :|x4');
+  });
+
+  it('merkitön rivi latoutuu ennallaan', () => {
+    expect(rivi([{}, {}])).toBe(barLineText(['Am', 'F']));
+  });
+
+  /*
+   * Avaava merkki on merkin leveämpi kuin tavallinen tahtiviiva, joten ilman
+   * varattua tilaa kertaava rivi liukuisi sivuun muista sointuriveistä.
+   */
+  it('varattu tila pitää kertaavan ja kertaamattoman rivin allekkain', () => {
+    const kertaava = rivi([{ start: true }, {}], 1);
+    const tavallinen = rivi([{}, {}], 1);
+    expect(kertaava.indexOf('Am')).toBe(tavallinen.indexOf('Am'));
+    expect(tavallinen).toBe('|  Am | F  |');
+  });
+});
+
+describe('repeatGutter', () => {
+  it('on nolla kun avauksia ei ole', () => {
+    expect(repeatGutter([{ id: 'l', text: '', chords: [], bars: ['Am'] }])).toBe(0);
+    expect(
+      repeatGutter([{ id: 'l', text: '', chords: [], bars: ['Am'], repeats: [{ end: true }] }]),
+    ).toBe(0);
+  });
+
+  it('varaa tilan kun yksikin rivi avaa kertauksen', () => {
+    expect(
+      repeatGutter([
+        { id: 'a', text: '', chords: [], bars: ['Am'] },
+        { id: 'b', text: '', chords: [], bars: ['F'], repeats: [{ start: true }] },
+      ]),
+    ).toBe(1);
   });
 });

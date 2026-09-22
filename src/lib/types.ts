@@ -36,6 +36,35 @@ export interface LyricLine {
    * vapaana tekstinä, esim. "Am", "Am F" tai "%".
    */
   bars?: string[];
+  /**
+   * Kertausmerkit tahdeittain: `repeats[i]` koskee tahtia `i`. Merkitään vain
+   * niihin tahteihin joissa kertaus avataan tai suljetaan.
+   *
+   * Valinnainen kenttä tunnetussa lajissa, ei uusi tietuelaji: vanha versio
+   * ohittaa sen ja latoo rivin ilman kertausmerkkejä. Siksi `BUNDLE_VERSION`ia
+   * ei tämän takia nosteta – nosto estäisi vanhaa versiota lukemasta koko
+   * varmuuskopiota, mikä on kovempi seuraamus kuin puuttuva merkki.
+   */
+  repeats?: BarRepeat[];
+}
+
+/**
+ * Yhden tahdin kertausmerkit.
+ *
+ * Merkki kuuluu tahtiin eikä tahtiviivaan, jotta kirjanpito on sama kuin
+ * tahtilajeilla. Sama tahti voi sekä avata että sulkea kertauksen (`|: Am :|`).
+ *
+ * Sovellus ei parita merkkejä keskenään: ne ovat nuottikuvaa, jonka soittaja
+ * lukee. Juuri siksi kertaus voi ulottua rivien yli – avaus yhdellä rivillä ja
+ * sulku toisella on täysin kelvollinen merkintä.
+ */
+export interface BarRepeat {
+  /** Kertaus avataan ennen tätä tahtia. */
+  start?: boolean;
+  /** Kertaus suljetaan tämän tahdin jälkeen. */
+  end?: boolean;
+  /** Montako kertaa kaikkiaan; 2 on oletus eikä sitä kirjoiteta näkyviin. */
+  times?: number;
 }
 
 export interface Song {

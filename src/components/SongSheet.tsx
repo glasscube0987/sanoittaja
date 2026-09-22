@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { barRowOf } from '../lib/bars';
 import { useI18n } from '../lib/i18n';
-import { barLineText, chordLineText, meterGutter } from '../lib/render';
+import { barLineText, chordLineText, meterGutter, repeatGutter } from '../lib/render';
 import { getSections, sectionTitle } from '../lib/sections';
 import { toAnchored } from '../lib/annotate';
 import type { Point } from '../lib/annotate';
@@ -59,6 +59,7 @@ export default function SongSheet({
   const ref = useRef<HTMLElement>(null);
   const sections = getSections(song);
   const gutter = meterGutter(song.lines);
+  const kertaus = repeatGutter(song.lines);
   /* Kerros piirretään aina kun merkintöjä on annettu. Ilman työkalua se on
      pelkkä näyttö – niin merkinnät päätyvät myös tulosteeseen ja PDF:ään. */
   const piirretaan = annotations !== undefined;
@@ -131,7 +132,10 @@ export default function SongSheet({
                 <div className="sheet-line" data-line={line.id} key={line.id}>
                   {otsikko}
                   <pre className="sheet-bars">
-                    {barLineText(line.bars, barRowOf(line).meters, gutter)}
+                    {barLineText(line.bars, barRowOf(line).meters, gutter, {
+                      marks: line.repeats,
+                      gutter: kertaus,
+                    })}
                   </pre>
                   {merkinnat}
                 </div>

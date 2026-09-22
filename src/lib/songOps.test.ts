@@ -339,13 +339,30 @@ describe('setLineBarRow', () => {
     const song = setLineBarRow(makeSong(), 'l1', {
       bars: ['Am', 'F'],
       meters: [' 3/4 ', ''],
+      repeats: [{}, {}],
     });
     expect(song.lines[0].bars).toEqual(['Am', 'F']);
     expect(song.lines[0].meters).toEqual(['3/4', '']);
   });
 
+  it('kirjoittaa kertausmerkit ja siivoaa merkitsemättömän rivin', () => {
+    const merkitty = setLineBarRow(makeSong(), 'l1', {
+      bars: ['Am', 'F'],
+      meters: ['', ''],
+      repeats: [{ start: true }, { end: true, times: 4 }],
+    });
+    expect(merkitty.lines[0].repeats).toEqual([{ start: true }, { end: true, times: 4 }]);
+
+    const siivottu = setLineBarRow(merkitty, 'l1', {
+      bars: ['Am', 'F'],
+      meters: ['', ''],
+      repeats: [{}, {}],
+    });
+    expect(siivottu.lines[0]).not.toHaveProperty('repeats');
+  });
+
   it('jättää tyhjät tahtilajit kokonaan pois', () => {
-    const song = setLineBarRow(makeSong(), 'l1', { bars: ['Am'], meters: [''] });
+    const song = setLineBarRow(makeSong(), 'l1', { bars: ['Am'], meters: [''], repeats: [{}] });
     expect(song.lines[0]).not.toHaveProperty('meters');
   });
 
@@ -354,7 +371,7 @@ describe('setLineBarRow', () => {
       ...makeSong(),
       lines: [{ id: 'b1', text: '', chords: [], bars: ['Am'], meter: '4/4' }],
     };
-    const song = setLineBarRow(lahto, 'b1', { bars: ['Am'], meters: ['4/4'] });
+    const song = setLineBarRow(lahto, 'b1', { bars: ['Am'], meters: ['4/4'], repeats: [{}] });
     expect(song.lines[0]).not.toHaveProperty('meter');
     expect(song.lines[0].meters).toEqual(['4/4']);
   });
@@ -419,6 +436,19 @@ describe('duplicateLine', () => {
     const next = duplicateLine(laulu(), 'l1');
     expect(next.lines[0].section).toEqual({ kind: 'chorus' });
     expect(next.lines[1].section).toBeUndefined();
+  });
+
+  /*
+   * copyLinen oma kommentti varoittaa juuri tästä: unohtunut kenttä katoaisi
+   * hiljaa jokaisesta kopiosta. Kertausmerkit ovat ensimmäinen kerta kun
+   * varoitus on ajankohtainen.
+   */
+  it('kertausmerkit kulkevat kopion mukana omana oliona', () => {
+    const song = laulu();
+    song.lines[1].repeats = [{ start: true }, { end: true, times: 3 }];
+    const next = duplicateLine(song, 'l2');
+    expect(next.lines[2].repeats).toEqual([{ start: true }, { end: true, times: 3 }]);
+    expect(next.lines[2].repeats?.[0]).not.toBe(song.lines[1].repeats?.[0]);
   });
 
   it('sointurivin tahdit ja tahtilajit kopioituvat omiksi taulukoikseen', () => {

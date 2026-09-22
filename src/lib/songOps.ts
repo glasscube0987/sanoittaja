@@ -1,7 +1,7 @@
 /** Laulun muokkausoperaatiot – puhtaita funktioita, jotka palauttavat uuden laulun. */
 import { adjustPositions, chordSpan } from './anchors';
 import type { BarRow } from './bars';
-import { splitBars, storedMeters } from './bars';
+import { splitBars, storedMeters, storedRepeats } from './bars';
 import type { Accidental } from './chords';
 import { respellChord, transposeBar, transposeChord } from './chords';
 import type { Notation } from './chords';
@@ -225,6 +225,7 @@ export function setLineBars(song: Song, lineId: string, bars: string[] | null): 
 /** Kirjoittaa rivin tahdit ja niiden tahtilajit. */
 export function setLineBarRow(song: Song, lineId: string, row: BarRow): Song {
   const meters = storedMeters(row.meters);
+  const repeats = storedRepeats(row.repeats);
   return touch({
     ...song,
     lines: song.lines.map((line) => {
@@ -232,6 +233,8 @@ export function setLineBarRow(song: Song, lineId: string, row: BarRow): Song {
       const next: LyricLine = { ...line, bars: [...row.bars] };
       if (meters) next.meters = meters;
       else delete next.meters;
+      if (repeats) next.repeats = repeats;
+      else delete next.repeats;
       // Vanha rivikohtainen kenttä on luettu jo tahtilajeihin.
       delete next.meter;
       return next;
@@ -310,6 +313,7 @@ function copyLine(line: LyricLine): LyricLine {
     chords: line.chords.map((chord) => ({ ...chord, id: uid() })),
     ...(line.bars ? { bars: [...line.bars] } : {}),
     ...(line.meters ? { meters: [...line.meters] } : {}),
+    ...(line.repeats ? { repeats: line.repeats.map((mark) => ({ ...mark })) } : {}),
   };
 }
 
