@@ -94,6 +94,14 @@ sulku siirtyy viimeiseen. Avaava `|:` on tavallista tahtiviivaa leveämpi, joten
 sille varataan sarake (`repeatGutter`) samoin kuin johtavalle tahtilajille –
 muuten kertaava rivi liukuisi sivuun muista sointuriveistä.
 
+**Näppäimistö ei kutista asetteluikkunaa iOS:llä.** Live-tila on
+`position: fixed; inset: 0`, joten ilman erillistä käsittelyä koko näkymä – ja
+sen mukana työkalupalkki, jolla tekstikenttä poistetaan – jää näppäimistön
+alle. `lib/keyboard.ts` seuraa `visualViewport`ia ja kertoo peitetyn osuuden,
+jonka `LiveView` asettaa näkymän alareunaksi. Laskenta on puhdas funktio, joten
+se testataan ilman selainta; selaintestissä `visualViewport` väärennetään,
+koska oikeaa näppäimistöä ei voi avata työpöytäselaimessa.
+
 **Versiot.** `DB_VERSION` (`lib/db.ts`) ja `BUNDLE_VERSION`
 (`lib/sync/exportFile.ts`) nousevat erikseen. `importLibrary` hyväksyy myös
 vanhemman paketin: käyttäjillä on oikeita varmuuskopioita, eivätkä ne saa

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useT } from '../lib/i18n';
+import { observeKeyboard } from '../lib/keyboard';
 import {
   clamp,
   FONT_MAX,
@@ -86,6 +87,12 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
   });
   /** Kenttä, jota kirjoitetaan. Vain yksi kerrallaan. */
   const [editing, setEditing] = useState<string | null>(null);
+  /*
+   * Näppäimistön peittämä osuus. iOS ei kutista asetteluikkunaa, joten ilman
+   * tätä koko live-näkymä – ja sen mukana työkalupalkki, jolla kenttä
+   * poistetaan – jää näppäimistön alle.
+   */
+  const [keyboard, setKeyboard] = useState(0);
 
   /*
    * Tuorein merkintälista käsittelijöitä varten.
@@ -192,6 +199,8 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
     }
     tallennaTeksti(id);
   }
+
+  useEffect(() => observeKeyboard(setKeyboard), []);
 
   /* Live-tilasta poistuminen kesken kirjoituksen ei saa hukata tekstiä.
      Sulkeuma uusitaan joka renderillä, joten purku näkee tuoreimman tilan. */
@@ -472,7 +481,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
   }
 
   return (
-    <div className="live-view">
+    <div className="live-view" style={{ bottom: keyboard }}>
       <div
         className={tool.active ? 'live-scroll drawing' : 'live-scroll'}
         ref={scrollRef}
