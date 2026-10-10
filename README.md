@@ -107,6 +107,11 @@ demoja puhelimella ja vie kaikki pilveen.
   soinnut pysyvät kirjaintensa kohdalla. Valinta muistetaan laitekohtaisesti.
   Pitkä rivi vierittyy sivusuunnassa sanoituslaatikon sisällä, teksti ja
   soinnut yhdessä.
+- **Haku** – «Kaikki laulut» -näkymän hakukenttä suodattaa laulut nimen tai
+  sanoituksen perusteella. Kun osuma ei ole nimessä, kortti näyttää sen rivin
+  jolla haku osui — muuten lista näyttäisi suodattuneen sattumanvaraisesti.
+  Kirjainkoko ei merkitse, mutta **ä ja ö ovat omia kirjaimiaan** eivätkä osu
+  a:han ja o:hon. Hakua ei muisteta: se on hetken työkalu eikä asetus.
 - **Järjestys** – «Kaikki laulut» -näkymän voi järjestää viimeksi muokatun,
   aakkosten (A–Ö) tai käänteisten aakkosten mukaan. Aakkostus on kielikohtainen,
   joten ä ja ö menevät suomessa aakkosten loppuun eivätkä merkistön mukaan.

@@ -226,6 +226,32 @@ test('roskakori poistaa kirjoitettavan kentän', async ({ page }) => {
   await expect(kentat(page)).toHaveCount(0);
 });
 
+/*
+ * Poiston koko ketju tallennetulle kentälle.
+ *
+ * Palat olivat katettuina erikseen – kentän avaaminen ja roskakori – mutta ei
+ * se, että *tallennetun* kentän saa poistettua. Juuri se oli epäselvää
+ * käytössä, ja se on ketju jonka käyttäjä oikeasti kulkee.
+ */
+test('tallennetun kentän voi avata ja poistaa', async ({ page }) => {
+  await avaaLive(page);
+  await tekstiTila(page);
+  await kirjoita(page, 'capo 3');
+  await expect(kentat(page)).toHaveCount(1);
+
+  const laatikko = (await kentat(page).first().boundingBox())!;
+  await napauta(page, laatikko.x + laatikko.width / 2, laatikko.y + laatikko.height / 2);
+  await expect(kirjoitettava(page)).toHaveValue('capo 3');
+
+  await page.getByLabel('Delete text').click();
+  await expect(kentat(page)).toHaveCount(0);
+
+  // Ja poisto jää voimaan: kenttä ei palaa lehteä uudelleen avattaessa.
+  await page.getByLabel('Exit live mode').click();
+  await page.getByRole('button', { name: 'Live', exact: true }).click();
+  await expect(kentat(page)).toHaveCount(0);
+});
+
 test('napautus kentän päällä avaa sen muokattavaksi', async ({ page }) => {
   await avaaLive(page);
   await tekstiTila(page);

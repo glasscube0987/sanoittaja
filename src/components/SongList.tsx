@@ -3,6 +3,8 @@ import { formatDate, useI18n } from '../lib/i18n';
 import type { Setlist, Song } from '../lib/types';
 import { addSongs, moveSong, newSetlist, removeSong, renameSetlist, setlistSongs } from '../lib/setlists';
 import { loadSortOrder, SORT_ORDERS, sortSongs, storeSortOrder } from '../lib/sortSongs';
+import { searchSongs } from '../lib/searchSongs';
+import type { SongMatch } from '../lib/searchSongs';
 import type { SortOrder } from '../lib/sortSongs';
 import {
   BACKUP_EVENT,
@@ -62,6 +64,9 @@ export default function SongList({
   /* Vain yksi rivi kerrallaan auki, jotta poistopainikkeita ei jää roikkumaan. */
   const [avoinId, setAvoinId] = useState<string | null>(null);
   const [sort, setSort] = useState<SortOrder>(loadSortOrder);
+  /* Haku on hetken työkalu eikä asetus, joten sitä ei muisteta kuten
+     lajittelujärjestystä: laulusta palatessa lista on taas kokonaisena. */
+  const [query, setQuery] = useState('');
   const [newOpen, setNewOpen] = useState(false);
   const [ideaOpen, setIdeaOpen] = useState(false);
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
@@ -116,9 +121,11 @@ export default function SongList({
   // Setti näyttää laulut omassa järjestyksessään, kirjasto viimeksi muokattu ensin.
   /* Lajittelu koskee vain koko kirjastoa: setissä järjestys on käyttäjän itse
      asettama esitysjärjestys, eikä sitä saa lajitella pois alta. */
-  const naytetyt = setlist
-    ? setlistSongs(setlist, songs)
-    : sortSongs(songs, sort, lang, t('app.untitled'));
+  /* Lajittelu ensin, haku sen päälle: haku säilyttää lähtöjärjestyksen, joten
+     tulos on lajiteltu ilman erillistä lajittelua osumille. */
+  const naytetyt: SongMatch[] = setlist
+    ? setlistSongs(setlist, songs).map((song) => ({ song }))
+    : searchSongs(sortSongs(songs, sort, lang, t('app.untitled')), query, t('app.untitled'));
 
   function vaihdaJarjestys(order: SortOrder) {
     setSort(order);
@@ -198,6 +205,22 @@ export default function SongList({
           </button>
         </div>
 
+        {/* Haku vain koko kirjastolle, samoin kuin lajittelu: setti on lyhyt ja
+            sen järjestys on esitysjärjestys. */}
+        {!setlist && songs.length > 1 && (
+          <input
+            className="search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('list.searchPlaceholder')}
+            aria-label={t('list.search')}
+            autoCapitalize="off"
+            autoComplete="off"
+            spellCheck={false}
+          />
+        )}
+
         {/* Lajittelu vain koko kirjastolle; setissä järjestys on esitysjärjestys. */}
         {!setlist && songs.length > 1 && (
           <div className="sort-bar">
@@ -220,7 +243,7 @@ export default function SongList({
             <button
               className="primary"
               disabled={naytetyt.length === 0}
-              onClick={() => onLive(naytetyt.map((s) => s.id), 0)}
+              onClick={() => onLive(naytetyt.map((m) => m.song.id), 0)}
             >
               {t('set.playLive')}
             </button>
@@ -240,6 +263,9 @@ export default function SongList({
             {t('list.emptyHint')}
           </p>
         )}
+        {!setlist && naytetyt.length === 0 && songs.length > 0 && (
+          <p className="empty-note">{t('list.noMatches', { query: query.trim() })}</p>
+        )}
         {setlist && naytetyt.length === 0 && songs.length > 0 && (
           <p className="empty-note">
             {t('set.empty')}
@@ -247,7 +273,7 @@ export default function SongList({
             {t('set.emptyHint')}
           </p>
         )}
-        {naytetyt.map((song, i) => {
+        {naytetyt.map(({ song, snippet }, i) => {
           const kortti = (
             <button className="song-card" onClick={() => onOpen(song.id)}>
               <span className="song-card-text">
@@ -264,6 +290,9 @@ export default function SongList({
                     date: formatDate(song.updatedAt, lang),
                   })}
                 </span>
+                {/* Katkelma kertoo miksi laulu on listalla silloin kun syy ei
+                    ole otsikossa; ilman sitä suodatus näyttäisi satunnaiselta. */}
+                {snippet && <span className="snippet">{snippet}</span>}
               </span>
               <Icon name="chevronRight" size={18} />
             </button>

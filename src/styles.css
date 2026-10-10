@@ -307,6 +307,33 @@ button.small {
   font-size: 13px;
 }
 
+/*
+ * Hakukenttä lajitteluvalitsimen yläpuolella.
+ *
+ * Koko on 16px kuten muissakin kentissä: pienemmällä iOS suurentaa näkymän
+ * kohdistettaessa eikä palauta zoomia. `zoom.spec.ts` vartioi tätä.
+ */
+.search {
+  display: block;
+  width: 100%;
+  font-size: max(16px, 1rem);
+  margin-bottom: 6px;
+}
+
+/*
+ * Osuman rivi kortilla. Yksi rivi riittää: se kertoo miksi laulu on listalla,
+ * eikä saa kasvattaa korttia niin että lista lakkaa olemasta silmäiltävä.
+ */
+.song-card .snippet {
+  display: block;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Setissä kortin rinnalla järjestyspainikkeet; kirjastossa kortti yksin. */
 /* Lajitteluvalitsin settivalitsimen alla; vain koko kirjastolle. */
 .sort-bar {
