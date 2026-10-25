@@ -17,7 +17,12 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Kiinnitetty eikä ubuntu-latest: ajokuva vaihtui 26.04:ään, jota tämän
+    # projektin Playwright ei tue («Playwright does not support chromium on
+    # ubuntu26.04-x64»). Selaintestit jäivät ajamatta ja julkaisu pysähtyi,
+    # vaikka koodissa ei ollut vikaa. Kiinnitys nostetaan kun Playwright on
+    # päivitetty versioon joka tuntee uuden ajokuvan.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
