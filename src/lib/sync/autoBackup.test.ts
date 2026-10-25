@@ -95,6 +95,18 @@ describe('authorizeUrl', () => {
     expect(url.searchParams.get('token_access_type')).toBe('offline');
   });
 
+  /*
+   * Ilman nimettyjä lupia token kantaa vain ne oikeudet jotka Dropbox-
+   * sovellukseen on asetettu, eikä haku pilvestä toimi lainkaan jos luku
+   * puuttuu.
+   */
+  it('pyytää myös lukuoikeudet, ei vain kirjoitusta', () => {
+    const scope = (url.searchParams.get('scope') ?? '').split(' ');
+    expect(scope).toContain('files.content.write');
+    expect(scope).toContain('files.content.read');
+    expect(scope).toContain('files.metadata.read');
+  });
+
   it('käyttää PKCE:tä ilman salaisuutta', () => {
     expect(url.searchParams.get('response_type')).toBe('code');
     expect(url.searchParams.get('code_challenge')).toBe('haaste');

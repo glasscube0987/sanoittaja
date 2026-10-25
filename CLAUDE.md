@@ -102,6 +102,18 @@ jonka `LiveView` asettaa näkymän alareunaksi. Laskenta on puhdas funktio, jote
 se testataan ilman selainta; selaintestissä `visualViewport` väärennetään,
 koska oikeaa näppäimistöä ei voi avata työpöytäselaimessa.
 
+**Tuonti yhdistää, ei ylikirjoita.** `importLibrary` kirjoitti aiemmin jokaisen
+tietueen kantaan sellaisenaan, jolloin tuleva versio voitti aina — kahdella
+laitteella se palautti uudemman työn vanhaan asuunsa. Sääntö asuu nyt yhdessä
+paikassa (`sync/merge.ts`): **aikaleimallinen** tietue (laulu, setti) ratkeaa
+`updatedAt`illa ja tasapeli jää paikalliseen; **aikaleimaton** (nauhoite,
+merkintä) lisätään jos puuttuu eikä koskaan ylikirjoiteta, koska ilman
+aikaleimaa ylikirjoitus on ainoa lopputulos joka voi hävittää työtä. Väliin
+jätetyt raportoidaan (`ImportResult.skipped`), jotta turvasäännön työ näkyy.
+Varmuuskopion nimessä on laite (`sync/device.ts`), jottei kahden laitteen
+saman päivän kopio kirjoitu toistensa päälle. Poistot eivät leviä: poistettu
+palaa tuonnissa. Se on tiedossa ja turvallinen, ja hautakivet ovat oma työnsä.
+
 **Versiot.** `DB_VERSION` (`lib/db.ts`) ja `BUNDLE_VERSION`
 (`lib/sync/exportFile.ts`) nousevat erikseen. `importLibrary` hyväksyy myös
 vanhemman paketin: käyttäjillä on oikeita varmuuskopioita, eivätkä ne saa

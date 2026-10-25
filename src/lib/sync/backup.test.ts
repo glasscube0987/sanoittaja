@@ -53,21 +53,35 @@ describe('varmuuskopion ikä', () => {
 });
 
 describe('backupFileName', () => {
+  /* Laite annetaan testeissä nimellä, jotta tulos ei riipu ympäristöstä. */
+  const LAITE = 'iPad-a3f1';
+
   it('päivää paikallisen kalenterin mukaan', () => {
     // Ilta Suomessa on jo eilinen UTC:ssä; nimen pitää seurata käyttäjän päivää.
     const ilta = new Date(2026, 7, 3, 23, 30);
-    expect(backupFileName(ilta)).toBe('sanoittaja-varmuuskopio-2026-08-03.json');
+    expect(backupFileName(ilta, LAITE)).toBe('sanoittaja-varmuuskopio-2026-08-03-iPad-a3f1.json');
   });
 
   it('nollaa kuukauden ja päivän kaksinumeroisiksi', () => {
-    expect(backupFileName(new Date(2026, 0, 9, 12, 0))).toBe('sanoittaja-varmuuskopio-2026-01-09.json');
+    expect(backupFileName(new Date(2026, 0, 9, 12, 0), LAITE)).toBe(
+      'sanoittaja-varmuuskopio-2026-01-09-iPad-a3f1.json',
+    );
   });
 
   it('antaa saman nimen samana päivänä, jolloin pilvessä on kopio päivää kohti', () => {
     const aamu = new Date(2026, 7, 3, 8, 0);
     const ilta = new Date(2026, 7, 3, 20, 0);
-    expect(backupFileName(aamu)).toBe(backupFileName(ilta));
-    expect(backupFileName(new Date(2026, 7, 4, 8, 0))).not.toBe(backupFileName(aamu));
+    expect(backupFileName(aamu, LAITE)).toBe(backupFileName(ilta, LAITE));
+    expect(backupFileName(new Date(2026, 7, 4, 8, 0), LAITE)).not.toBe(backupFileName(aamu, LAITE));
+  });
+
+  /*
+   * Pelkällä päiväyksellä kaksi laitetta kirjoitti pilvessä saman tiedoston
+   * päälle, ja päivän kopio oli sen laitteen kirjasto joka ehti viimeiseksi.
+   */
+  it('eri laitteet kirjoittavat eri tiedostoon samana päivänä', () => {
+    const paiva = new Date(2026, 7, 3, 12, 0);
+    expect(backupFileName(paiva, 'iPad-a3f1')).not.toBe(backupFileName(paiva, 'iPhone-b2c4'));
   });
 });
 

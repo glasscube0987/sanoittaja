@@ -8,12 +8,15 @@ import {
   listRecordings,
   listSetlists,
   listSongs,
+  recordingIds,
   saveAnnotation,
   saveRecording,
   saveSetlist,
   saveSong,
 } from '../db';
 import type { Annotation, Recording, Setlist, Song } from '../types';
+import { deviceName } from './device';
+import { chooseRecord } from './merge';
 
 interface ExportedRecording extends Omit<Recording, 'blob'> {
   dataBase64: string;
@@ -38,6 +41,14 @@ export interface ImportResult {
   recordings: number;
   setlists: number;
   annotations: number;
+  /**
+   * Väliin jätetyt tietueet: paikallinen versio oli uudempi tai yhtä vanha.
+   *
+   * Raportoidaan erikseen, jotta käyttäjä näkee että jotain **jätettiin
+   * tarkoituksella** eikä vain «tuotiin 12 laulua». Juuri tämä luku kertoo että
+   * turvasääntö teki työnsä.
+   */
+  skipped: number;
 }
 
 function blobToBase64(blob: Blob): Promise<string> {
@@ -105,31 +116,83 @@ export async function importLibrary(file: Blob): Promise<ImportResult> {
   const setlists = bundle.setlists ?? [];
   const annotations = bundle.annotations ?? [];
 
-  for (const song of bundle.songs) await saveSong(song);
+  /*
+   * Yhdistäminen eikä ylikirjoitus. Paikalliset versiot luetaan ensin, jotta
+   * jokaisesta tietueesta voidaan päättää kumpi jää voimaan – ilman tätä
+   * vanhempi paketti palauttaisi uudemman työn vanhaan asuunsa.
+   */
+  const paikalliset = {
+    songs: new Map((await listSongs()).map((s) => [s.id, s])),
+    setlists: new Map((await listSetlists()).map((l) => [l.id, l])),
+    annotations: new Map((await listAllAnnotations()).map((a) => [a.id, a])),
+    recordings: await recordingIds(),
+  };
+
+  let skipped = 0;
+  let songs = 0;
+  for (const song of bundle.songs) {
+    if (chooseRecord(paikalliset.songs.get(song.id), song) === 'local') {
+      skipped += 1;
+      continue;
+    }
+    await saveSong(song);
+    songs += 1;
+  }
+
+  let lists = 0;
+  for (const list of setlists) {
+    if (chooseRecord(paikalliset.setlists.get(list.id), list) === 'local') {
+      skipped += 1;
+      continue;
+    }
+    await saveSetlist(list);
+    lists += 1;
+  }
+
+  /*
+   * Nauhoitteilla ja merkinnöillä ei ole muokkausaikaa, joten ne lisätään vain
+   * jos puuttuvat. Ks. `chooseRecord`: ilman aikaleimaa ylikirjoitus on ainoa
+   * lopputulos joka voi hävittää työtä.
+   */
+  let recordings = 0;
   for (const rec of bundle.recordings) {
+    if (paikalliset.recordings.has(rec.id)) {
+      skipped += 1;
+      continue;
+    }
     const { dataBase64, ...meta } = rec;
     await saveRecording({ ...meta, blob: base64ToBlob(dataBase64, rec.mimeType) });
+    recordings += 1;
   }
-  for (const list of setlists) await saveSetlist(list);
-  for (const note of annotations) await saveAnnotation(note);
 
-  return {
-    songs: bundle.songs.length,
-    recordings: bundle.recordings.length,
-    setlists: setlists.length,
-    annotations: annotations.length,
-  };
+  let notes = 0;
+  for (const note of annotations) {
+    if (paikalliset.annotations.has(note.id)) {
+      skipped += 1;
+      continue;
+    }
+    await saveAnnotation(note);
+    notes += 1;
+  }
+
+  return { songs, recordings, setlists: lists, annotations: notes, skipped };
 }
 
 /**
  * Varmuuskopion tiedostonimi. Päiväys on paikallinen eikä UTC, jotta illalla
  * otettu kopio ei näytä eiliseltä. Sama nimi käy tiedostoon ja pilveen, jolloin
  * pilveen kertyy päiväkohtainen historia yhden ylikirjoittuvan tiedoston sijaan.
+ *
+ * Nimessä on myös laite, koska pelkällä päiväyksellä kaksi laitetta kirjoitti
+ * pilvessä saman tiedoston päälle: päivän kopio oli sen laitteen kirjasto joka
+ * ehti viimeiseksi. Tuonti ei katso nimeä, joten vanhat kopiot kelpaavat
+ * ennallaan.
  */
-export function backupFileName(at: number | Date = Date.now()): string {
+export function backupFileName(at: number | Date = Date.now(), device = deviceName()): string {
   const d = at instanceof Date ? at : new Date(at);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `sanoittaja-varmuuskopio-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
+  const paiva = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return `sanoittaja-varmuuskopio-${paiva}-${device}.json`;
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {

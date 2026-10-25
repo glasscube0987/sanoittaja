@@ -112,6 +112,13 @@ demoja puhelimella ja vie kaikki pilveen.
   jolla haku osui — muuten lista näyttäisi suodattuneen sattumanvaraisesti.
   Kirjainkoko ei merkitse, mutta **ä ja ö ovat omia kirjaimiaan** eivätkä osu
   a:han ja o:hon. Hakua ei muisteta: se on hetken työkalu eikä asetus.
+- **Kaksi laitetta** – varmuuskopion nimessä on päiväys **ja laite**, joten iPad
+  ja puhelin eivät kirjoita toistensa kopioiden päälle. «Hae pilvestä» listaa
+  pilven kopiot ja yhdistää valitun kirjastoon suoraan sovelluksessa.
+  Yhdistäminen ei korvaa: **täällä oleva uudempi versio ei koskaan korvaudu
+  vanhemmalla**, ja väliin jätetyt kerrotaan tuloksessa. Nauhoitteet ja
+  merkinnät lisätään vain jos puuttuvat, koska niillä ei ole muokkausaikaa
+  jonka perusteella valita. Poistot eivät leviä laitteelta toiselle.
 - **Järjestys** – «Kaikki laulut» -näkymän voi järjestää viimeksi muokatun,
   aakkosten (A–Ö) tai käänteisten aakkosten mukaan. Aakkostus on kielikohtainen,
   joten ä ja ö menevät suomessa aakkosten loppuun eivätkä merkistön mukaan.

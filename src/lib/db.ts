@@ -192,6 +192,21 @@ export async function listAllAnnotations(): Promise<Annotation[]> {
   return rows as Annotation[];
 }
 
+/**
+ * Nauhoitteiden tunnisteet ilman sisältöä.
+ *
+ * Yhdistäminen tarvitsee vain tiedon siitä mitä on jo olemassa, ja blobit ovat
+ * megatavuja: koko joukon lataaminen muistiin pelkkien tunnisteiden takia olisi
+ * tarpeetonta. `getAllKeys` lukee vain avaimet.
+ */
+export async function recordingIds(): Promise<Set<string>> {
+  const db = await openDb();
+  const keys = await reqResult(
+    db.transaction('recordings').objectStore('recordings').getAllKeys(),
+  );
+  return new Set((keys as IDBValidKey[]).map(String));
+}
+
 export async function listRecordings(songId: string): Promise<Recording[]> {
   const db = await openDb();
   const index = db.transaction('recordings').objectStore('recordings').index('songId');

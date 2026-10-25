@@ -446,7 +446,11 @@ export default function SongList({
         />
       )}
       {cloudOpen && (
-        <CloudSheet onClose={() => setCloudOpen(false)} onBackedUp={() => setBackupDays(daysSinceBackup())} />
+        <CloudSheet
+          onClose={() => setCloudOpen(false)}
+          onBackedUp={() => setBackupDays(daysSinceBackup())}
+          onImported={onLibraryChanged}
+        />
       )}
     </>
   );

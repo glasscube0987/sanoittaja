@@ -1577,6 +1577,37 @@ textarea.annot-text-body {
   min-height: 20px;
 }
 
+/*
+ * Pilvestä haettavien kopioiden lista. Pystyyn eikä riviin: tiedostonimessä on
+ * päiväys ja laite, eivätkä ne mahdu puhelimen leveydelle rinnakkain.
+ */
+.cloud-files {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.cloud-files button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+.cloud-file-name {
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.cloud-file-meta {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
 /* Huomautus varmuuskopiosta ei estä mitään, joten se korostuu vasta vanhentuessaan. */
 .backup-note.stale {
   color: var(--accent);

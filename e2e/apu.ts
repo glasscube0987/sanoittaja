@@ -330,3 +330,71 @@ export function laulujenNimet(page: Page): Promise<string[]> {
     DB_VERSION,
   );
 }
+
+/**
+ * Pilvestä haettava varmuuskopio ilman oikeaa Dropboxia.
+ *
+ * Katkaisee listauksen ja latauksen sivun sisällä samalla tavalla kuin
+ * `pysaytaDropbox` katkaisee viennin: `page.route` ei sieppaa näitä pyyntöjä
+ * WebKitissä. Kutsuttava ennen ensimmäistä sivunlatausta.
+ *
+ * `status` ohjaa vastauksen koodin, jotta myös puuttuva lukuoikeus (403) on
+ * testattavissa – se on se tapaus jossa käyttäjä on kirjautunut mutta sovellus
+ * ei silti saa lukea.
+ */
+export async function vaarennaPilvikopiot(
+  page: Page,
+  tiedostot: { name: string; sisalto: string; modifiedAt?: number }[],
+  status = 200,
+): Promise<void> {
+  await page.addInitScript(
+    ({ rows, code }) => {
+      const alkuperainen = window.fetch.bind(window);
+      window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = input instanceof Request ? input.url : String(input);
+
+        if (url.endsWith('/2/files/list_folder')) {
+          if (code !== 200) return new Response('ei lupaa', { status: code });
+          const entries = rows.map((r) => ({
+            '.tag': 'file',
+            name: r.name,
+            path_lower: `/${r.name.toLowerCase()}`,
+            size: r.sisalto.length,
+            server_modified: new Date(r.modifiedAt ?? Date.now()).toISOString(),
+          }));
+          return new Response(JSON.stringify({ entries }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (url.endsWith('/2/files/download')) {
+          if (code !== 200) return new Response('ei lupaa', { status: code });
+          const headers = (init?.headers ?? {}) as Record<string, string>;
+          const path = JSON.parse(headers['Dropbox-API-Arg'] ?? '{}').path as string;
+          const row = rows.find((r) => `/${r.name.toLowerCase()}` === path);
+          return new Response(row?.sisalto ?? '', { status: row ? 200 : 404 });
+        }
+
+        if (url.startsWith('https://content.dropboxapi.com/')) {
+          return new Response('{}', { status: 200 });
+        }
+        return alkuperainen(input, init);
+      };
+    },
+    { rows: tiedostot, code: status },
+  );
+}
+
+/** Varmuuskopiopaketti yhdestä laulusta, sellaisena kuin exportLibrary sen tekee. */
+export function paketti(song: Song): string {
+  return JSON.stringify({
+    app: 'sanoittaja',
+    version: 2,
+    exportedAt: Date.now(),
+    songs: [song],
+    recordings: [],
+    setlists: [],
+    annotations: [],
+  });
+}

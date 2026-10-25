@@ -90,6 +90,15 @@ export function getDropboxClientIdOverride(): string {
 }
 
 /**
+ * Tarvittavat oikeudet: kirjoitus kopiota varten, luku ja listaus hakua varten.
+ */
+export const SCOPES = [
+  'files.content.write',
+  'files.content.read',
+  'files.metadata.read',
+];
+
+/**
  * Kirjautumisosoite. Erillisenä funktiona, jotta parametrit — erityisesti
  * pitkäikäisyys ja PKCE — voidaan varmistaa testillä ilman selainta.
  */
@@ -102,6 +111,13 @@ export function authorizeUrl(clientId: string, redirect: string, challenge: stri
   url.searchParams.set('code_challenge_method', 'S256');
   // Ilman tätä kirjautuminen kestää vain neljä tuntia.
   url.searchParams.set('token_access_type', 'offline');
+  /*
+   * Luvat pyydetään nimeltä. Ilman tätä token kantaa vain ne oikeudet jotka
+   * Dropbox-sovellukseen on asetettu, eikä haku pilvestä toimi lainkaan jos
+   * luku puuttuu. Vanha kirjautuminen ei saa lukuoikeutta takautuvasti, joten
+   * haku kehottaa kirjautumaan uudelleen jos palvelu vastaa 401/403.
+   */
+  url.searchParams.set('scope', SCOPES.join(' '));
   return url.toString();
 }
 
@@ -176,6 +192,30 @@ async function dropboxUpload(token: string, path: string, content: Blob | string
   }
 }
 
+/** Varmuuskopioiden nimeämiskäytäntö; muut tiedostot jätetään listaamatta. */
+const BACKUP_PREFIX = 'sanoittaja-varmuuskopio-';
+
+interface DropboxEntry {
+  '.tag': string;
+  name: string;
+  path_lower?: string;
+  size?: number;
+  server_modified?: string;
+}
+
+/**
+ * Luku- ja listausvirheet erotetaan muista: puuttuva lupa on käyttäjän
+ * korjattavissa kirjautumalla uudelleen, eikä se saa näyttää samalta kuin
+ * verkkovirhe.
+ */
+function lukuvirhe(status: number, teksti: string): Error {
+  if (status === 401 || status === 403) {
+    forgetTokens();
+    return new Error('Dropboxin lukuoikeus puuttuu. Kirjaudu uudelleen.');
+  }
+  return new Error(`Dropbox-haku epäonnistui (${status}): ${teksti}`);
+}
+
 export const dropboxProvider: CloudProvider = {
   id: 'dropbox',
   label: 'Dropbox',
@@ -199,8 +239,40 @@ export const dropboxProvider: CloudProvider = {
   async uploadBackup(blob: Blob, filename: string): Promise<void> {
     const token = await freshAccessToken();
     // App folder -oikeudella "/" on kansio Apps/<sovellus>/ käyttäjän omalla
-    // tilillä, ei kehittäjän. Saman päivän kopio ylikirjoittuu, eri päivien
-    // kopiot jäävät talteen.
+    // tilillä, ei kehittäjän. Saman laitteen saman päivän kopio ylikirjoittuu,
+    // muut jäävät talteen.
     await dropboxUpload(token, `/${filename}`, blob);
+  },
+
+  async listBackups() {
+    const token = await freshAccessToken();
+    const res = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: '' }),
+    });
+    if (!res.ok) throw lukuvirhe(res.status, await res.text());
+
+    const data = (await res.json()) as { entries?: DropboxEntry[] };
+    return (data.entries ?? [])
+      .filter((e) => e['.tag'] === 'file' && e.name.startsWith(BACKUP_PREFIX))
+      .map((e) => ({
+        path: e.path_lower ?? `/${e.name}`,
+        name: e.name,
+        size: e.size ?? 0,
+        modifiedAt: e.server_modified ? Date.parse(e.server_modified) : 0,
+      }))
+      // Uusin ensin: siirto laitteelta toiselle koskee lähes aina tuoreinta.
+      .sort((a, b) => b.modifiedAt - a.modifiedAt);
+  },
+
+  async downloadBackup(path: string) {
+    const token = await freshAccessToken();
+    const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Dropbox-API-Arg': JSON.stringify({ path }) },
+    });
+    if (!res.ok) throw lukuvirhe(res.status, await res.text());
+    return res.blob();
   },
 };

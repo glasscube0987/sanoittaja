@@ -200,10 +200,15 @@ const en = {
 
   'cloud.title': 'Back up to cloud',
   'cloud.description':
-    'The whole library — songs, chords and recordings — goes into your own cloud account as one file that “Restore” reads back. One file per day, so older backups stay.',
+    'The whole library — songs, chords and recordings — goes into your own cloud account as one file that “Restore” reads back. One file per day and device, so backups from your other devices stay. “Fetch from cloud” merges one back: a newer version here is never overwritten by an older one.',
   'cloud.exportDropbox': 'Back up to Dropbox',
   'cloud.signInDropbox': 'Sign in to Dropbox',
   'cloud.exportDrive': 'Back up to Google Drive',
+  'cloud.fetchFromCloud': 'Fetch from cloud',
+  'cloud.listing': 'Listing backups…',
+  'cloud.noBackups': 'No backups in the cloud yet.',
+  'cloud.fetching': 'Fetching {file}…',
+  'cloud.merged': 'Merged: {songs} songs, {recordings} recordings. {skipped} kept as newer here.',
   'cloud.settings': 'Cloud settings…',
   'cloud.needsClientId': '{provider}: add a client id in settings first.',
   'cloud.signingIn': 'Signing in to {provider}…',
@@ -435,10 +440,15 @@ const fi: Record<Key, string> = {
 
   'cloud.title': 'Varmuuskopioi pilveen',
   'cloud.description':
-    'Koko kirjasto — laulut, soinnut ja nauhoitteet — menee omalle pilvitilillesi yhtenä tiedostona, jonka ”Palauta” lukee takaisin. Yksi tiedosto päivää kohti, joten vanhat kopiot säilyvät.',
+    'Koko kirjasto — laulut, soinnut ja nauhoitteet — menee omalle pilvitilillesi yhtenä tiedostona, jonka ”Palauta” lukee takaisin. Yksi tiedosto päivää ja laitetta kohti, joten toisen laitteen kopiot säilyvät. ”Hae pilvestä” yhdistää kopion takaisin: täällä oleva uudempi versio ei koskaan korvaudu vanhemmalla.',
   'cloud.exportDropbox': 'Varmuuskopioi Dropboxiin',
   'cloud.signInDropbox': 'Kirjaudu Dropboxiin',
   'cloud.exportDrive': 'Varmuuskopioi Google Driveen',
+  'cloud.fetchFromCloud': 'Hae pilvestä',
+  'cloud.listing': 'Haetaan kopioiden listaa…',
+  'cloud.noBackups': 'Pilvessä ei ole vielä kopioita.',
+  'cloud.fetching': 'Haetaan {file}…',
+  'cloud.merged': 'Yhdistetty: {songs} laulua, {recordings} nauhoitetta. {skipped} jätettiin, koska täällä on uudempi.',
   'cloud.settings': 'Pilviasetukset…',
   'cloud.needsClientId': '{provider}: lisää ensin client id asetuksissa.',
   'cloud.signingIn': 'Kirjaudutaan palveluun {provider}…',
