@@ -18,6 +18,7 @@ import {
   setLineBarRow,
   setLineBars,
   setLineSection,
+  setSongTags,
   splitLine,
   transposeOffset,
   transposeSong,
@@ -45,10 +46,16 @@ import LineEditor from './LineEditor';
 import BarSheet from './BarSheet';
 import LineSheet from './LineSheet';
 import RecordingsPanel from './RecordingsPanel';
+import TagSheet from './TagSheet';
 import SongSheet from './SongSheet';
 
 interface Props {
   song: Song;
+  /**
+   * Kirjastossa jo käytetyt tagit, tagilakanan tarjottaviksi. Tulee `App`ista:
+   * editorilla on vain yksi laulu, eikä se voi tietää mitä muissa on.
+   */
+  knownTags: string[];
   onChange: (song: Song) => void;
   onUndo: () => void;
   canUndo: boolean;
@@ -82,6 +89,7 @@ export interface ChordTarget {
 
 export default function SongEditor({
   song,
+  knownTags,
   onChange,
   onUndo,
   canUndo,
@@ -94,6 +102,7 @@ export default function SongEditor({
   const [chordTarget, setChordTarget] = useState<ChordTarget | null>(null);
   const [lineTargetId, setLineTargetId] = useState<string | null>(null);
   const [barsTargetId, setBarsTargetId] = useState<string | null>(null);
+  const [tagsOpen, setTagsOpen] = useState(false);
   // null = tuonti laulun loppuun, muuten rivin id jonka perään rivit menevät.
   const [importAfterId, setImportAfterId] = useState<string | null | undefined>(undefined);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
@@ -295,6 +304,27 @@ export default function SongEditor({
           />
         </div>
 
+        {/* Tagit omalle riville otsikkorivin alle: otsikkorivillä on jo nimi,
+            sävellaji ja tahtilaji, eikä 393 pikseliin mahdu neljättä kenttää.
+            Chip poistaa itsensä napautuksella – tagin poisto on tavallisempaa
+            kuin sen muokkaus, eikä yhtä tagia voi muokata vaan vain vaihtaa. */}
+        <div className="tag-bar song-tags">
+          <span className="label">{t('tags.label')}</span>
+          {(song.tags ?? []).map((tag) => (
+            <button
+              key={tag}
+              className="tag small current"
+              aria-label={t('tags.remove', { tag })}
+              onClick={() => onChange(setSongTags(song, (song.tags ?? []).filter((v) => v !== tag)))}
+            >
+              {tag} ✕
+            </button>
+          ))}
+          <button className="ghost small" onClick={() => setTagsOpen(true)}>
+            {t('tags.add')}
+          </button>
+        </div>
+
         <div className="transpose-bar">
           <span className="label">{t('editor.transpose')}</span>
           {/* Merkintätapa luetaan vasta napautuksessa, jotta asetuksissa tehty
@@ -420,6 +450,17 @@ export default function SongEditor({
         <SongSheet song={song} annotations={notes} />
       </main>
 
+      {tagsOpen && (
+        <TagSheet
+          tags={song.tags ?? []}
+          known={knownTags}
+          onSave={(tags) => {
+            onChange(setSongTags(song, tags));
+            setTagsOpen(false);
+          }}
+          onClose={() => setTagsOpen(false)}
+        />
+      )}
       {chordTarget && (
         <ChordSheet
           target={chordTarget}

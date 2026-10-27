@@ -335,6 +335,87 @@ button.small {
 }
 
 /* Setissä kortin rinnalla järjestyspainikkeet; kirjastossa kortti yksin. */
+/*
+ * Tagirivi: suodatin laululistalla ja laulun omat tagit editorissa.
+ *
+ * `flex-wrap`, koska tagit ovat vapaata tekstiä eikä niiden määrää voi rajata:
+ * neljä tagia ei mahdu puhelimen leveydelle, ja ilman kiertymistä rivi
+ * vierittyisi ruudun ulkopuolelle sieltä mistä sitä ei näe.
+ */
+.tag-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+
+.tag-bar .label {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin-right: 2px;
+}
+
+/*
+ * Tagichip näyttää painikkeelta myös valitsematta.
+ *
+ * Lajitteluvalitsimessa yksi vaihtoehto on aina valittuna, joten rivissä on
+ * aina kehystetty ankkuri. Tagirivi on oletuksena kokonaan valitsematta, ja
+ * ilman kehystä se luki kuvakaappauksessa kirjaston tagien luettelona – ei
+ * mitenkään napautettavalta.
+ *
+ * Ei `.chip-row`ta, samasta syystä kuin settivalitsimessakaan: se on
+ * sointuvalinnoille ja käyttää tasalevyistä fonttia, ja tagit ovat tavallista
+ * tekstiä.
+ */
+.tag-bar button.tag {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+
+/*
+ * Valittu tagi erottuu samalla tavalla kuin valittu järjestys: kulta on
+ * settivalitsimen oma merkitys, eikä kolmas eritasoinen valinta samalla värillä
+ * erottuisi mistään.
+ */
+.tag-bar button.tag.current {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/*
+ * Editorissa tagirivi on transponointirivin naapuri, joten sen otsikko
+ * ladotaan samoin: kaksi eri tavalla ladottua otsikkoa peräkkäin näyttäisi
+ * vahingolta.
+ */
+.song-tags .label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Laulun tagit kortilla. Ei painikkeita: kortti itse avaa laulun. */
+.card-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 1px;
+}
+
+.card-tag {
+  font-size: 11px;
+  line-height: 1.6;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
 /* Lajitteluvalitsin settivalitsimen alla; vain koko kirjastolle. */
 .sort-bar {
   display: flex;

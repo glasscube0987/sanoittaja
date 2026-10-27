@@ -102,6 +102,18 @@ jonka `LiveView` asettaa näkymän alareunaksi. Laskenta on puhdas funktio, jote
 se testataan ilman selainta; selaintestissä `visualViewport` väärennetään,
 koska oikeaa näppäimistöä ei voi avata työpöytäselaimessa.
 
+**Tagit kaventavat, eikä kirjainkoko erota niitä.** Laulun vaihe ei ole yksi
+tila-arvo, koska sama laulu voi olla yhtä aikaa «cover» ja «keikkakunto» –
+siksi vapaat tagit (`Song.tags`) eikä tilakenttä. Kaksi valittua tagia näyttää
+ne laulut joilla on **molemmat**: suodattamisen tarkoitus on löytää vähemmän,
+ja laajentava sääntö kasvattaisi listaa. «Cover» ja «cover» ovat sama tagi,
+mikä on olennaista nyt kun sama kirjasto elää kahdella laitteella; se mikä on
+«sama tagi» määritellään yhdessä paikassa (`lib/tags.ts`, `dedupeTags`), ja
+aakkostus tulee samasta `collator`ista kuin laululistan. Laululistan valinta
+rajataan niihin tageihin jotka kirjastossa yhä ovat: tuonti voi viedä tagin
+listan ollessa auki, ja päälle jäänyt suodatin tyhjentäisi listan ilman yhtään
+chippiä jolla sen purkaisi.
+
 **Tuonti yhdistää, ei ylikirjoita.** `importLibrary` kirjoitti aiemmin jokaisen
 tietueen kantaan sellaisenaan, jolloin tuleva versio voitti aina — kahdella
 laitteella se palautti uudemman työn vanhaan asuunsa. Sääntö asuu nyt yhdessä

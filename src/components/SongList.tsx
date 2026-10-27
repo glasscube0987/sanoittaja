@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDate, useI18n } from '../lib/i18n';
 import type { Setlist, Song } from '../lib/types';
 import { addSongs, moveSong, newSetlist, removeSong, renameSetlist, setlistSongs } from '../lib/setlists';
 import { loadSortOrder, SORT_ORDERS, sortSongs, storeSortOrder } from '../lib/sortSongs';
 import { searchSongs } from '../lib/searchSongs';
+import { allTags, filterByTags, sameTag } from '../lib/tags';
 import type { SongMatch } from '../lib/searchSongs';
 import type { SortOrder } from '../lib/sortSongs';
 import {
@@ -67,6 +68,10 @@ export default function SongList({
   /* Haku on hetken työkalu eikä asetus, joten sitä ei muisteta kuten
      lajittelujärjestystä: laulusta palatessa lista on taas kokonaisena. */
   const [query, setQuery] = useState('');
+  /* Tagivalinta on haun kaltainen hetken työkalu eikä asetus: laulusta
+     palatessa lista on taas kokonaisena, eikä kirjasto näytä tyhjältä siksi
+     että viime viikon suodatin on yhä päällä. */
+  const [valitutTagit, setValitutTagit] = useState<string[]>([]);
   const [newOpen, setNewOpen] = useState(false);
   const [ideaOpen, setIdeaOpen] = useState(false);
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
@@ -118,14 +123,44 @@ export default function SongList({
   }
 
   const setlist = setlists.find((l) => l.id === setlistId) ?? null;
+
+  // Tagit koko kirjastosta eikä suodatetusta: muuten valinta söisi ne chipit
+  // joilla valinnan voisi purkaa.
+  const kirjastonTagit = useMemo(() => allTags(songs, lang), [songs, lang]);
+
+  /*
+   * Valinta rajataan niihin tageihin jotka kirjastossa yhä ovat.
+   *
+   * Tuonti tai pilvihaku voi vaihtaa kirjaston listan ollessa auki, ja jos
+   * valittu tagi katoaa sen mukana, päälle jäänyt suodatin tyhjentäisi listan
+   * ilman yhtään chippiä jolla sen voisi purkaa – näkymästä ei pääsisi ulos
+   * muuten kuin lataamalla sivun uudelleen.
+   */
+  const aktiiviset = useMemo(
+    () => valitutTagit.filter((tag) => kirjastonTagit.some((v) => sameTag(v, tag))),
+    [valitutTagit, kirjastonTagit],
+  );
+
   // Setti näyttää laulut omassa järjestyksessään, kirjasto viimeksi muokattu ensin.
-  /* Lajittelu koskee vain koko kirjastoa: setissä järjestys on käyttäjän itse
-     asettama esitysjärjestys, eikä sitä saa lajitella pois alta. */
-  /* Lajittelu ensin, haku sen päälle: haku säilyttää lähtöjärjestyksen, joten
-     tulos on lajiteltu ilman erillistä lajittelua osumille. */
+  /* Lajittelu ja suodatus koskevat vain koko kirjastoa: setissä järjestys on
+     käyttäjän itse asettama esitysjärjestys, eikä sitä saa lajitella pois alta. */
+  /* Tagit ensin, sitten lajittelu, sitten haku: tagit ja haku vain kaventavat
+     samaa listaa, ja lajittelu niiden välissä säilyy, koska haku pitää
+     lähtöjärjestyksen – tulos on lajiteltu ilman erillistä lajittelua
+     osumille. */
   const naytetyt: SongMatch[] = setlist
     ? setlistSongs(setlist, songs).map((song) => ({ song }))
-    : searchSongs(sortSongs(songs, sort, lang, t('app.untitled')), query, t('app.untitled'));
+    : searchSongs(
+        sortSongs(filterByTags(songs, aktiiviset), sort, lang, t('app.untitled')),
+        query,
+        t('app.untitled'),
+      );
+
+  function vaihdaTagi(tag: string) {
+    setValitutTagit((prev) =>
+      prev.some((v) => sameTag(v, tag)) ? prev.filter((v) => !sameTag(v, tag)) : [...prev, tag],
+    );
+  }
 
   function vaihdaJarjestys(order: SortOrder) {
     setSort(order);
@@ -221,6 +256,28 @@ export default function SongList({
           />
         )}
 
+        {/* Tagisuodatin hakukentän alle, samalla ehdolla kuin haku ja lajittelu
+            – ja vain jos tageja on olemassa: tyhjä valitsinrivi olisi pelkkä
+            selittämätön otsikko niille jotka eivät tageja käytä. */}
+        {!setlist && songs.length > 1 && kirjastonTagit.length > 0 && (
+          <div className="tag-bar" role="group" aria-label={t('tags.filter')}>
+            <span className="label">{t('tags.label')}</span>
+            {kirjastonTagit.map((tag) => {
+              const paalla = aktiiviset.some((v) => sameTag(v, tag));
+              return (
+                <button
+                  key={tag}
+                  className={paalla ? 'tag small current' : 'tag small'}
+                  aria-pressed={paalla}
+                  onClick={() => vaihdaTagi(tag)}
+                >
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Lajittelu vain koko kirjastolle; setissä järjestys on esitysjärjestys. */}
         {!setlist && songs.length > 1 && (
           <div className="sort-bar">
@@ -263,8 +320,13 @@ export default function SongList({
             {t('list.emptyHint')}
           </p>
         )}
+        {/* Nykyinen huomautus kertoo hakusanan, joten pelkällä tagisuodatuksella
+            tyhjä lista jäisi selittämättä: ilman hakusanaa näytetään tagien oma
+            huomautus. */}
         {!setlist && naytetyt.length === 0 && songs.length > 0 && (
-          <p className="empty-note">{t('list.noMatches', { query: query.trim() })}</p>
+          <p className="empty-note">
+            {query.trim() ? t('list.noMatches', { query: query.trim() }) : t('list.noTagMatches')}
+          </p>
         )}
         {setlist && naytetyt.length === 0 && songs.length > 0 && (
           <p className="empty-note">
@@ -290,6 +352,18 @@ export default function SongList({
                     date: formatDate(song.updatedAt, lang),
                   })}
                 </span>
+                {/* Tagit metarivin alle eivätkä sen sisään: ne ovat lyhyitä,
+                    mutta kolme tagia ja päiväys samalla rivillä kiertyisi
+                    kahdelle puhelimen leveydellä. */}
+                {song.tags && song.tags.length > 0 && (
+                  <span className="card-tags">
+                    {song.tags.map((tag) => (
+                      <span className="card-tag" key={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </span>
+                )}
                 {/* Katkelma kertoo miksi laulu on listalla silloin kun syy ei
                     ole otsikossa; ilman sitä suodatus näyttäisi satunnaiselta. */}
                 {snippet && <span className="snippet">{snippet}</span>}

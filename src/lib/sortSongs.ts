@@ -20,8 +20,11 @@ const STORAGE_KEY = 'sanoittaja.sort';
  * silloin ä ja ö päätyisivät z:n jälkeen mutta myös ennen kaikkia isoja
  * kirjaimia, ja suomessa å ä ö kuuluvat aakkosten loppuun omina kirjaiminaan.
  * `numeric` järjestää myös «Laulu 2» ennen «Laulu 10».
+ *
+ * Viety ulos, jotta tagit aakkostuvat samalla säännöllä: «miten suomi
+ * aakkostuu» ei saa olla kahdessa paikassa.
  */
-function collator(lang: Lang): Intl.Collator {
+export function collator(lang: Lang): Intl.Collator {
   return new Intl.Collator(lang === 'fi' ? 'fi' : 'en', {
     sensitivity: 'base',
     numeric: true,

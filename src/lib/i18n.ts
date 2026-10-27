@@ -47,6 +47,17 @@ const en = {
   'list.backupStale': 'Last backup {days} days ago — worth taking a new one.',
   'list.importing': 'Importing…',
   'list.imported': 'Imported {songs} songs and {recordings} recordings.',
+  'list.noTagMatches': 'No song has all the selected tags.',
+
+  'tags.label': 'Tags',
+  'tags.filter': 'Filter by tag',
+  'tags.add': '+ Tag',
+  'tags.sheetTitle': 'Song tags',
+  'tags.hint': 'Pick an existing tag or write a new one. A tag is the same whether you write it “Cover” or “cover”.',
+  'tags.newLabel': 'New tag',
+  'tags.addNew': 'Add',
+  'tags.remove': 'Remove tag {tag}',
+  'tags.none': 'No tags yet.',
 
   'editor.backLabel': 'Songs',
   'editor.undo': 'Undo',
@@ -286,6 +297,18 @@ const fi: Record<Key, string> = {
   'list.backupStale': 'Edellisestä varmuuskopiosta {days} päivää — kannattaa ottaa uusi.',
   'list.importing': 'Tuodaan…',
   'list.imported': 'Tuotu {songs} laulua ja {recordings} nauhoitetta.',
+  'list.noTagMatches': 'Yhdelläkään laululla ei ole kaikkia valittuja tageja.',
+
+  'tags.label': 'Tagit',
+  'tags.filter': 'Suodata tagilla',
+  'tags.add': '+ Tagi',
+  'tags.sheetTitle': 'Laulun tagit',
+  'tags.hint':
+    'Valitse valmis tagi tai kirjoita uusi. Tagi on sama, kirjoitatko sen ”Cover” tai ”cover”.',
+  'tags.newLabel': 'Uusi tagi',
+  'tags.addNew': 'Lisää',
+  'tags.remove': 'Poista tagi {tag}',
+  'tags.none': 'Ei vielä tageja.',
 
   'editor.backLabel': 'Laulut',
   'editor.undo': 'Kumoa',

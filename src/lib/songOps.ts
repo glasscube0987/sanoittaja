@@ -7,6 +7,7 @@ import { respellChord, transposeBar, transposeChord } from './chords';
 import type { Notation } from './chords';
 import { barRowText, classifyLine } from './importText';
 import { getSections } from './sections';
+import { dedupeTags } from './tags';
 import type { ChordAnchor, LyricLine, SectionMark, Song } from './types';
 import { uid } from './types';
 
@@ -240,6 +241,26 @@ export function setLineBarRow(song: Song, lineId: string, row: BarRow): Song {
       return next;
     }),
   });
+}
+
+/**
+ * Kirjoittaa laulun tagit.
+ *
+ * Tyhjät pudotetaan ja kaksoiskappaleet poistetaan **kirjainkoosta
+ * riippumatta**, jolloin «Cover» ja «cover» eivät päädy samaan lauluun
+ * kahdesti. Säilyvä asu on se joka kirjoitettiin ensin.
+ *
+ * Tyhjä joukko poistaa kentän kokonaan: tagiton laulu ei kanna tyhjää
+ * taulukkoa varmuuskopiosta toiseen.
+ */
+export function setSongTags(song: Song, tags: string[]): Song {
+  const siistityt = dedupeTags(tags);
+  const next = { ...song };
+  // Tyhjä lista poistetaan kokonaan: tyhjä `tags: []` olisi varmuuskopiossa
+  // pelkkää painoa, ja «ei tageja» on kentän puuttuminen.
+  if (siistityt.length > 0) next.tags = siistityt;
+  else delete next.tags;
+  return touch(next);
 }
 
 /** Merkitsee rivin osion aluksi tai (null) poistaa merkinnän. */

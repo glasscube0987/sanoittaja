@@ -83,6 +83,19 @@ export interface Song {
    * lähdettiin – sen avulla laulun voi palauttaa alkuperäiseen sävellajiin.
    */
   transpose?: number;
+  /**
+   * Vapaat tagit, esim. «cover» tai «keikkakunto».
+   *
+   * Tallennetaan sellaisina kuin ne kirjoitetaan, mutta verrataan
+   * kirjainkoosta riippumatta: muuten iPadilla kirjoitettu «Cover» ja
+   * puhelimella kirjoitettu «cover» olisivat kaksi eri suodatinta samalle
+   * asialle.
+   *
+   * Valinnainen kenttä tunnetussa lajissa, ei uusi tietuelaji, joten
+   * `BUNDLE_VERSION`ia ei tämän takia nosteta – vanha versio ohittaa kentän ja
+   * näyttää laulun ilman tageja.
+   */
+  tags?: string[];
   lines: LyricLine[];
   createdAt: number;
   updatedAt: number;

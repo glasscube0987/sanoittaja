@@ -93,6 +93,11 @@ export async function avaaMonta(page: Page, nimet: string[]): Promise<void> {
   const songs = nimet.map((title, i) =>
     laulu({ id: `s${i}`, title, updatedAt: nimet.length - i, lines: [{ id: `l${i}`, text: title, chords: [] }] }),
   );
+  await avaaKirjasto(page, songs);
+}
+
+/** Kylvää annetut laulut sellaisinaan ja jää laululistaan. */
+export async function avaaKirjasto(page: Page, songs: Song[]): Promise<void> {
   await avaaLista(page, songs[0]);
   for (const song of songs.slice(1)) await kylvaLaulu(page, song);
   await page.reload();

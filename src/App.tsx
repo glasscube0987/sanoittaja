@@ -21,6 +21,7 @@ import { AUTO_BACKUP_CHECK_MS, markLibraryChanged, maybeAutoBackup } from './lib
 import type { Setlist, Song } from './lib/types';
 import { newSong, uid } from './lib/types';
 import { ideaTitle } from './lib/ideas';
+import { allTags } from './lib/tags';
 import type { IdeaRecording } from './components/IdeaSheet';
 
 type View =
@@ -54,6 +55,13 @@ export default function App() {
     }),
     [lang],
   );
+
+  /*
+   * Kirjaston tagijoukko lasketaan täällä, koska vain tässä ovat kaikki laulut.
+   * Editori tarjoaa niitä valittaviksi: kirjoitusvirhe tekee uuden tagin, eikä
+   * sitä huomaa mistään, jos valmiita ei näe.
+   */
+  const knownTags = useMemo(() => allTags(songs ?? [], lang), [songs, lang]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -228,6 +236,7 @@ export default function App() {
       {editing ? (
         <SongEditor
           song={editing}
+          knownTags={knownTags}
           onChange={(next) => updateSong(next, editing)}
           onUndo={undo}
           canUndo={history.length > 0}

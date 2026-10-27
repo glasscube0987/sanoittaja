@@ -12,6 +12,7 @@ import {
   respellSong,
   setChord,
   setLineBarRow,
+  setSongTags,
   splitLine,
   transposeOffset,
   transposeSong,
@@ -331,6 +332,27 @@ describe('barsFromLine', () => {
 
   it('jättää tyhjän rivin oletustahteihin', () => {
     expect(barsFromLine({ id: 'l', text: '   ', chords: [] })).toEqual(DEFAULT_BARS);
+  });
+});
+
+describe('setSongTags', () => {
+  it('kirjoittaa tagit ja siivoaa välit', () => {
+    const song = setSongTags(makeSong(), ['  cover ', 'keikka  kunto']);
+    expect(song.tags).toEqual(['cover', 'keikka kunto']);
+  });
+
+  it('pudottaa tyhjät', () => {
+    expect(setSongTags(makeSong(), ['cover', '   ', '']).tags).toEqual(['cover']);
+  });
+
+  /* «Cover» ja «cover» ovat sama tagi; ensin kirjoitettu asu jää voimaan. */
+  it('poistaa kaksoiskappaleet kirjainkoosta riippumatta', () => {
+    expect(setSongTags(makeSong(), ['Cover', 'cover', 'COVER']).tags).toEqual(['Cover']);
+  });
+
+  it('tyhjä joukko poistaa kentän kokonaan', () => {
+    const merkitty = setSongTags(makeSong(), ['cover']);
+    expect(setSongTags(merkitty, [])).not.toHaveProperty('tags');
   });
 });
 
