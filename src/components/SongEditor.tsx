@@ -35,6 +35,7 @@ import {
   storeLyricSize,
 } from '../lib/lyricSize';
 import { getSections, sectionTitle } from '../lib/sections';
+import { sameTag } from '../lib/tags';
 import { barRowOf } from '../lib/bars';
 import { printSheet } from '../lib/print';
 import { useAnnotations } from '../lib/useAnnotations';
@@ -315,7 +316,12 @@ export default function SongEditor({
               key={tag}
               className="tag small current"
               aria-label={t('tags.remove', { tag })}
-              onClick={() => onChange(setSongTags(song, (song.tags ?? []).filter((v) => v !== tag)))}
+              /* `sameTag` eikä `!==`: mikä on sama tagi on yhden funktion
+                 tiedossa, eikä se saa olla eri sääntö siinä kohdassa jossa
+                 tagi poistetaan. */
+              onClick={() =>
+                onChange(setSongTags(song, (song.tags ?? []).filter((v) => !sameTag(v, tag))))
+              }
             >
               {tag} ✕
             </button>

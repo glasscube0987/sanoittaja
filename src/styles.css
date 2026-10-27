@@ -336,12 +336,15 @@ button.small {
 
 /* Setissä kortin rinnalla järjestyspainikkeet; kirjastossa kortti yksin. */
 /*
- * Tagirivi: suodatin laululistalla ja laulun omat tagit editorissa.
+ * Valitsinrivit hakukentän alla: lajittelu ja tagit. Sama latoma, koska ne ovat
+ * käyttäjälle sama asia – listaa kaventavia säätimiä peräkkäisillä riveillä, ja
+ * kahdesta erikseen ladotusta rivistä ei näkisi että ne kuuluvat yhteen.
  *
  * `flex-wrap`, koska tagit ovat vapaata tekstiä eikä niiden määrää voi rajata:
  * neljä tagia ei mahdu puhelimen leveydelle, ja ilman kiertymistä rivi
  * vierittyisi ruudun ulkopuolelle sieltä mistä sitä ei näe.
  */
+.sort-bar,
 .tag-bar {
   display: flex;
   align-items: center;
@@ -350,10 +353,25 @@ button.small {
   padding-bottom: 4px;
 }
 
+.sort-label,
 .tag-bar .label {
   color: var(--text-dim);
   font-size: 13px;
   margin-right: 2px;
+}
+
+/*
+ * Valittu vaihtoehto erottuu ilman korostusväriä. Kulta kertoo
+ * settivalitsimessa missä kokoelmassa ollaan; jos se tarkoittaisi myös
+ * järjestystä tai tagia, kaksi tai kolme eritasoista valintaa näyttäisi
+ * päällekkäisillä riveillä samalta.
+ */
+.sort-bar button.current,
+.tag-bar button.tag.current {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--text);
+  font-weight: 600;
 }
 
 /*
@@ -367,23 +385,15 @@ button.small {
  * Ei `.chip-row`ta, samasta syystä kuin settivalitsimessakaan: se on
  * sointuvalinnoille ja käyttää tasalevyistä fonttia, ja tagit ovat tavallista
  * tekstiä.
+ *
+ * `:not(.current)` eikä pelkkä `.tag`, jottei sääntö kilpaile valitun kanssa
+ * lähdejärjestyksestä: kaksi yhtä painavaa sääntöä samalle chipille ratkeaisi
+ * sillä kumpi sattuu olemaan tiedostossa alempana.
  */
-.tag-bar button.tag {
+.tag-bar button.tag:not(.current) {
   background: transparent;
   border-color: var(--border);
   color: var(--text-dim);
-}
-
-/*
- * Valittu tagi erottuu samalla tavalla kuin valittu järjestys: kulta on
- * settivalitsimen oma merkitys, eikä kolmas eritasoinen valinta samalla värillä
- * erottuisi mistään.
- */
-.tag-bar button.tag.current {
-  background: var(--surface-2);
-  border-color: var(--border-strong);
-  color: var(--text);
-  font-weight: 600;
 }
 
 /*
@@ -414,33 +424,6 @@ button.small {
   background: var(--surface-2);
   color: var(--text-dim);
   white-space: nowrap;
-}
-
-/* Lajitteluvalitsin settivalitsimen alla; vain koko kirjastolle. */
-.sort-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding-bottom: 4px;
-}
-
-.sort-label {
-  color: var(--text-dim);
-  font-size: 13px;
-  margin-right: 2px;
-}
-
-/*
- * Valittu järjestys erottuu ilman korostusväriä. Kulta kertoo settivalitsimessa
- * missä kokoelmassa ollaan; jos se tarkoittaisi myös järjestystä, kaksi
- * eritasoista valintaa näyttäisi päällekkäisillä riveillä samalta.
- */
-.sort-bar button.current {
-  background: var(--surface-2);
-  border-color: var(--border-strong);
-  color: var(--text);
-  font-weight: 600;
 }
 
 /*

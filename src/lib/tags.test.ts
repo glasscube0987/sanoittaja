@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allTags, dedupeTags, filterByTags, hasTag, normalizeTag, uniqueTags } from './tags';
+import { allTags, dedupeTags, filterByTags, matchExisting, normalizeTag, uniqueTags } from './tags';
 import type { Song } from './types';
 
 const laulu = (id: string, tags?: string[]): Song => ({
@@ -67,10 +67,18 @@ describe('allTags', () => {
   });
 });
 
-describe('hasTag', () => {
-  it('ei erota kirjainkokoa', () => {
-    expect(hasTag(laulu('a', ['Cover']), 'cover')).toBe(true);
-    expect(hasTag(laulu('a', ['cover']), 'kesken')).toBe(false);
+describe('matchExisting', () => {
+  /*
+   * Ilman kartoitusta «cover» tallentuisi uutena asuna, ja se kumpi asu
+   * suodatinrivillä näkyy ratkeaisi laulujen kantajärjestyksestä – vaikka
+   * vihjeteksti lupaa että kirjoitusasulla ei ole väliä.
+   */
+  it('antaa kirjaston oman asun', () => {
+    expect(matchExisting('cover', ['Cover', 'kesken'])).toBe('Cover');
+  });
+
+  it('tuntematon jää kirjoitettuun asuun ja siistitään', () => {
+    expect(matchExisting('  Uusi  tagi ', ['Cover'])).toBe('Uusi tagi');
   });
 });
 

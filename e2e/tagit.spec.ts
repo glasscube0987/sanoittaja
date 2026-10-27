@@ -80,6 +80,27 @@ test('kirjaston tagi on tarjolla toisessa laulussa', async ({ page }) => {
   await expect(page.getByLabel('Remove tag cover')).toBeVisible();
 });
 
+/*
+ * Vihje lupaa ettei kirjoitusasulla ole väliä. Ilman kartoitusta «cover»
+ * tallentuisi uutena asuna, ja se kumpi asu suodatinrivillä näkyy ratkeaisi
+ * laulujen kantajärjestyksestä.
+ */
+test('kirjoitettu tagi saa kirjaston oman kirjoitusasun', async ({ page }) => {
+  await avaaKirjasto(page, kirjasto([{ title: 'Alfa', tags: ['Cover'] }, { title: 'Beeta' }]));
+
+  await page.locator('.song-card', { hasText: 'Beeta' }).click();
+  await page.getByRole('button', { name: '+ Tag' }).click();
+  await page.getByLabel('New tag').fill('cover');
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await page.locator('.sheet').getByRole('button', { name: 'Save' }).click();
+
+  /* Kantaan asti: `getByLabel` ei erota kirjainkokoa, joten näkymästä luettu
+     nimi kelpuuttaisi myös väärän asun. */
+  await expect.poll(async () => JSON.parse(await tallennettuLaulu(page, 's1')).tags).toEqual([
+    'Cover',
+  ]);
+});
+
 test('tagin poisto editorissa poistaa sen myös kannasta', async ({ page }) => {
   await avaaLaulu(page, laulu({ tags: ['cover', 'kesken'] }));
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useI18n } from '../lib/i18n';
-import { normalizeTag, sameTag, uniqueTags } from '../lib/tags';
+import { matchExisting, normalizeTag, sameTag, uniqueTags } from '../lib/tags';
 
 interface Props {
   /** Laulun nykyiset tagit. */
@@ -36,15 +36,34 @@ export default function TagSheet({ tags, known, onSave, onClose }: Props) {
   const kaikki = useMemo(() => uniqueTags([...valitut, ...known], lang), [valitut, known, lang]);
   const paalla = (tag: string) => valitut.some((v) => sameTag(v, tag));
 
+  /*
+   * Päätös kokonaan updaterin sisällä: `paalla` lukee render-ajan tilaa, joten
+   * sen varassa tehty valinta näkisi vanhan arvon jos kaksi napautusta osuu
+   * samaan kierrokseen. Sama vaaraluokka kuin piirtokerroksen «yksi tapahtuma
+   * per kierros».
+   */
   function vaihda(tag: string) {
-    setValitut((prev) => (paalla(tag) ? prev.filter((v) => !sameTag(v, tag)) : [...prev, tag]));
+    setValitut((prev) =>
+      prev.some((v) => sameTag(v, tag)) ? prev.filter((v) => !sameTag(v, tag)) : [...prev, tag],
+    );
   }
 
   function lisaaUusi() {
-    const tag = normalizeTag(uusi);
     setUusi('');
-    if (!tag || paalla(tag)) return;
-    setValitut((prev) => [...prev, tag]);
+    setValitut((prev) => lisatty(prev));
+  }
+
+  /**
+   * Valinta kirjoitetun tagin kanssa.
+   *
+   * Asu kartoitetaan kirjastossa jo olevaan: vihje lupaa ettei kirjoitusasulla
+   * ole väliä, ja lupaus pitää vain jos «cover» löytää «Cover»in sen sijaan
+   * että tekisi siitä uuden asun.
+   */
+  function lisatty(prev: string[]): string[] {
+    const tag = matchExisting(uusi, kaikki);
+    if (!tag || prev.some((v) => sameTag(v, tag))) return prev;
+    return [...prev, tag];
   }
 
   return (
@@ -56,8 +75,7 @@ export default function TagSheet({ tags, known, onSave, onClose }: Props) {
           e.preventDefault();
           // Kesken oleva kenttä otetaan mukaan: kirjoitettu tagi jota ei ole
           // vielä lisätty katoaisi muuten tallennuksessa huomaamatta.
-          const tag = normalizeTag(uusi);
-          onSave(tag && !paalla(tag) ? [...valitut, tag] : valitut);
+          onSave(lisatty(valitut));
         }}
       >
         <h2>{t('tags.sheetTitle')}</h2>

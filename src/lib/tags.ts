@@ -20,7 +20,14 @@ export function normalizeTag(raw: string): string {
   return raw.trim().replace(/\s+/g, ' ');
 }
 
-/** Vertailumuoto: kirjainkoko ei erota tageja toisistaan. */
+/**
+ * Vertailumuoto: kirjainkoko ei erota tageja toisistaan.
+ *
+ * Kieli on kiinteä, toisin kuin aakkostuksessa (`collator(lang)`). Vertailumuoto
+ * ei saa riippua käyttöliittymän kielestä: muuten sama kirjasto yhdistäisi tagit
+ * eri tavalla eri kielellä, ja suomeksi yksi tagi hajoaisi englanniksi kahdeksi.
+ * Aakkostus on eri asia – se on näkymä, ei identiteetti.
+ */
 function vertailu(tag: string): string {
   return normalizeTag(tag).toLocaleLowerCase('fi');
 }
@@ -72,9 +79,17 @@ export function allTags(songs: Song[], lang: Lang): string[] {
   );
 }
 
-/** Onko laulussa annettu tagi. */
-export function hasTag(song: Song, tag: string): boolean {
-  return (song.tags ?? []).some((t) => sameTag(t, tag));
+/**
+ * Kirjoitettu tagi siinä asussa jossa se jo tunnetaan, jos se tunnetaan.
+ *
+ * «Tagi on sama, kirjoitatko sen Cover tai cover» on käyttäjälle luvattu, ja
+ * lupaus pitää vain jos kirjoitettu asu kartoitetaan olemassa olevaan. Muuten
+ * «cover» tallentuisi uutena asuna, ja se kumpi asu suodatinrivillä näkyy
+ * ratkeaisi siitä missä järjestyksessä laulut sattuvat kannasta tulemaan.
+ */
+export function matchExisting(tag: string, known: string[]): string {
+  const kirjoitettu = normalizeTag(tag);
+  return known.find((v) => sameTag(v, kirjoitettu)) ?? kirjoitettu;
 }
 
 /**
