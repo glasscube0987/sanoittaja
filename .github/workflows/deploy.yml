@@ -1,9 +1,13 @@
-name: Deploy to GitHub Pages
+name: Test and deploy
 
+# Testit ajetaan myös kehityshaaroissa, julkaisu vain mainista. Aiemmin ajo
+# käynnistyi vain mainissa, joten WebKit-kate – jota ei voi ajaa paikallisesti –
+# saatiin vasta samalla hetkellä kun muutos jo julkaistiin oikeaan sovellukseen.
 on:
   push:
     branches:
       - main
+      - 'claude/**'
   workflow_dispatch:
 
 permissions:
@@ -11,18 +15,19 @@ permissions:
   pages: write
   id-token: write
 
+# Haarakohtainen ryhmä: yhteisessä ryhmässä kehityshaaran push peruisi kesken
+# olevan julkaisun.
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    # Kiinnitetty eikä ubuntu-latest: ajokuva vaihtui 26.04:ään, jota tämän
-    # projektin Playwright ei tue («Playwright does not support chromium on
-    # ubuntu26.04-x64»). Selaintestit jäivät ajamatta ja julkaisu pysähtyi,
-    # vaikka koodissa ei ollut vikaa. Kiinnitys nostetaan kun Playwright on
-    # päivitetty versioon joka tuntee uuden ajokuvan.
-    runs-on: ubuntu-24.04
+    # Ajokuva oli hetken kiinnitetty 24.04:ään, koska Playwright 1.56 ei
+    # tuntenut 26.04:ää ja julkaisu pysähtyi siihen. Kiinnitys poistui kun
+    # Playwright päivitettiin; jos «Install browsers» kaatuu taas viestiin
+    # «does not support … on ubuntuXX», syy on sama ja lääke on sama.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
@@ -47,13 +52,16 @@ jobs:
         run: npm run test:e2e
 
       - name: Configure Pages
+        if: github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v5
+        if: github.ref == 'refs/heads/main'
         with:
           path: dist
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     environment:
