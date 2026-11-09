@@ -75,6 +75,17 @@ asettaa `.lyrics`-laatikkoon. Samasta syystä tekstikenttä saa leveytensä sama
 `chordSpan`-laskennasta kuin sointurivi: rivi ja sen soinnut vierittyvät yhtenä,
 eikä pitkän rivin loppupäästä puutu tekstiä.
 
+**Sanoituslaatikon sivuvierityksessä otsikot ja asetuspainikkeet pysyvät
+paikallaan** (`position: sticky`). Se vaatii kaksi asiaa, jotka kumpikin on jo
+kerran puuttunut: osioiden on oltava leveimmän rivin levyisiä (ruudukko, jonka
+raidan *vähimmäis*koko on `max-content`), koska tarttuva elementti pysyy vain
+oman vanhempansa sisällä; ja tarttumiskohta mitataan laatikon sisältöreunasta,
+joten laatikon täytettä ei lasketa siihen mukaan.
+
+**Tasalevyinen fontti kuuluu vain nuottikuvalle** – soinnuille, tahtilajeille ja
+kertausmerkeille (`.chip-row.notation`). Muu käyttöliittymä on yhdellä fontilla;
+sama vika on korjattu erikseen sekä tagi- että rivilakanasta.
+
 **Rivin toiminnot asuvat `LineSheet`issä**, eivät kohdistetun rivin
 työkalurivissä: sointurivi on painike ilman tekstikenttää, joten se ei voi
 saada kohdistusta, eikä keskellä olevaan pelkistä sointuriveistä koostuvaan
@@ -101,6 +112,17 @@ alle. `lib/keyboard.ts` seuraa `visualViewport`ia ja kertoo peitetyn osuuden,
 jonka `LiveView` asettaa näkymän alareunaksi. Laskenta on puhdas funktio, joten
 se testataan ilman selainta; selaintestissä `visualViewport` väärennetään,
 koska oikeaa näppäimistöä ei voi avata työpöytäselaimessa.
+
+**Kantavirhe ei saa hukkua.** Näkymä päivittyy heti ja kanta kirjoitetaan
+taustalla, joten epäonnistunut kirjoitus ei näy missään: laulu on ruudulla
+mutta ei kannassa. Aiemmin parikymmentä kohtaa kirjasi virheen vain konsoliin,
+ja epäonnistunut nauhoite katosi sanomatta. Jokainen taustalla ajettava
+kantatoiminto kulkee siksi `guard()`in kautta (`lib/failures.ts`), eikä kaavaa
+`.catch((err) => console.error(…))` kirjoiteta enää mihinkään. Ilmoitus
+näytetään `App`issa kaiken päällä ja pysyy kunnes se kuitataan. Koko sovellus on
+lisäksi virherajan sisällä (`ErrorBoundary`): rikkinäinen tietue kaataa listan
+joka avauksella, ja kaatumisnäkymän tärkein painike on **varmuuskopio**, joka
+lukee kannan suoraan eikä tarvitse kaatunutta käyttöliittymää.
 
 **Tagit kaventavat, eikä kirjainkoko erota niitä.** Laulun vaihe ei ole yksi
 tila-arvo, koska sama laulu voi olla yhtä aikaa «cover» ja «keikkakunto» –
@@ -160,7 +182,17 @@ asetteluvirheet ovat näkyneet vain kapealla näytöllä.
 **Tässä kehitysympäristössä on asennettuna vain Chromium.** `npm run test:e2e`
 yrittää käynnistää myös WebKitin ja epäonnistuu — käytä
 `npm run test:e2e:chromium`. WebKit-kate tulee CI:stä, eikä sitä pidä väittää
-ajetuksi paikallisesti.
+ajetuksi paikallisesti. Ympäristön selain on sidottu tiettyyn
+Playwright-versioon: jos testit kaatuvat viestiin «Executable doesn't exist»,
+projektin `@playwright/test` on jäänyt ympäristön versiosta jälkeen.
+
+**`getByLabel` ei erota kirjainkokoa.** Testi joka tarkistaa kirjoitusasun on
+luettava kannasta eikä näkymän nimestä; näkymästä luettuna se päästi
+sabotaasin läpi.
+
+**Ladontaviat testataan mittaamalla**, ei käytöksestä: `e2e/laatu.spec.ts`
+vertaa laatikoiden sijainteja ja fontteja, koska kolme sen vioista ei rikkonut
+yhtään toimintoa – näkymä vain ei näyttänyt sitä mitä sen piti.
 
 Piirtokerroksen (`components/Annotations.tsx`) testeissä on toistunut kaksi
 sokeaa pistettä, jotka molemmat päästivät läpi julkaistun vian:
@@ -195,4 +227,7 @@ kuvakaappaus puhelimen koolla.
 
 Push `main`-haaraan ajaa testit ja julkaisee GitHub Pagesiin
 (`.github/workflows/deploy.yml`). `deploy` on `needs: build`, joten punainen ajo
-ei julkaise mitään.
+ei julkaise mitään. Sama ajo käynnistyy myös `claude/**`-haaroissa **ilman
+julkaisua**: WebKit-kate saadaan siis ennen kuin muutos viedään `main`iin.
+
+Mitä tehdään seuraavaksi ja miksi siinä järjestyksessä: `SUUNNITELMA.md`.
