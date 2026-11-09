@@ -86,7 +86,7 @@ export default function SettingsSheet({
           <label>{t('settings.notation')}</label>
           {/* Sama chip-rivi kuin kielivalinnassa; vaihto tulee voimaan heti,
               koska transponointi lukee asetuksen vasta napautuksessa. */}
-          <div className="chip-row">
+          <div className="chip-row notation">
             {NOTATIONS.map((option) => (
               <button
                 type="button"

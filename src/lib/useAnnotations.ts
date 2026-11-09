@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { ANNOTATIONS_EVENT, listAnnotations } from './db';
+import { guard } from './failures';
 import type { Annotation } from './types';
 
 /**
@@ -26,9 +27,7 @@ export function useAnnotations(songId: string): [Annotation[], Dispatch<SetState
   const lue = useCallback(() => {
     const siivoa = ensimmainen.current;
     ensimmainen.current = false;
-    listAnnotations(songId, siivoa)
-      .then(setNotes)
-      .catch((err) => console.error('Merkintöjen luku epäonnistui', err));
+    guard('read', listAnnotations(songId, siivoa).then(setNotes));
   }, [songId]);
 
   useEffect(() => {

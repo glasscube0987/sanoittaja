@@ -20,6 +20,7 @@ import { requestPersistence } from './lib/persist';
 import { AUTO_BACKUP_CHECK_MS, markLibraryChanged, maybeAutoBackup } from './lib/sync/autoBackup';
 import type { Setlist, Song } from './lib/types';
 import { newSong, uid } from './lib/types';
+import { guard, onFailure, reportFailure, type Failure } from './lib/failures';
 import { ideaTitle } from './lib/ideas';
 import { allTags } from './lib/tags';
 import type { IdeaRecording } from './components/IdeaSheet';
@@ -68,9 +69,20 @@ export default function App() {
   }, [lang]);
 
   useEffect(() => {
-    listSongs().then(setSongs);
-    listSetlists().then(setSetlists);
+    /* Lukuvirhe näytetään ja kirjasto avataan tyhjänä. Ilman tätä `songs` jäisi
+       nulliksi ja ruutu valkoiseksi ilman mitään selitystä. */
+    listSongs()
+      .then(setSongs)
+      .catch((err) => {
+        reportFailure('read', err);
+        setSongs([]);
+      });
+    guard('read', listSetlists().then(setSetlists));
   }, []);
+
+  // Viimeisin kantavirhe. Yksi riittää: ne johtuvat lähes aina samasta syystä.
+  const [failure, setFailure] = useState<Failure | null>(null);
+  useEffect(() => onFailure(setFailure), []);
 
   const updateSetlist = useCallback((list: Setlist) => {
     setSetlists((prev) => {
@@ -78,14 +90,14 @@ export default function App() {
       return known ? prev.map((l) => (l.id === list.id ? list : l)) : [...prev, list];
     });
     markLibraryChanged();
-    saveSetlist(list).catch((err) => console.error('Setin tallennus epäonnistui', err));
+    guard('save', saveSetlist(list));
   }, []);
 
   const removeSetlist = useCallback((id: string) => {
     // Setin poisto ei koske lauluihin: ne ovat edelleen kaikissa lauluissa.
     setSetlists((prev) => prev.filter((l) => l.id !== id));
     markLibraryChanged();
-    dbDeleteSetlist(id).catch((err) => console.error('Setin poisto epäonnistui', err));
+    guard('delete', dbDeleteSetlist(id));
   }, []);
 
   /*
@@ -129,7 +141,7 @@ export default function App() {
       window.setTimeout(() => {
         timers.delete(song.id);
         markLibraryChanged();
-        saveSong(song).catch((err) => console.error('Tallennus epäonnistui', err));
+        guard('save', saveSong(song));
       }, 400),
     );
   }, []);
@@ -146,7 +158,7 @@ export default function App() {
   const startSong = useCallback((song: Song, focus = false) => {
     setSongs((prev) => [song, ...(prev ?? [])]);
     markLibraryChanged();
-    saveSong(song).catch((err) => console.error('Tallennus epäonnistui', err));
+    guard('save', saveSong(song));
     setView({ name: 'editor', songId: song.id, focus });
   }, []);
 
@@ -164,15 +176,18 @@ export default function App() {
     (rec: IdeaRecording) => {
       const song = newSong(ideaTitle());
       startSong(song);
-      saveRecording({
-        id: uid(),
-        songId: song.id,
-        name: translate(lang, 'rec.defaultName', { date: formatDateTime(Date.now(), lang) }),
-        mimeType: rec.mimeType,
-        durationMs: rec.durationMs,
-        createdAt: Date.now(),
-        blob: rec.blob,
-      }).catch((err) => console.error('Nauhoitteen tallennus epäonnistui', err));
+      guard(
+        'save',
+        saveRecording({
+          id: uid(),
+          songId: song.id,
+          name: translate(lang, 'rec.defaultName', { date: formatDateTime(Date.now(), lang) }),
+          mimeType: rec.mimeType,
+          durationMs: rec.durationMs,
+          createdAt: Date.now(),
+          blob: rec.blob,
+        }),
+      );
     },
     [lang, startSong],
   );
@@ -195,13 +210,13 @@ export default function App() {
     );
     setView({ name: 'list' });
     markLibraryChanged();
-    dbDeleteSong(songId).catch((err) => console.error('Poisto epäonnistui', err));
+    guard('delete', dbDeleteSong(songId));
   }, []);
 
   const reload = useCallback(() => {
     markLibraryChanged();
-    listSongs().then(setSongs);
-    listSetlists().then(setSetlists);
+    guard('read', listSongs().then(setSongs));
+    guard('read', listSetlists().then(setSetlists));
   }, []);
 
   if (songs === null) return null;
@@ -221,7 +236,7 @@ export default function App() {
     }
     setHistory((stack) => stack.slice(0, -1));
     setSongs((prev) => (prev ? prev.map((s) => (s.id === restored.id ? restored : s)) : prev));
-    saveSong(restored).catch((err) => console.error('Tallennus epäonnistui', err));
+    guard('save', saveSong(restored));
   }
 
   // Jono ratkaistaan vasta tässä, jotta live-tila näyttää muokkaukset heti ja
@@ -233,6 +248,20 @@ export default function App() {
 
   return (
     <LangContext.Provider value={i18n}>
+      {/* Kantavirhe kaiken päällä, myös live-tilan: merkinnän tallennus voi
+          epäonnistua juuri siellä. Ilmoitus pysyy kunnes se kuitataan, koska
+          ohi vilahtava viesti keikan keskellä jäisi näkemättä. */}
+      {failure && (
+        <div className="failure-banner" role="alert">
+          <span>
+            {i18n.t(`fail.${failure.kind}`)}
+            <small>{failure.message}</small>
+          </span>
+          <button className="ghost" onClick={() => setFailure(null)} aria-label={i18n.t('common.close')}>
+            ✕
+          </button>
+        </div>
+      )}
       {editing ? (
         <SongEditor
           song={editing}

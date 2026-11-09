@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { deleteRecording, listRecordings, saveRecording } from '../lib/db';
+import { guard, reportFailure } from '../lib/failures';
 import { formatDateTime, useI18n, type T } from '../lib/i18n';
 import { formatDuration, startRecording, type ActiveRecording } from '../lib/recorder';
 import type { Recording } from '../lib/types';
@@ -18,7 +19,7 @@ export default function RecordingsPanel({ songId }: Props) {
   const timer = useRef<number>();
 
   useEffect(() => {
-    listRecordings(songId).then(setRecordings);
+    guard('read', listRecordings(songId).then(setRecordings));
   }, [songId]);
 
   useEffect(() => () => window.clearInterval(timer.current), []);
@@ -37,8 +38,15 @@ export default function RecordingsPanel({ songId }: Props) {
         createdAt: Date.now(),
         blob,
       };
-      await saveRecording(rec);
-      setRecordings((prev) => [rec, ...prev]);
+      /* Nauhoite näkyviin vain jos se on kannassa. Aiemmin epäonnistunut
+         tallennus katkaisi funktion hiljaa: otto katosi sanomatta mitään,
+         ja se on juuri se tiedosto jota ei voi tehdä uudelleen. */
+      try {
+        await saveRecording(rec);
+        setRecordings((prev) => [rec, ...prev]);
+      } catch (err) {
+        reportFailure('save', err);
+      }
       setStatus('');
       return;
     }
@@ -57,13 +65,13 @@ export default function RecordingsPanel({ songId }: Props) {
   function rename(rec: Recording, name: string) {
     const updated = { ...rec, name };
     setRecordings((prev) => prev.map((r) => (r.id === rec.id ? updated : r)));
-    saveRecording(updated).catch((err) => console.error(err));
+    guard('save', saveRecording(updated));
   }
 
   async function remove(rec: Recording) {
     if (!confirm(t('rec.confirmDelete', { name: rec.name }))) return;
     setRecordings((prev) => prev.filter((r) => r.id !== rec.id));
-    await deleteRecording(rec.id);
+    guard('delete', deleteRecording(rec.id));
   }
 
   return (

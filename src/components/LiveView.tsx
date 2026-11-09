@@ -24,6 +24,7 @@ import {
 } from '../lib/annotate';
 import type { Point } from '../lib/annotate';
 import { deleteAnnotation, saveAnnotation } from '../lib/db';
+import { guard } from '../lib/failures';
 import { useAnnotations } from '../lib/useAnnotations';
 import type { Annotation, Song, TextAnnotation } from '../lib/types';
 import { isStroke, isText, uid } from '../lib/types';
@@ -120,13 +121,13 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
       createdAt: Date.now(),
     };
     setNotes((prev) => [...prev, note]);
-    saveAnnotation(note).catch((err) => console.error('Merkinnän tallennus epäonnistui', err));
+    guard('save', saveAnnotation(note));
   }
 
   function poistaMerkinta(id: string) {
     setNotes((prev) => prev.filter((n) => n.id !== id));
     setEditing((nyt) => (nyt === id ? null : nyt));
-    deleteAnnotation(id).catch((err) => console.error('Merkinnän poisto epäonnistui', err));
+    guard('delete', deleteAnnotation(id));
   }
 
   /* --- Tekstikentät --- */
@@ -168,7 +169,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
     };
     setNotes((prev) => [...prev, note]);
     setEditing(note.id);
-    saveAnnotation(note).catch((err) => console.error('Merkinnän tallennus epäonnistui', err));
+    guard('save', saveAnnotation(note));
   }
 
   /** Muokkaa kenttää näytöllä; kantaan kirjoitetaan vasta kun ote irtoaa. */
@@ -181,7 +182,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
   function tallennaTeksti(id: string) {
     const note = notesRef.current.find((n) => n.id === id);
     if (note && isText(note)) {
-      saveAnnotation(note).catch((err) => console.error('Merkinnän tallennus epäonnistui', err));
+      guard('save', saveAnnotation(note));
     }
   }
 
@@ -283,11 +284,11 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
       const jalkeen = new Set(tila.nyt.map((n) => n.id));
       for (const note of tila.alku) {
         if (jalkeen.has(note.id)) continue;
-        deleteAnnotation(note.id).catch((err) => console.error('Merkinnän poisto epäonnistui', err));
+        guard('delete', deleteAnnotation(note.id));
       }
       for (const note of tila.nyt) {
         if (ennen.has(note.id)) continue;
-        saveAnnotation(note).catch((err) => console.error('Merkinnän tallennus epäonnistui', err));
+        guard('save', saveAnnotation(note));
       }
       return;
     }
@@ -706,19 +707,27 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
         <button onClick={toggle} className="primary" aria-label={t(running ? 'live.pause' : 'live.play')}>
           <Icon name={running ? 'pause' : 'play'} size={20} />
         </button>
-        <button
-          onClick={() => adjust(setSpeed, -SPEED_STEP, SPEED_MIN, SPEED_MAX)}
-          aria-label={t('live.slower')}
-        >
-          −
-        </button>
-        <span className="live-speed">{t('live.speed', { speed })}</span>
-        <button
-          onClick={() => adjust(setSpeed, SPEED_STEP, SPEED_MIN, SPEED_MAX)}
-          aria-label={t('live.faster')}
-        >
-          +
-        </button>
+        {/* Nopeus yhtenä säätimenä: − luku +. Aiemmin luvun paikalla oli teksti
+            «Nopeus 20», joka sai sen tilan mikä painikkeilta jäi – puhelimessa
+            siitä näkyi «N.», eikä säädettävää arvoa nähnyt lainkaan. Sana on
+            nyt ruudunlukijan nimessä ja luku aina näkyvissä. */}
+        <span className="live-stepper" role="group" aria-label={t('live.speed', { speed })}>
+          <button
+            onClick={() => adjust(setSpeed, -SPEED_STEP, SPEED_MIN, SPEED_MAX)}
+            aria-label={t('live.slower')}
+          >
+            −
+          </button>
+          <span className="live-speed" aria-hidden>
+            {speed}
+          </span>
+          <button
+            onClick={() => adjust(setSpeed, SPEED_STEP, SPEED_MIN, SPEED_MAX)}
+            aria-label={t('live.faster')}
+          >
+            +
+          </button>
+        </span>
         <button
           onClick={() => adjust(setFontSize, -FONT_STEP, FONT_MIN, FONT_MAX)}
           aria-label={t('live.smallerText')}
@@ -738,7 +747,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
         >
           <Icon name="pen" size={20} />
         </button>
-        <button className="ghost" onClick={onClose} aria-label={t('live.exit')}>
+        <button className="ghost live-exit" onClick={onClose} aria-label={t('live.exit')}>
           ✕
         </button>
         </div>

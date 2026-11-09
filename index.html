@@ -9,7 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="./icon.svg" />
+    <!-- PNG eikä SVG: iOS ei käytä SVG:tä kotiruutukuvakkeena, ja ilman tätä
+         kotiruudulle päätyy kuvakaappaus sivusta. Tehdään: scripts/kuvakkeet.mjs -->
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <title>Sanoittaja</title>
   </head>
   <body>

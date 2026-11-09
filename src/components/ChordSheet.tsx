@@ -114,7 +114,7 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
           autoComplete="off"
           spellCheck={false}
         />
-        <div className="chip-row">
+        <div className="chip-row notation">
           {chips.map((chip) => (
             <button type="button" key={chip} onClick={() => onSave(chip, pos)}>
               {chip}

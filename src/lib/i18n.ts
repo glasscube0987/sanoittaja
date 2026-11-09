@@ -24,6 +24,16 @@ const en = {
   'common.close': 'Close',
   'common.error': 'Error: {message}',
 
+  'fail.save': 'Saving failed — your latest change is not stored on this device.',
+  'fail.delete': 'Deleting failed — the item may come back.',
+  'fail.read': 'Stored data could not be read.',
+
+  'crash.title': 'Something went wrong',
+  'crash.text':
+    'The app ran into an error and cannot show this view. Take a backup first — it reads your songs straight from this device — and then reload.',
+  'crash.backup': 'Download backup',
+  'crash.reload': 'Reload',
+
   'list.settings': 'Settings',
   'list.newSong': '+ New song',
   'list.newTitle': 'New song',
@@ -272,6 +282,16 @@ const fi: Record<Key, string> = {
   'common.delete': 'Poista',
   'common.close': 'Sulje',
   'common.error': 'Virhe: {message}',
+
+  'fail.save': 'Tallennus epäonnistui — viimeisin muutos ei ole tallessa tässä laitteessa.',
+  'fail.delete': 'Poisto epäonnistui — kohde voi palata näkyviin.',
+  'fail.read': 'Tallennettua tietoa ei voitu lukea.',
+
+  'crash.title': 'Jokin meni vikaan',
+  'crash.text':
+    'Sovellus törmäsi virheeseen eikä voi näyttää tätä näkymää. Ota ensin varmuuskopio — se lukee laulusi suoraan tästä laitteesta — ja lataa sovellus sitten uudelleen.',
+  'crash.backup': 'Lataa varmuuskopio',
+  'crash.reload': 'Lataa uudelleen',
 
   'list.settings': 'Asetukset',
   'list.newSong': '+ Uusi laulu',

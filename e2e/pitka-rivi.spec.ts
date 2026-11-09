@@ -81,7 +81,9 @@ test('rivin lopussa tekstiä on siellä missä soinnutkin', async ({ page }) => 
   });
 
   // Teksti ulottuu näkyvän alueen oikeaan reunaan asti eikä lopu kesken.
-  expect(mitat.tekstiOikea).toBeGreaterThanOrEqual(mitat.laatikkoOikea - 8);
+  // Väliin jää rivin ja laatikon täyte (4 + 6 px) sekä kehys: vierityksen
+  // loppupäässä on nyt sama reunus kuin alussa.
+  expect(mitat.tekstiOikea).toBeGreaterThanOrEqual(mitat.laatikkoOikea - 12);
   // Ja sointu on yhä oman kirjaimensa kohdalla; sarake on noin 9,6 px.
   expect(Math.abs(mitat.sointuX - mitat.merkkiX)).toBeLessThan(5);
 });

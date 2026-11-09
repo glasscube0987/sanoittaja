@@ -51,6 +51,18 @@ test('yläpalkin mikrofoni nauhoittaa idean lauluksi', async ({ page, browserNam
     expect(tallennetut[0].songId).not.toBe('testi');
   }
 
+  /*
+   * Sama rajoite toiseen suuntaan: WebKitin testikanta hylkää blobin, joten
+   * juuri siellä virheilmoituksen on näyttävä. Tämä on ainoa testi jossa
+   * tallennus epäonnistuu oikeasti eikä väärennettynä – ja se on se virhe
+   * joka aiemmin hukkui konsoliin.
+   */
+  if (browserName === 'webkit') {
+    await expect(page.getByRole('alert')).toContainText('Saving failed');
+  } else {
+    await expect(page.getByRole('alert')).toHaveCount(0);
+  }
+
   expect(await laulujenNimet(page)).toHaveLength(2);
   expect(await mikkiAuki(page)).toBe(0);
 });

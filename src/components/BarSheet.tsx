@@ -174,7 +174,7 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
           spellCheck={false}
         />
 
-        <div className="chip-row">
+        <div className="chip-row notation">
           {chips.map((chip) => (
             <button type="button" key={chip} onClick={() => addChord(chip)}>
               {chip}
@@ -198,7 +198,7 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
             eikä merkintä siksi kuulu koko riville. */}
         <div className="field">
           <label htmlFor="bar-meter">{t('bars.meter', { index: index + 1 })}</label>
-          <div className="chip-row">
+          <div className="chip-row notation">
             <button type="button" className={meter ? '' : 'primary'} onClick={() => setMeter('')}>
               —
             </button>
@@ -228,7 +228,7 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
             avata ja sulkea mistä tahansa tahdista, myös rivien yli. */}
         <div className="field">
           <label>{t('bars.repeat', { index: index + 1 })}</label>
-          <div className="chip-row">
+          <div className="chip-row notation">
             <button
               type="button"
               className={repeat.start ? 'primary' : ''}
@@ -247,7 +247,7 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
           {/* Kertaluku on mielekäs vain sulkevalle merkille. */}
           {repeat.end && (
             <>
-              <div className="chip-row">
+              <div className="chip-row notation">
                 <button
                   type="button"
                   className={!repeat.times || repeat.times === 2 ? 'primary' : ''}
