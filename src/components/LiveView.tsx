@@ -15,7 +15,6 @@ import {
 } from '../lib/live';
 import {
   COLORS,
-  eraseAlong,
   ERASER_RADII,
   isBlank,
   STROKE_WIDTHS,
@@ -29,7 +28,7 @@ import { useAnnotations } from '../lib/useAnnotations';
 import type { Annotation, Song, TextAnnotation } from '../lib/types';
 import { isStroke, isText, uid } from '../lib/types';
 import type { DrawMode, DrawTool, ErasePhase, TextTools } from './Annotations';
-import type { EraseSegment } from './SongSheet';
+import type { EraseStroke } from './SongSheet';
 import Icon from './Icon';
 import SongSheet from './SongSheet';
 
@@ -271,7 +270,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
    */
   const pyyhkaisy = useRef<{ alku: Annotation[]; nyt: Annotation[] } | null>(null);
 
-  function pyyhi(phase: ErasePhase, segment: (lineId: string) => EraseSegment | null) {
+  function pyyhi(phase: ErasePhase, erase: EraseStroke) {
     if (phase === 'start') pyyhkaisy.current = { alku: notes, nyt: notes };
 
     const tila = pyyhkaisy.current;
@@ -304,8 +303,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
         seuraava.push(note);
         continue;
       }
-      const jana = segment(note.lineId);
-      const palat = jana ? eraseAlong(note.points, jana.from, jana.to, sade) : null;
+      const palat = erase(note, sade);
       if (!palat) {
         seuraava.push(note);
         continue;
@@ -512,6 +510,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
           onErase={pyyhi}
           text={tekstityokalut}
           fontSize={fontSize}
+          wrap
           onPenSeen={() => setTool((prev) => (prev.penSeen ? prev : { ...prev, penSeen: true }))}
         />
         {/* Loppuun tilaa, jotta viimeinen rivi ehtii ruudun keskelle. */}

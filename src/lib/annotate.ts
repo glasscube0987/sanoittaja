@@ -6,11 +6,15 @@
  * riviin, ja sen pisteet ovat **em-yksiköissä**: yksi yksikkö on rivin
  * fonttikoko.
  *
- * Fonttikoko eikä rivin leveys, koska lehti on tasalevyistä tekstiä eikä
- * rivity: silloin jokainen kirjaimen paikka on fonttikoon monikerta, ja
- * em-yksiköissä piirretty veto seuraa kirjaimia kun tekstikokoa muutetaan.
- * Leveyteen suhteutettuna veto jäi paikalleen tekstin kasvaessa, koska rivin
- * leveys on säiliön leveys eikä muutu tekstikoon mukana.
+ * Fonttikoko eikä rivin leveys, koska lehti on tasalevyistä tekstiä: jokainen
+ * kirjaimen paikka on fonttikoon monikerta, ja em-yksiköissä piirretty veto
+ * seuraa kirjaimia kun tekstikokoa muutetaan. Leveyteen suhteutettuna veto jäi
+ * paikalleen tekstin kasvaessa, koska rivin leveys on säiliön leveys eikä muutu
+ * tekstikoon mukana.
+ *
+ * Koordinaatit ovat aina **taittamattoman** rivin. Kapealla näytöllä rivi
+ * taittuu, mutta se on näyttömuunnos (`wrap.ts`) eikä muuta sitä mitä tänne
+ * tallennetaan – sama merkintä kelpaa puhelimelle ja iPadille.
  *
  * Sekä x että y jaetaan samalla luvulla, jolloin muoto säilyy – ympyrä pysyy
  * ympyränä. Origo on rivin vasen yläkulma, joten veto seuraa riviään kun

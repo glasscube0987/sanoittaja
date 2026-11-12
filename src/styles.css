@@ -1268,6 +1268,15 @@ button.small {
   margin-bottom: 0.2em;
 }
 
+/* Merkin leveyden mitta rivitystä varten: lehden fontilla, poissa ladonnasta. */
+.song-sheet .sheet-measure {
+  position: absolute;
+  visibility: hidden;
+  font-family: var(--mono);
+  white-space: pre;
+  pointer-events: none;
+}
+
 .song-sheet .sheet-line {
   margin-bottom: 0.15em;
   /* Merkintäkerros asemoituu rivin sisään, jolloin sijainti tulee selaimelta

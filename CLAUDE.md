@@ -58,6 +58,33 @@ kuuluu riviin mutta saa ulottua sen ulkopuolelle (`overflow: visible`), joten
 mikä tahansa merkintöihin kohdistuva osumatesti kuuluu **lehden tasolle** eikä
 yhden rivin sisään.
 
+**Rivitys on näyttömuunnos, ei tallennusmuoto.** Live-tilassa näytölle
+mahtumaton rivi taittuu sanarajasta (`lib/wrap.ts`) ja sointurivi tahtiviivasta
+(`wrapBarLine`). Rivitys on **laitekohtainen** – puhelin taittaa, iPad näyttää
+rivin kokonaisena – koska lauluun tallennettu katko olisi katkaissut rivit myös
+siellä missä ne mahtuvat. Siksi merkinnät tallennetaan edelleen suhteessa
+**taittamattomaan** riviin, ja taitettu näkymä siirtää ne näytettäessä sille
+näyttöriville jolle niiden sana päätyi; näytölle piirretty viedään samalla
+muunnoksella takaisin. Tallennusmuotoon ei koskettu, eikä mikään vanhene kun
+tekstikoko tai näyttö vaihtuu. Kolme asiaa, jotka kukin olivat ensin väärin:
+
+- **Veto siirtyy yhtenä kappaleena**, ei pisteittäin. Sanan ympärille piirretty
+  ympyrä ylittää aina vähän sanansa reunat, ja pisteittäin siirrettynä sen kaari
+  ilmestyisi viereiselle näyttöriville. Vain pitkä, matala veto joka on
+  kahdella taitoksella jaetaan – alleviivaus taittokohdan yli.
+- **Taitokset eivät ole yhtä korkeita.** Sointurivi ladotaan vain niille
+  taitoksille joiden yllä on sointuja; tyhjä sointurivi jokaisella jatkorivillä
+  näytti siltä kuin säe olisi hajonnut pätkiksi. Siirtymä mitataan siksi
+  taitoksittain tekstirivistä, ei yhdestä rivikorkeudesta.
+- **Taitetun rivin lopun tyhjä tila ei vastaa mitään kohtaa taittamattomalla
+  rivillä.** Sinne piirretty asetetaan oman rivinsä loppuun, muuten se hyppäisi
+  seuraavan näyttörivin alkuun kun sormi nousee.
+
+Mittaaminen on sallittua vain koska taitettu rivi on aina näytöllä: **tuloste
+ei rivity**, ja yhdellä palalla kaikki muunnokset ovat identiteettejä. Tiedossa
+oleva raja: usean rivin yli piirretty iso kuvio (laatikko kertosäkeen ympärillä)
+ei täsmää toisella laitteella, koska taitettu kertosäe on korkeampi.
+
 **Merkintöjä on kahta lajia** (`Annotation` on erotteleva unioni): veto ja
 tekstikenttä. Vedot piirtyvät SVG-kerrokseen, tekstikentät omaan
 HTML-kerrokseensa sen alle, ja kerroksista **vain yksi ottaa kosketuksia
@@ -189,6 +216,11 @@ projektin `@playwright/test` on jäänyt ympäristön versiosta jälkeen.
 **`getByLabel` ei erota kirjainkokoa.** Testi joka tarkistaa kirjoitusasun on
 luettava kannasta eikä näkymän nimestä; näkymästä luettuna se päästi
 sabotaasin läpi.
+
+**Synteettinen ele pysyy elementissä josta se alkoi.** Sovellus kaappaa
+osoittimen, joten rivin reunan yli jatkuva veto kuuluu yhä riville jolta se
+alkoi. Testi joka lähettää jokaisen pisteen sille elementille joka kohdassa
+sattuu olemaan, piirtää ympyrästä puolikkaan (`e2e/rivitys.spec.ts`, `laheta`).
 
 **Ladontaviat testataan mittaamalla**, ei käytöksestä: `e2e/laatu.spec.ts`
 vertaa laatikoiden sijainteja ja fontteja, koska kolme sen vioista ei rikkonut

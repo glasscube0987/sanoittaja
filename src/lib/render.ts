@@ -13,7 +13,7 @@ import type { BarRepeat, LyricLine } from './types';
  * niin, että niiden väliin jää vähintään yksi väli – muuten ne sulautuisivat
  * yhdeksi lukukelvottomaksi merkkijonoksi.
  */
-export function chordLineText(line: LyricLine): string {
+export function chordLineText(line: Pick<LyricLine, 'chords'>): string {
   let out = '';
   for (const chord of [...line.chords].sort((a, b) => a.pos - b.pos)) {
     const start = out.length === 0 ? chord.pos : Math.max(chord.pos, out.length + 1);
@@ -25,12 +25,6 @@ export function chordLineText(line: LyricLine): string {
 /** Tahdin vähimmäisleveys, jotta tyhjäkin tahti näkyy tahtina. */
 const MIN_BAR_WIDTH = 2;
 
-/**
- * Sointurivi tekstinä: `| Am  | F   | C   | G   |`.
- *
- * Tahdit tasataan rivin leveimmän mukaan, jotta tahtiviivat asettuvat
- * allekkain ja tahtien kesto on luettavissa silmäyksellä.
- */
 /** Kertausmerkkien ladonta-asetukset. */
 export interface RepeatLayout {
   marks?: BarRepeat[];
@@ -55,15 +49,23 @@ function barLine(before: BarRepeat | undefined, after: BarRepeat | undefined): s
   return open || '|';
 }
 
-export function barLineText(
-  bars: string[],
-  meters: string[] = [],
-  gutter = 0,
-  repeats: RepeatLayout = {},
-): string {
-  if (bars.length === 0) return '';
-  const marks = repeats.marks ?? [];
+/** Sointurivin ladonnan osat, yhteiset koko riville ja sen taitoksille. */
+interface BarRowParts {
+  marks: BarRepeat[];
+  cells: string[];
+  /** Tahdin leveys: rivin levein, jotta tahtiviivat asettuvat allekkain. */
+  width: number;
+  prefix: string;
+  /** Avaavan tahtiviivan sarakkeen leveys kertausmerkkeineen. */
+  headWidth: number;
+}
 
+function barRowParts(
+  bars: string[],
+  meters: string[],
+  gutter: number,
+  repeats: RepeatLayout,
+): BarRowParts {
   /*
    * Tahtilaji kuuluu siihen tahtiin josta laji vaihtuu, joten se kirjoitetaan
    * tahtiviivan jälkeen tahdin alkuun – paitsi rivin ensimmäisessä tahdissa,
@@ -75,24 +77,116 @@ export function barLineText(
     return i > 0 && meter ? `${meter} ${content}` : content;
   });
 
-  const width = Math.max(MIN_BAR_WIDTH, ...cells.map((cell) => cell.length));
   const lead = (meters[0] ?? '').trim();
-  // Johtava merkintä omassa sarakkeessaan: ilman varattua tilaa merkitty rivi
-  // liukuisi sivuun muiden sointurivien tahtiviivoista.
-  const prefix = (lead ? `${lead} ` : '').padStart(gutter);
+  return {
+    marks: repeats.marks ?? [],
+    cells,
+    width: Math.max(MIN_BAR_WIDTH, ...cells.map((cell) => cell.length)),
+    // Johtava merkintä omassa sarakkeessaan: ilman varattua tilaa merkitty rivi
+    // liukuisi sivuun muiden sointurivien tahtiviivoista.
+    prefix: (lead ? `${lead} ` : '').padStart(gutter),
+    /*
+     * Avaava `|:` on merkin leveämpi kuin `|`, joten kertaava rivi liukuisi
+     * sivuun muista sointuriveistä. Sama ratkaisu kuin johtavalla tahtilajilla:
+     * merkille varataan kiinteä tila, jos laulussa on yksikin avaava kertaus.
+     */
+    headWidth: 1 + (repeats.gutter ?? 0),
+  };
+}
 
-  /*
-   * Avaava `|:` on merkin leveämpi kuin `|`, joten kertaava rivi liukuisi
-   * sivuun muista sointuriveistä. Sama ratkaisu kuin johtavalla tahtilajilla:
-   * merkille varataan kiinteä tila, jos laulussa on yksikin avaava kertaus.
-   */
-  const head = barLine(undefined, marks[0]).padEnd(1 + (repeats.gutter ?? 0));
+/**
+ * Tahdit `alku`…`loppu − 1` omana rivinään.
+ *
+ * Koko rivi on sama funktio koko välillä. Taitoksessa rivi alkaa avaavalla ja
+ * päättyy sulkevalla tahtiviivalla, joten taittokohdan `:||:` jakautuu
+ * itsestään: `:|` jää edellisen rivin loppuun ja `|:` aloittaa seuraavan –
+ * niin kuin nuotissa rivin vaihtuessa.
+ */
+function barChunk(parts: BarRowParts, alku: number, loppu: number): string {
+  const { marks, cells, width, prefix, headWidth } = parts;
+  // Jatkorivillä johtavan merkinnän paikka on tyhjä, mutta varattu: tahtiviivat
+  // pysyvät allekkain ensimmäisen rivin kanssa.
+  const lead = alku === 0 ? prefix : ' '.repeat(prefix.length);
+  const head = barLine(undefined, marks[alku]).padEnd(headWidth);
+  let inner = '';
+  for (let i = alku; i < loppu; i++) {
+    inner += (i === alku ? '' : barLine(marks[i - 1], marks[i])) + ` ${cells[i].padEnd(width)} `;
+  }
+  return `${lead}${head}${inner}${barLine(marks[loppu - 1], undefined)}`;
+}
 
-  const inner = cells
-    .map((cell, i) => (i === 0 ? '' : barLine(marks[i - 1], marks[i])) + ` ${cell.padEnd(width)} `)
-    .join('');
+/**
+ * Sointurivi tekstinä: `| Am  | F   | C   | G   |`.
+ *
+ * Tahdit tasataan rivin leveimmän mukaan, jotta tahtiviivat asettuvat
+ * allekkain ja tahtien kesto on luettavissa silmäyksellä.
+ */
+export function barLineText(
+  bars: string[],
+  meters: string[] = [],
+  gutter = 0,
+  repeats: RepeatLayout = {},
+): string {
+  if (bars.length === 0) return '';
+  return barChunk(barRowParts(bars, meters, gutter, repeats), 0, bars.length);
+}
 
-  return `${prefix}${head}${inner}${barLine(marks[bars.length - 1], undefined)}`;
+/** Sointurivin taitos: omalla näyttörivillään ladottu pala tahteja. */
+export interface BarSegment {
+  /** Sarake, josta pala alkaa taittamattomalla rivillä. */
+  from: number;
+  /** Montako saraketta palan sisältö on siirtynyt vasemmalle. */
+  shift: number;
+  text: string;
+}
+
+/**
+ * Jakaa sointurivin paloiksi, joista jokainen mahtuu `cols` sarakkeeseen.
+ *
+ * Katkaistaan vain tahtiviivasta. Jokainen pala alkaa samasta sarakkeesta kuin
+ * ensimmäinen, joten tahtiviivat asettuvat allekkain myös taitettuna.
+ *
+ * `from` ja `shift` kertovat merkinnöille mihin kohtaan taittamatonta riviä
+ * pala kuuluu; ks. `lib/wrap.ts`. Tahdin sisältö on palassa täsmälleen samassa
+ * kohdassa suhteessa tahtiviivaansa kuin taittamattomalla rivillä, joten
+ * soinnun ympärille piirretty ympyrä osuu sointuunsa.
+ */
+export function wrapBarLine(
+  bars: string[],
+  meters: string[] = [],
+  gutter = 0,
+  repeats: RepeatLayout = {},
+  cols = Infinity,
+): BarSegment[] {
+  if (bars.length === 0) return [{ from: 0, shift: 0, text: '' }];
+  const parts = barRowParts(bars, meters, gutter, repeats);
+  const koko = barChunk(parts, 0, bars.length);
+  if (!Number.isFinite(cols) || koko.length <= cols) return [{ from: 0, shift: 0, text: koko }];
+
+  // Tahtien alkusarakkeet taittamattomalla rivillä: erotin ja itse tahti.
+  const sisalto = parts.prefix.length + parts.headWidth;
+  const erotin: number[] = [parts.prefix.length];
+  const tahti: number[] = [sisalto];
+  for (let i = 1; i < bars.length; i++) {
+    erotin[i] = tahti[i - 1] + parts.width + 2;
+    tahti[i] = erotin[i] + barLine(parts.marks[i - 1], parts.marks[i]).length;
+  }
+
+  const palat: BarSegment[] = [];
+  let alku = 0;
+  while (alku < bars.length) {
+    // Niin monta tahtia kuin mahtuu, mutta aina vähintään yksi: liian leveä
+    // tahti valuu yli mieluummin kuin jää kokonaan pois.
+    let loppu = alku + 1;
+    while (loppu < bars.length && barChunk(parts, alku, loppu + 1).length <= cols) loppu++;
+    palat.push({
+      from: alku === 0 ? 0 : erotin[alku],
+      shift: alku === 0 ? 0 : tahti[alku] - sisalto,
+      text: barChunk(parts, alku, loppu),
+    });
+    alku = loppu;
+  }
+  return palat;
 }
 
 /**

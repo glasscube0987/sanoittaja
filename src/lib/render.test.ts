@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { barLineText, chordLineText, isBlankLine, meterGutter, repeatGutter } from './render';
+import {
+  barLineText,
+  chordLineText,
+  isBlankLine,
+  meterGutter,
+  repeatGutter,
+  wrapBarLine,
+} from './render';
 import type { BarRepeat } from './types';
 import type { ChordAnchor, LyricLine } from './types';
 
@@ -183,5 +190,97 @@ describe('repeatGutter', () => {
         { id: 'b', text: '', chords: [], bars: ['F'], repeats: [{ start: true }] },
       ]),
     ).toBe(1);
+  });
+});
+
+describe('wrapBarLine', () => {
+  const tahdit = ['Am', 'F', 'C', 'G', 'Dm', 'E7', 'Am', 'Am'];
+
+  it('mahtuva rivi on yksi pala, sama kuin barLineText', () => {
+    expect(wrapBarLine(tahdit, [], 0, {}, 80)).toEqual([
+      { from: 0, shift: 0, text: barLineText(tahdit) },
+    ]);
+  });
+
+  it('ääretön leveys ei rivitä: tuloste pysyy ennallaan', () => {
+    expect(wrapBarLine(tahdit)).toHaveLength(1);
+  });
+
+  it('katkaisee tahtiviivasta ja jokainen pala mahtuu', () => {
+    const palat = wrapBarLine(tahdit, [], 0, {}, 24);
+    expect(palat.map((p) => p.text)).toEqual([
+      '| Am | F  | C  | G  |',
+      '| Dm | E7 | Am | Am |',
+    ]);
+    for (const pala of palat) expect(pala.text.length).toBeLessThanOrEqual(24);
+  });
+
+  it('kapealla näytöllä paloja tulee useampi', () => {
+    const palat = wrapBarLine(tahdit, [], 0, {}, 12);
+    expect(palat.map((p) => p.text)).toEqual([
+      '| Am | F  |',
+      '| C  | G  |',
+      '| Dm | E7 |',
+      '| Am | Am |',
+    ]);
+  });
+
+  /* Liian leveä tahti valuu yli mieluummin kuin jää kokonaan pois. */
+  it('jokaisessa palassa on vähintään yksi tahti', () => {
+    const palat = wrapBarLine(['Cmaj7 Am7 Dm7 G7', 'C'], [], 0, {}, 8);
+    expect(palat).toHaveLength(2);
+    expect(palat[0].text).toContain('Cmaj7 Am7 Dm7 G7');
+  });
+
+  /*
+   * Merkinnät ovat tallessa taittamattoman rivin sarakkeissa. `shift` kertoo
+   * paljonko palan sisältö on siirtynyt, joten sama merkki on kummassakin
+   * samassa kohdassa: palan sarake + shift = rivin sarake.
+   */
+  it('tahdin sisältö on palassa samassa kohdassa kuin koko rivillä', () => {
+    const koko = barLineText(tahdit);
+    const palat = wrapBarLine(tahdit, [], 0, {}, 24);
+    const toinen = palat[1];
+    const dm = toinen.text.indexOf('Dm');
+    expect(koko.slice(dm + toinen.shift, dm + toinen.shift + 2)).toBe('Dm');
+    const e7 = toinen.text.indexOf('E7');
+    expect(koko.slice(e7 + toinen.shift, e7 + toinen.shift + 2)).toBe('E7');
+    // Pala alkaa rivillä tahtiviivasta, joka edeltää sen ensimmäistä tahtia.
+    expect(koko[toinen.from]).toBe('|');
+    expect(koko.slice(toinen.from).trimStart().startsWith('| Dm')).toBe(true);
+  });
+
+  /* Taittokohdan `:||:` jakautuu niin kuin nuotissa rivin vaihtuessa: sulkeva
+     jää edellisen rivin loppuun ja avaava aloittaa seuraavan. */
+  it('kertausmerkit jakautuvat taittokohdassa', () => {
+    const marks: BarRepeat[] = [{ start: true }, {}, {}, { end: true }, { start: true }, {}, {}, { end: true, times: 3 }];
+    const palat = wrapBarLine(tahdit, [], 0, { marks, gutter: 1 }, 26);
+    expect(palat.map((p) => p.text)).toEqual([
+      '|: Am | F  | C  | G  :|',
+      '|: Dm | E7 | Am | Am :|x3',
+    ]);
+    // Taittamattomana ne ovat yksi merkki.
+    expect(barLineText(tahdit, [], 0, { marks, gutter: 1 })).toContain(':||:');
+  });
+
+  it('kertausmerkkien kanssa sisältö on yhä samassa kohdassa', () => {
+    const marks: BarRepeat[] = [{ start: true }, {}, {}, { end: true }, { start: true }, {}, {}, { end: true }];
+    const koko = barLineText(tahdit, [], 0, { marks, gutter: 1 });
+    const toinen = wrapBarLine(tahdit, [], 0, { marks, gutter: 1 }, 26)[1];
+    const dm = toinen.text.indexOf('Dm');
+    expect(koko.slice(dm + toinen.shift, dm + toinen.shift + 2)).toBe('Dm');
+  });
+
+  /* Johtavan tahtilajin sarake on jatkorivillä tyhjä mutta varattu, jotta
+     tahtiviivat pysyvät allekkain. */
+  it('jatkorivin tahtiviivat ovat allekkain ensimmäisen rivin kanssa', () => {
+    const palat = wrapBarLine(tahdit, ['3/4'], 4, {}, 28);
+    expect(palat[0].text.startsWith('3/4 | Am')).toBe(true);
+    expect(palat[1].text.startsWith('    | Dm')).toBe(true);
+    expect(palat[1].text.indexOf('|')).toBe(palat[0].text.indexOf('|'));
+  });
+
+  it('tyhjä rivi on yksi tyhjä pala', () => {
+    expect(wrapBarLine([], [], 0, {}, 20)).toEqual([{ from: 0, shift: 0, text: '' }]);
   });
 });

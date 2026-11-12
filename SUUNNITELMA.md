@@ -7,14 +7,14 @@ järjestys, avoimet päätökset ja tiedossa oleva velka.
 Tavoite on oikea tuote keikkailevalle muusikolle ja lauluntekijälle: sointu- ja
 sanoituslaput, jotka toimivat lavalla, ja omat laulut, jotka pysyvät tallessa.
 
-Päivitetty 9.11.2026 koko sovelluksen arvion jälkeen.
+Päivitetty 12.11.2026: rivitys live-tilaan tehty.
 
 ## Järjestys
 
 | # | Erä | Tila |
 |---|-----|------|
 | 1 | Laatuerä | tehty |
-| 2 | Live-tila keikkakuntoon | seuraava |
+| 2 | Live-tila keikkakuntoon | kesken: rivitys tehty |
 | 3 | Käyttöliittymän suunnittelukierros | |
 | 4 | Tabulatuuri, sitten nuotit | |
 | 5 | Beta oikeilla muusikoilla | |
@@ -49,22 +49,30 @@ Arviossa löytyneet viat ja työkaluvelka.
 Tarkoituksella siirretty eteenpäin: pitkän rivin rivitys live-tilassa (erä 2,
 vaatii päätöksen – ks. alla) ja linteri (velkalistalla).
 
-## 2. Live-tila keikkakuntoon — seuraava
+## 2. Live-tila keikkakuntoon — kesken
 
 Live-tila on se näkymä jonka varassa keikka on, joten sen viat painavat eniten.
 
-**Pitkän rivin rivitys.** Nyt pitkä rivi valuu oikean reunan yli ja näkymä
-vierittyy sivulle – soittaessa sitä ei voi tehdä. Rivin on rivityttävä
-sanarajasta niin, että soinnut seuraavat sanojaan.
+**Pitkän rivin rivitys — tehty.** Näytölle mahtumaton rivi taittuu sanarajasta
+ja soinnut seuraavat sanojaan; sointurivi taittuu tahtiviivasta. Rivitys on
+laitekohtainen: puhelin taittaa, iPad näyttää rivin kokonaisena. Tuloste ei
+rivity.
 
-> **Avoin päätös ennen toteutusta.** Omat merkinnät (kynä, tekstikentät) on
-> ankkuroitu rivin alkuun em-yksiköissä. Se toimii, koska rivin ladonta on sama
-> kaikilla tekstikoilla ja laitteilla. Rivitys rikkoo tämän: puhelimella
-> kahdelle riville taittuva säe on iPadilla yhdellä, ja sanan ympärille piirretty
-> ympyrä jäisi väärään kohtaan. Vaihtoehdot: (a) merkintä ankkuroidaan sanaan
-> eikä riviin, (b) rivitys vain lauluissa joissa ei ole merkintöjä, (c)
-> rivitys on laitekohtainen valinta ja merkinnät näkyvät vain rivittämättä.
-> Tämä on tietomallin päätös, ei tyylikysymys.
+Omat merkinnät seuraavat sanaansa näytöltä toiselle. Ne tallennetaan edelleen
+suhteessa taittamattomaan riviin, ja taitto on pelkkä näyttömuunnos, joten
+tallennusmuotoon ei tarvinnut koskea eikä vanhoja merkintöjä muuntaa.
+
+Tiedossa olevat rajat:
+
+- **Usean rivin yli piirretty iso kuvio** (laatikko kertosäkeen ympärillä) ei
+  täsmää toisella laitteella: taitettu kertosäe on korkeampi kuin taittamaton,
+  eikä kuvio voi venyä sen mukana.
+- **Sointurivin korkeudelle sijoitettu merkintä** voi taitettuna osua edellisen
+  näyttörivin päälle, jos sen kohdalla ei ole sointuja – jatkorivillä ei
+  silloin ole sointuriviä lainkaan.
+- **Taittokohdan yli menevä alleviivaus** jakautuu kahdeksi.
+- **iPhonella ja iPadilla kokeilematta**: testattu selaintestein puhelimen ja
+  tabletin kokoisilla näytöillä, ei oikeilla laitteilla eikä Apple Pencilillä.
 
 **Transponointi live-tilassa.** Laulaja vaihtuu tai kapo unohtui: sävellajin
 pitää vaihtua lavalla ilman editoriin palaamista.

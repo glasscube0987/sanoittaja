@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useT } from '../lib/i18n';
 import type { Point } from '../lib/annotate';
 import { DRAG_SLOP, pathData, simplify, STROKE_WIDTHS, toAnchored, toFlat } from '../lib/annotate';
 import type { Annotation, TextAnnotation } from '../lib/types';
 import { isStroke, isText } from '../lib/types';
+import { placeStroke, pointToStrip, pointToWrapped, strokeToStrip } from '../lib/wrap';
+import type { Segment, WrapLayout } from '../lib/wrap';
 
 export type ErasePhase = 'start' | 'move' | 'end';
 
@@ -76,6 +78,34 @@ interface Props {
   /** Kynän havaitseminen: sen jälkeen sormi ei piirrä. */
   onPenSeen?: () => void;
   text?: TextTools;
+  /**
+   * Rivin taitokset, kun rivi ei mahdu näytölle yhtenä. Merkinnät ovat tallessa
+   * suhteessa taittamattomaan riviin; tämän avulla ne näytetään taitettuna ja
+   * näytölle piirretty viedään takaisin. Puuttuu kun rivi mahtuu – ja aina
+   * tulosteessa.
+   */
+  wrap?: { segments: Segment[]; ch: number };
+}
+
+/**
+ * Taitosten sijainnit rivin laatikossa, em: kunkin laatikon yläreuna ja
+ * tekstirivin siirtymä ensimmäiseen verrattuna.
+ *
+ * Mitataan ladotulta riviltä eikä lasketa tyyleistä: taitoksen korkeus riippuu
+ * siitä onko juuri sen yllä sointuja, ja ensimmäisen yläreuna siitä onko rivin
+ * sisällä osion otsikko. Mittaaminen on tässä sallittua, koska taitettu rivi on
+ * aina näytöllä – tuloste ei rivity.
+ */
+export function taitosMitat(rivi: HTMLElement, em: number): { dy: number[]; tops: number[] } {
+  const scale = em || 1;
+  const taitokset = [...rivi.querySelectorAll<HTMLElement>('[data-seg]')];
+  const tekstit = taitokset.map(
+    (taitos) => taitos.querySelector<HTMLElement>('.sheet-lyric')?.offsetTop ?? taitos.offsetTop,
+  );
+  return {
+    dy: tekstit.map((top) => (top - tekstit[0]) / scale),
+    tops: taitokset.map((taitos) => taitos.offsetTop / scale),
+  };
 }
 
 /** Katselutila: ei piirtoa, ei kosketuksia. */
@@ -125,10 +155,12 @@ export default function LineAnnotations({
   onErase,
   onPenSeen,
   text,
+  wrap,
 }: Props) {
   const t = useT();
   const ref = useRef<SVGSVGElement>(null);
   const [em, setEm] = useState(16);
+  const [mitat, setMitat] = useState<{ dy: number[]; tops: number[] }>({ dy: [], tops: [] });
   const [kesken, setKesken] = useState<Point[] | null>(null);
   /* Edellinen pyyhkäisykohta näytön koordinaateissa, jotta liike välitetään
      janana eikä irrallisina pisteinä. */
@@ -152,13 +184,35 @@ export default function LineAnnotations({
   const tekstit = notes.filter(isText);
   const tekstitila = tool.active && tool.mode === 'text';
 
-  /* Fonttikoko luetaan uudelleen kun live-tilan tekstikoko muuttuu. */
-  useEffect(() => {
+  /*
+   * Fonttikoko luetaan uudelleen kun live-tilan tekstikoko muuttuu, ja
+   * taitetulla rivillä samalla taitoksen mitat. Ennen piirtoa eikä sen jälkeen:
+   * muuten merkinnät välähtäisivät taittamattoman rivin paikoissa aina kun
+   * taitto muuttuu.
+   */
+  const taitoksia = wrap?.segments.length ?? 1;
+  /* Taitoskohdat avaimena: sanan lisääminen voi siirtää katkoa niin, että
+     taitosten määrä pysyy mutta yksi niistä saa tai menettää sointurivinsä. */
+  const taitosavain = wrap?.segments.map((seg) => seg.from).join(',') ?? '';
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const koko = parseFloat(getComputedStyle(el).fontSize);
     if (koko > 0) setEm(koko);
-  }, [fontSize]);
+    if (taitoksia > 1 && el.parentElement) {
+      const uudet = taitosMitat(el.parentElement, koko);
+      // Sama sisältö pitää saman olion, jottei mittaus käynnistä uutta piirtoa.
+      const sama = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
+      setMitat((prev) => (sama(prev.dy, uudet.dy) && sama(prev.tops, uudet.tops) ? prev : uudet));
+    }
+  }, [fontSize, taitoksia, wrap?.ch, taitosavain]);
+
+  /* Taitto käytössä vasta kun mitat on luettu; sitä ennen ja taittamattomalla
+     rivillä muunnokset ovat identiteettejä. */
+  const layout: WrapLayout | null =
+    wrap && taitoksia > 1 && mitat.dy.length === taitoksia ? { ...wrap, ...mitat } : null;
+  const naytolle = (p: Point): Point => (layout ? pointToWrapped(layout, p) : p);
+  const nauhalle = (p: Point): Point => (layout ? pointToStrip(layout, p) : p);
 
   function piirtaako(e: React.PointerEvent): boolean {
     if (!tool.active) return false;
@@ -232,7 +286,9 @@ export default function LineAnnotations({
       onErase?.('end', null, null);
     }
     if (kesken && kesken.length > 0) {
-      onDraw?.(lineId, simplify(toFlat(kesken)), tool.color);
+      // Piirretty näkyy näytön koordinaateissa; talteen se menee nauhan.
+      const veto = simplify(toFlat(kesken));
+      onDraw?.(lineId, layout ? strokeToStrip(layout, veto) : veto, tool.color);
     }
     setKesken(null);
   }
@@ -255,7 +311,7 @@ export default function LineAnnotations({
     if (e.pointerType === 'pen') onPenSeen?.();
     if (!koskettaako() || !text) return;
     if (text.editingId) text.commit(text.editingId);
-    text.create(lineId, piste(e));
+    text.create(lineId, nauhalle(piste(e)));
   }
 
   function laatikkoDown(e: React.PointerEvent<HTMLDivElement>, note: TextAnnotation) {
@@ -264,7 +320,9 @@ export default function LineAnnotations({
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
     const at = piste(e);
-    veto.current = { id: note.id, dx: at.x - note.x, dy: at.y - note.y, alku: at, siirretty: false };
+    // Tarttumakohta lasketaan siitä missä kenttä näkyy, ei siitä missä se on tallessa.
+    const nyt = naytolle(note);
+    veto.current = { id: note.id, dx: at.x - nyt.x, dy: at.y - nyt.y, alku: at, siirretty: false };
   }
 
   function laatikkoMove(e: React.PointerEvent<HTMLDivElement>) {
@@ -277,7 +335,7 @@ export default function LineAnnotations({
       return;
     }
     vedossa.siirretty = true;
-    text.move(vedossa.id, { x: at.x - vedossa.dx, y: at.y - vedossa.dy });
+    text.move(vedossa.id, nauhalle({ x: at.x - vedossa.dx, y: at.y - vedossa.dy }));
   }
 
   /** Kosketus ei jatka kerrokselle. */
@@ -325,6 +383,7 @@ export default function LineAnnotations({
       >
         {tekstit.map((note) => {
           const muokataan = text?.editingId === note.id;
+          const paikka = naytolle(note);
           const asu = {
             fontSize: `${note.size}em`,
             color: note.color,
@@ -336,7 +395,7 @@ export default function LineAnnotations({
               key={note.id}
               className={muokataan ? 'annot-text editing' : 'annot-text'}
               data-text={note.id}
-              style={{ left: `${note.x}em`, top: `${note.y}em` }}
+              style={{ left: `${paikka.x}em`, top: `${paikka.y}em` }}
               /* Kirjoitettavana olevan kentän kosketukset kuuluvat kentälle:
                  ilman pysäytystä kerros näki ne lopetuksena, eikä kohdistinta
                  voinut siirtää sanan keskelle koskettamatta samalla «valmis». */
@@ -389,17 +448,21 @@ export default function LineAnnotations({
         onPointerCancel={onPointerUp}
         aria-hidden
       >
-        {vedot.map((note) => (
-          <path
-            key={note.id}
-            d={pathData(note.points, em)}
-            stroke={note.color}
-            strokeWidth={Math.max(1, note.width * em)}
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        ))}
+        {vedot.flatMap((note) =>
+          /* Taitetulla rivillä veto voi piirtyä useana palana: taittokohdan yli
+             menevästä alleviivauksesta tulee yksi kummallekin näyttöriville. */
+          (layout ? placeStroke(layout, note.points) : [note.points]).map((points, i) => (
+            <path
+              key={`${note.id}:${i}`}
+              d={pathData(points, em)}
+              stroke={note.color}
+              strokeWidth={Math.max(1, note.width * em)}
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          )),
+        )}
         {kesken && (
           <path
             d={pathData(toFlat(kesken), em)}
