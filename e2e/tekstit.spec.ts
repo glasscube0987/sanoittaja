@@ -9,7 +9,14 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { avaaLaulu, DB_VERSION, laulu, vaakaYlivuoto } from './apu';
+import {
+  avaaLaulu,
+  avaaSaadot,
+  DB_VERSION,
+  laulu,
+  poistuLivesta,
+  vaakaYlivuoto,
+} from './apu';
 
 function piirrettavaLaulu() {
   return laulu({
@@ -176,7 +183,7 @@ test('kenttä säilyy ja palaa uudelleen avattaessa', async ({ page }) => {
   await tekstiTila(page);
   await kirjoita(page, 'capo 3');
 
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
   await expect(page.locator('.live-view')).toHaveCount(0);
   await page.getByRole('button', { name: 'Live', exact: true }).click();
 
@@ -247,7 +254,7 @@ test('tallennetun kentän voi avata ja poistaa', async ({ page }) => {
   await expect(kentat(page)).toHaveCount(0);
 
   // Ja poisto jää voimaan: kenttä ei palaa lehteä uudelleen avattaessa.
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   await expect(kentat(page)).toHaveCount(0);
 });
@@ -300,7 +307,7 @@ test('kenttä siirtyy vetämällä ja siirto säilyy', async ({ page }) => {
   const siirretty = await sijainti();
 
   // Siirto tallentuu: uudelleen avattaessa kenttä on siellä minne se jätettiin.
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   await expect(kentat(page)).toHaveCount(1);
   expect(Math.abs((await sijainti()) - siirretty)).toBeLessThan(2);
@@ -344,6 +351,7 @@ test('kenttä kasvaa tekstikoon mukana', async ({ page }) => {
   const lehti = (await page.locator('.live-view .sheet-line').first().boundingBox())!;
 
   // Kaksi askelta suuremmaksi: 20 → 24 pikseliä, eli kerroin 1.2.
+  await avaaSaadot(page);
   await page.getByLabel('Larger text').click();
   await page.getByLabel('Larger text').click();
 
@@ -464,7 +472,7 @@ test('kenttä tulee mukaan tulostuslehdelle', async ({ page }) => {
   await tekstiTila(page);
   await kirjoita(page, 'capo 3');
 
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
   await expect(page.locator('.live-view')).toHaveCount(0);
 
   await expect.poll(() => page.locator('.song-sheet .annot-text-body').count()).toBe(1);
@@ -589,7 +597,7 @@ test('kesken jäänyt tyhjä kenttä siivoutuu laulua avattaessa', async ({ page
    * kohdassa. Siivous tehdään laulua avattaessa.
    */
   await avaaLive(page);
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
 
   await page.evaluate(
     (versio) =>

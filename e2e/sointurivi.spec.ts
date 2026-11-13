@@ -1,5 +1,9 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { avaaLaulu, laulu } from './apu';
+import {
+  avaaLaulu,
+  laulu,
+  poistuLivesta,
+} from './apu';
 
 /** Laulu, jonka ensimmäinen rivi on valmis sointuriviksi muunnettavaksi. */
 function laulunPohja() {
@@ -112,7 +116,7 @@ test('sointurivi näkyy tulostusnäkymässä ja live-tilassa', async ({ page }) 
 
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   expect(await teksti(page.locator('.live-view .sheet-bars').first())).toBe('| Am | F  |    |    |');
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
 
   await page.emulateMedia({ media: 'print' });
   expect(await teksti(page.locator('.song-sheet .sheet-bars').first())).toBe('| Am | F  |    |    |');

@@ -132,6 +132,27 @@ sulku siirtyy viimeiseen. Avaava `|:` on tavallista tahtiviivaa leveämpi, joten
 sille varataan sarake (`repeatGutter`) samoin kuin johtavalle tahtilajille –
 muuten kertaava rivi liukuisi sivuun muista sointuriveistä.
 
+**Live-tilan palkissa on kolme tilaa, ja kussakin näkyy vain se mitä siinä
+tarvitaan.** Toistorivi (toisto, nopeus, säädöt, kynä, poistuminen) on se mitä
+painetaan kesken soiton. Säätörivi – tekstikoko ja sävellaji – avataan sen
+päälle, koska niihin kosketaan kerran laulua kohti. Piirtotilassa toisto- ja
+settirivit ovat **piilossa** ja tilalla on yksi «Valmis»: kolme tai neljä
+päällekkäistä palkkia vei puhelimen ruudusta viidenneksen. Kaksi seurausta,
+jotka kumpikin olivat ensin väärin: «Valmis» päättää kesken olevan kirjoituksen
+itse eikä jätä sitä kohdistuksen katoamisen varaan (iOS:ssä painike ei ota
+kohdistusta), ja kirjoitettaessa roskakori **korvaa** kumoamisen eikä tule sen
+viereen, koska rinnakkain ne kiersivät rivin kahdelle riville juuri näppäimistön
+ollessa auki.
+
+**Live-tilassa transponointi on laulun muutos, ei esitysasetus.** Se kulkee
+saman `transposeSong`in kautta kuin editorissa ja tallentuu; «missä sävellajissa
+laulu on» ei saa olla kahdessa paikassa. Editorista avatun laulun muutos menee
+peruutuspinoon. Yksi ero editoriin: etumerkit valitaan **kohdesävellajin mukaan**
+(`keyAccidental`), koska live-tilassa ei ole ♭/♯-painikkeita ja oletus kirjoitti
+a-mollista nostetun c-mollin soinnuilla G#, D# ja A#. Painikkeilla on omat
+nimensä eivätkä editorin: editori on live-tilan alla, ja kaksi samannimistä
+painiketta samalla ruudulla on ollut tässä projektissa vika jo kolmesti.
+
 **Näppäimistö ei kutista asetteluikkunaa iOS:llä.** Live-tila on
 `position: fixed; inset: 0`, joten ilman erillistä käsittelyä koko näkymä – ja
 sen mukana työkalupalkki, jolla tekstikenttä poistetaan – jää näppäimistön

@@ -1,5 +1,10 @@
 import { expect, test, type Locator } from '@playwright/test';
-import { avaaLaulu, laulu, tallennettuLaulu } from './apu';
+import {
+  avaaLaulu,
+  laulu,
+  poistuLivesta,
+  tallennettuLaulu,
+} from './apu';
 
 /**
  * Kertausmerkit sointurivillä.
@@ -60,7 +65,7 @@ test('kertausmerkit tulevat mukaan live-tilaan ja tulostuslehdelle', async ({ pa
 
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   expect(await teksti(page.locator('.live-view .sheet-bars').first())).toBe('|: Am | F  :|');
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
 
   await page.emulateMedia({ media: 'print' });
   expect(await teksti(page.locator('.song-sheet .sheet-bars').first())).toBe('|: Am | F  :|');

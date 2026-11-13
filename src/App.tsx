@@ -294,6 +294,9 @@ export default function App() {
           index={liveIndex}
           onIndexChange={(index) => setLive((prev) => (prev ? { ...prev, index } : prev))}
           onClose={() => setLive(null)}
+          /* Editorista avatun laulun transponointi menee peruutuspinoon kuten
+             editorissa tehty; setistä avatulla laululla pinoa ei ole. */
+          onSongChange={(next) => updateSong(next, editing?.id === next.id ? editing : undefined)}
         />
       )}
     </LangContext.Provider>

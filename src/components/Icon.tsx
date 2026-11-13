@@ -26,6 +26,7 @@ export type IconName =
   | 'eraser'
   | 'text'
   | 'trash'
+  | 'check'
   | 'mic';
 
 interface Props {
@@ -60,6 +61,8 @@ const PATHS: Record<IconName, string> = {
   // Ladontamerkki T: tekstityökalu.
   text: 'M5 5.5h14M12 5.5v13M9 18.5h6',
   trash: 'M4.5 7h15M9.5 7V4.8h5V7M6.8 7l.9 12.2a1.5 1.5 0 0 0 1.5 1.3h5.6a1.5 1.5 0 0 0 1.5-1.3L17.2 7',
+  // Väkänen: valmis. Piirtotilasta palataan tällä.
+  check: 'M5 12.5l4.5 4.5L19 7.5',
   // Mikrofonin kapseli, kaari sen ympärillä ja jalka: idean talteenotto.
   mic: 'M12 3.2a2.8 2.8 0 0 1 2.8 2.8v5.5a2.8 2.8 0 0 1-5.6 0V6A2.8 2.8 0 0 1 12 3.2M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6',
   play: '',

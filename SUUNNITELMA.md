@@ -7,15 +7,15 @@ järjestys, avoimet päätökset ja tiedossa oleva velka.
 Tavoite on oikea tuote keikkailevalle muusikolle ja lauluntekijälle: sointu- ja
 sanoituslaput, jotka toimivat lavalla, ja omat laulut, jotka pysyvät tallessa.
 
-Päivitetty 12.11.2026: rivitys live-tilaan tehty.
+Päivitetty 13.11.2026: erä 2 (live-tila keikkakuntoon) tehty.
 
 ## Järjestys
 
 | # | Erä | Tila |
 |---|-----|------|
 | 1 | Laatuerä | tehty |
-| 2 | Live-tila keikkakuntoon | kesken: rivitys tehty |
-| 3 | Käyttöliittymän suunnittelukierros | |
+| 2 | Live-tila keikkakuntoon | tehty |
+| 3 | Käyttöliittymän suunnittelukierros | seuraava |
 | 4 | Tabulatuuri, sitten nuotit | |
 | 5 | Beta oikeilla muusikoilla | |
 | 6 | Natiivikuori ja sovelluskauppa | |
@@ -49,7 +49,7 @@ Arviossa löytyneet viat ja työkaluvelka.
 Tarkoituksella siirretty eteenpäin: pitkän rivin rivitys live-tilassa (erä 2,
 vaatii päätöksen – ks. alla) ja linteri (velkalistalla).
 
-## 2. Live-tila keikkakuntoon — kesken
+## 2. Live-tila keikkakuntoon — tehty
 
 Live-tila on se näkymä jonka varassa keikka on, joten sen viat painavat eniten.
 
@@ -74,14 +74,28 @@ Tiedossa olevat rajat:
 - **iPhonella ja iPadilla kokeilematta**: testattu selaintestein puhelimen ja
   tabletin kokoisilla näytöillä, ei oikeilla laitteilla eikä Apple Pencilillä.
 
-**Transponointi live-tilassa.** Laulaja vaihtuu tai kapo unohtui: sävellajin
-pitää vaihtua lavalla ilman editoriin palaamista.
+**Transponointi live-tilassa — tehty.** Säätörivillä − ½ ja + ½, sävellaji
+niiden välissä ja paluu alkuperäiseen. Muutos on sama kuin editorissa ja
+tallentuu lauluun; etumerkit valitaan kohdesävellajin mukaan.
 
-**Setin selaus.** Seuraavan laulun nimi näkyviin ennen vaihtoa, ja vaihto yhdellä
-kädellä.
+**Setin selaus — tehty.** Seuraavan laulun nimi ja sävellaji näkyvät
+selauspainikkeessa, ja laulun lopussa on iso «Seuraava»-painike siinä kohdassa
+johon vieritys pysähtyy.
 
-**Ohjainpalkin tila.** Piirtotilassa palkkeja on kolme päällekkäin ja ne vievät
-viidenneksen puhelimen ruudusta.
+**Ohjainpalkin tila — tehty.** Toistorivillä on vain kesken soiton tarvittavat
+säätimet; tekstikoko ja sävellaji ovat säätöpainikkeen takana. Piirtotilassa
+näkyvät vain työkalut ja «Valmis» – kaksi riviä aiemman kolmen tai neljän
+sijaan.
+
+Jäi tekemättä tai havaittiin matkalla:
+
+- **Piirtotilasta ei pääse suoraan seuraavaan lauluun eikä pois live-tilasta**:
+  ensin «Valmis». Usean laulun merkitseminen peräkkäin vaatii siksi kaksi
+  napautusta enemmän per laulu kuin ennen.
+- **Editorin transponointi ei valitse etumerkkejä sävellajin mukaan**, live-tilan
+  valitsee. Editorissa ne vaihdetaan ♭/♯-painikkeilla; yhtenäistäminen kuuluu
+  suunnittelukierrokseen.
+- **Laulun vaihto pyyhkäisemällä** puuttuu; vaihto on painikkeista.
 
 ## 3. Käyttöliittymän suunnittelukierros
 

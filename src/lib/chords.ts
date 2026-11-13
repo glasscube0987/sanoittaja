@@ -124,6 +124,30 @@ export function transposeChord(
   return root + parsed.quality + bass;
 }
 
+/**
+ * Kumpaa etumerkkiä sävellajissa kirjoitetaan. `undefined` kun sävellajia ei
+ * tunnisteta tai siinä ei ole etumerkkejä (C ja Am).
+ *
+ * Live-tilassa transponoidaan ilman editorin ♭/♯-painikkeita, ja oletus –
+ * kukin sointu säilyttää oman etumerkkinsä – kirjoitti a-mollista nostetun
+ * c-mollin soinnuilla G#, D# ja A#. Lavalla ne luetaan Ab, Eb ja Bb.
+ *
+ * Molli luetaan rinnakkaisduurinsa kautta, jolloin sääntö on yksi kvinttiympyrä
+ * eikä kaksi taulukkoa. Fis/Ges-duurissa (ja dis/es-mollissa) kumpaakin on
+ * kuusi, joten siinä noudatetaan sitä miten sävellaji on kirjoitettu.
+ */
+export function keyAccidental(key: string): Accidental | undefined {
+  const parsed = parseChord(key);
+  if (!parsed) return undefined;
+  // «m», «m7» ja «min» ovat mollia; «maj7» ja iso «M» eivät.
+  const molli = /^m(?!aj)/.test(parsed.quality);
+  const duuri = (PITCH_CLASS[parsed.root] + (molli ? 3 : 0)) % 12;
+  if (duuri === 0) return undefined;
+  if (duuri === 6) return parsed.root.includes('b') ? 'flat' : 'sharp';
+  // F, B♭, E♭, A♭ ja D♭; loput ovat ristisävellajeja.
+  return [5, 10, 3, 8, 1].includes(duuri) ? 'flat' : 'sharp';
+}
+
 /** Vaihtaa symbolin enharmonisen kirjoitusasun (C# <-> Db) transponoimatta. */
 export function respellChord(symbol: string, prefer: Accidental, notation: Notation = 'B'): string {
   return transposeChord(symbol, 0, prefer, notation);

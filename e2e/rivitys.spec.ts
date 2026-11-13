@@ -1,5 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import { avaaLaulu, DB_VERSION, laulu, PITKA_RIVI } from './apu';
+import {
+  avaaLaulu,
+  avaaSaadot,
+  DB_VERSION,
+  laulu,
+  PITKA_RIVI,
+} from './apu';
 
 /**
  * Pitkän rivin rivitys live-tilassa.
@@ -223,11 +229,14 @@ test('tekstikoon muutos taittaa rivin uudelleen', async ({ page }) => {
   await avaaLive(page);
   const alussa = (await taitokset(page)).length;
 
+  await avaaSaadot(page);
   for (let i = 0; i < 4; i++) await page.getByLabel('Larger text').click();
   await expect.poll(async () => (await taitokset(page)).length).toBeGreaterThan(alussa);
   expect(await ylivuoto(page)).toBeLessThanOrEqual(0);
 
-  for (let i = 0; i < 8; i++) await page.getByLabel('Smaller text').click();
+  await avaaSaadot(page);
+  // 28 → 14, joka on pienin koko; sen alle painike ei enää vie.
+  for (let i = 0; i < 7; i++) await page.getByLabel('Smaller text').click();
   await expect.poll(async () => (await taitokset(page)).length).toBeLessThan(alussa);
   expect(await ylivuoto(page)).toBeLessThanOrEqual(0);
 });

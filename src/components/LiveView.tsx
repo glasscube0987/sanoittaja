@@ -23,6 +23,9 @@ import {
 } from '../lib/annotate';
 import type { Point } from '../lib/annotate';
 import { deleteAnnotation, saveAnnotation } from '../lib/db';
+import { loadNotation } from '../lib/notation';
+import { keyAccidental, transposeChord } from '../lib/chords';
+import { transposeOffset, transposeSong } from '../lib/songOps';
 import { guard } from '../lib/failures';
 import { useAnnotations } from '../lib/useAnnotations';
 import type { Annotation, Song, TextAnnotation } from '../lib/types';
@@ -38,6 +41,12 @@ interface Props {
   index: number;
   onIndexChange: (index: number) => void;
   onClose: () => void;
+  /**
+   * Laulun muutos live-tilasta: transponointi. Sama muutos kuin editorissa –
+   * soinnut tallennetaan transponoituina – eikä erillinen esitysasetus, jottei
+   * «missä sävellajissa laulu on» ole kahdessa paikassa.
+   */
+  onSongChange: (song: Song) => void;
 }
 
 /** Kirjasinvalinnan näkyvät nimet. Taulukkona, jotta avain kelpaa `t()`:lle. */
@@ -55,7 +64,7 @@ type WakeLockNavigator = Navigator & {
   wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinelLike> };
 };
 
-export default function LiveView({ songs, index, onIndexChange, onClose }: Props) {
+export default function LiveView({ songs, index, onIndexChange, onClose, onSongChange }: Props) {
   const t = useT();
   const song = songs[index];
   const monta = songs.length > 1;
@@ -64,6 +73,10 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
   const [fontSize, setFontSize] = useState(initial.fontSize);
   const [running, setRunning] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  /* Tekstikoko ja sävellaji ovat säätöjä joihin kosketaan kerran laulua tai
+     keikkaa kohti, joten ne ovat oman painikkeensa takana eivätkä vie tilaa
+     niiltä joita painetaan kesken soiton. */
+  const [saadot, setSaadot] = useState(false);
   const [poke, setPoke] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -479,6 +492,29 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
     wake();
   }
 
+  /* Merkintätapa luetaan vasta napautuksessa, kuten editorissa: asetuksissa
+     tehty vaihto vaikuttaa heti ilman että sitä pitää heijastaa tilaan. */
+  function transponoi(askel: number) {
+    const notation = loadNotation();
+    /* Etumerkit valitaan sävellajin mukaan johon päädytään. Editorissa ne voi
+       vaihtaa ♭/♯-painikkeilla; täällä niitä ei ole, eikä lavalla ole aikaa
+       lukea c-mollia ylennysmerkein. Ilman sävellajia sointu säilyttää omansa. */
+    const kohde = song.songKey ? transposeChord(song.songKey, askel, undefined, notation) : '';
+    onSongChange(transposeSong(song, askel, keyAccidental(kohde), notation));
+    wake();
+  }
+
+  function lopetaPiirto() {
+    // Kesken oleva kirjoitus päätetään, jottei kenttä jää auki näkymättömiin.
+    if (editing) paataTeksti(editing);
+    setTool((prev) => ({ ...prev, active: false }));
+  }
+
+  const offset = transposeOffset(song);
+  const offsetLabel = offset > 0 ? `+${offset}` : String(offset);
+  const nimi = (laulu: Song) => laulu.title || t('app.untitled');
+  const seuraava = index + 1 < songs.length ? songs[index + 1] : null;
+
   return (
     <div className="live-view" style={{ bottom: keyboard }}>
       <div
@@ -513,6 +549,24 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
           wrap
           onPenSeen={() => setTool((prev) => (prev.penSeen ? prev : { ...prev, penSeen: true }))}
         />
+        {/* Laulun lopussa seuraava laulu on siinä mihin katse jo osuu: vieritys
+            pysähtyy tähän, eikä setin eteneminen vaadi palkin etsimistä. */}
+        {seuraava && !tool.active && (
+          <button
+            className="live-next-card"
+            onClick={(e) => {
+              // Lehden napautus käynnistää vierityksen. Laulun vaihto pysäyttää
+              // sen joka tapauksessa, mutta tämä ei saa käynnistää sitä hetkeksikään.
+              e.stopPropagation();
+              siirry(1);
+            }}
+          >
+            <small>{t('live.nextShort')}</small>
+            <strong>{nimi(seuraava)}</strong>
+            {seuraava.songKey && <span>{seuraava.songKey}</span>}
+            <Icon name="chevronRight" size={20} />
+          </button>
+        )}
         {/* Loppuun tilaa, jotta viimeinen rivi ehtii ruudun keskelle. */}
         <div className="live-tail" />
       </div>
@@ -527,21 +581,39 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
         className={showControls ? 'live-bar' : 'live-bar hidden'}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Settilistan selaus omalla rivillään: ohjainrivi on jo täynnä. */}
-        {monta && (
+        {/* Settilistan selaus omalla rivillään. Seuraavan laulun nimi ja
+            sävellaji näkyvät painikkeessa itsessään: lavalla halutaan tietää
+            mihin ollaan menossa ennen kuin sinne mennään – kapo ehditään siirtää
+            välispiikin aikana. Piirtotilassa rivi on piilossa, koska siellä ei
+            vaihdeta laulua ja jokainen rivi on pois lehdeltä. */}
+        {monta && !tool.active && (
           <div className="live-nav">
             <button onClick={() => siirry(-1)} disabled={index === 0} aria-label={t('live.previousSong')}>
               <Icon name="chevronLeft" size={20} />
             </button>
             <span className="live-position">
               {t('live.position', { index: index + 1, count: songs.length })}
-              <small>{song.title || t('app.untitled')}</small>
+              <small>{nimi(song)}</small>
             </span>
             <button
+              className="live-next"
               onClick={() => siirry(1)}
-              disabled={index === songs.length - 1}
-              aria-label={t('live.nextSong')}
+              disabled={!seuraava}
+              aria-label={
+                seuraava ? t('live.nextNamed', { title: nimi(seuraava) }) : t('live.nextSong')
+              }
             >
+              {seuraava && (
+                <span className="live-next-title">
+                  {/* Sävellaji otsikkorivillä eikä nimen perässä: pitkä nimi
+                      katkeaa kolmeen pisteeseen, ja sävellaji katosi sen mukana. */}
+                  <small>
+                    {t('live.nextShort')}
+                    {seuraava.songKey ? ` · ${seuraava.songKey}` : ''}
+                  </small>
+                  {nimi(seuraava)}
+                </span>
+              )}
               <Icon name="chevronRight" size={20} />
             </button>
           </div>
@@ -609,11 +681,16 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
                   );
                 })}
               </span>
-              <button onClick={kumoa} disabled={notes.length === 0} aria-label={t('draw.undo')}>
-                <Icon name="undo" size={18} />
-              </button>
-              {/* Roskakori kumoamisen vierellä: molemmat ovat tekoja eivätkä
-                  asua, ja asurivi oli jo täynnä. */}
+              {/* Kumoaminen ja roskakori vuorottelevat samassa paikassa. Kenttää
+                  kirjoitettaessa «poista tämä» on se teko jota tarvitaan, ja
+                  kumoaminen poistaisi viimeisimmän merkinnän, joka ei välttämättä
+                  ole kirjoitettava kenttä. Rinnakkain ne myös kiersivät rivin
+                  puhelimessa toiselle riville juuri näppäimistön ollessa auki. */}
+              {!editing && (
+                <button onClick={kumoa} disabled={notes.length === 0} aria-label={t('draw.undo')}>
+                  <Icon name="undo" size={18} />
+                </button>
+              )}
               {editing && (
                 <button
                   className="ghost"
@@ -635,6 +712,13 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
                   {t('draw.fingerShort')}
                 </button>
               )}
+              {/* Piirtotilassa toisto- ja settirivit ovat piilossa: kolme
+                  päällekkäistä palkkia vei puhelimen ruudusta viidenneksen juuri
+                  silloin kun lehteä pitää nähdä. Tämä painike on siksi tie
+                  takaisin, ja se on aina näkyvissä. */}
+              <button className="primary draw-done" onClick={lopetaPiirto} aria-label={t('draw.done')}>
+                <Icon name="check" size={18} />
+              </button>
             </div>
 
             {tool.mode !== 'eraser' && (
@@ -702,54 +786,109 @@ export default function LiveView({ songs, index, onIndexChange, onClose }: Props
             )}
           </>
         )}
-        <div className="live-controls">
-        <button onClick={toggle} className="primary" aria-label={t(running ? 'live.pause' : 'live.play')}>
-          <Icon name={running ? 'pause' : 'play'} size={20} />
-        </button>
-        {/* Nopeus yhtenä säätimenä: − luku +. Aiemmin luvun paikalla oli teksti
-            «Nopeus 20», joka sai sen tilan mikä painikkeilta jäi – puhelimessa
-            siitä näkyi «N.», eikä säädettävää arvoa nähnyt lainkaan. Sana on
-            nyt ruudunlukijan nimessä ja luku aina näkyvissä. */}
-        <span className="live-stepper" role="group" aria-label={t('live.speed', { speed })}>
-          <button
-            onClick={() => adjust(setSpeed, -SPEED_STEP, SPEED_MIN, SPEED_MAX)}
-            aria-label={t('live.slower')}
-          >
-            −
-          </button>
-          <span className="live-speed" aria-hidden>
-            {speed}
-          </span>
-          <button
-            onClick={() => adjust(setSpeed, SPEED_STEP, SPEED_MIN, SPEED_MAX)}
-            aria-label={t('live.faster')}
-          >
-            +
-          </button>
-        </span>
-        <button
-          onClick={() => adjust(setFontSize, -FONT_STEP, FONT_MIN, FONT_MAX)}
-          aria-label={t('live.smallerText')}
-        >
-          A−
-        </button>
-        <button
-          onClick={() => adjust(setFontSize, FONT_STEP, FONT_MIN, FONT_MAX)}
-          aria-label={t('live.largerText')}
-        >
-          A+
-        </button>
-        <button
-          className={tool.active ? 'primary' : ''}
-          onClick={() => setTool((prev) => ({ ...prev, active: !prev.active }))}
-          aria-label={t('draw.toggle')}
-        >
-          <Icon name="pen" size={20} />
-        </button>
-        <button className="ghost live-exit" onClick={onClose} aria-label={t('live.exit')}>
-          ✕
-        </button>
-        </div>
+        {!tool.active && saadot && (
+          <div className="live-settings">
+            <span className="live-stepper" role="group" aria-label={t('live.textSize', { size: fontSize })}>
+              <button
+                onClick={() => adjust(setFontSize, -FONT_STEP, FONT_MIN, FONT_MAX)}
+                disabled={fontSize <= FONT_MIN}
+                aria-label={t('live.smallerText')}
+              >
+                A−
+              </button>
+              <span className="live-value" aria-hidden>
+                {fontSize}
+              </span>
+              <button
+                onClick={() => adjust(setFontSize, FONT_STEP, FONT_MIN, FONT_MAX)}
+                disabled={fontSize >= FONT_MAX}
+                aria-label={t('live.largerText')}
+              >
+                A+
+              </button>
+            </span>
+            {/* Laulaja vaihtuu tai kapo unohtui: sävellajin on vaihduttava
+                lavalla ilman editoriin palaamista. */}
+            <span
+              className="live-stepper"
+              role="group"
+              aria-label={t('live.key', { key: song.songKey || offsetLabel })}
+            >
+              {/* Omat nimet eivätkä editorin: editori on live-tilan alla, ja
+                  kaksi samannimistä painiketta samalla ruudulla on ruudunlukijalle
+                  arvoitus. */}
+              <button onClick={() => transponoi(-1)} aria-label={t('live.keyDown')}>
+                − ½
+              </button>
+              <span className="live-value live-key" aria-hidden>
+                {song.songKey || offsetLabel}
+              </span>
+              <button onClick={() => transponoi(1)} aria-label={t('live.keyUp')}>
+                + ½
+              </button>
+            </span>
+            {/* Paluu näkyy vain kun laulu ei ole alkuperäisessä sävellajissaan,
+                kuten editorissa. */}
+            {offset !== 0 && (
+              <button
+                className="reset-key"
+                onClick={() => transponoi(-offset)}
+                aria-label={t('live.resetKey', { offset: offsetLabel })}
+              >
+                {offsetLabel} ↺
+              </button>
+            )}
+          </div>
+        )}
+        {!tool.active && (
+          <div className="live-controls">
+            <button onClick={toggle} className="primary" aria-label={t(running ? 'live.pause' : 'live.play')}>
+              <Icon name={running ? 'pause' : 'play'} size={20} />
+            </button>
+            {/* Nopeus yhtenä säätimenä: − luku +. Aiemmin luvun paikalla oli
+                teksti «Nopeus 20», joka sai sen tilan mikä painikkeilta jäi –
+                puhelimessa siitä näkyi «N.», eikä säädettävää arvoa nähnyt
+                lainkaan. Sana on nyt ruudunlukijan nimessä ja luku aina
+                näkyvissä. */}
+            <span className="live-stepper" role="group" aria-label={t('live.speed', { speed })}>
+              <button
+                onClick={() => adjust(setSpeed, -SPEED_STEP, SPEED_MIN, SPEED_MAX)}
+                aria-label={t('live.slower')}
+              >
+                −
+              </button>
+              <span className="live-value live-speed" aria-hidden>
+                {speed}
+              </span>
+              <button
+                onClick={() => adjust(setSpeed, SPEED_STEP, SPEED_MIN, SPEED_MAX)}
+                aria-label={t('live.faster')}
+              >
+                +
+              </button>
+            </span>
+            <button
+              className={saadot ? 'current' : ''}
+              onClick={() => {
+                setSaadot((auki) => !auki);
+                wake();
+              }}
+              aria-label={t('live.settings')}
+              aria-expanded={saadot}
+            >
+              Aa
+            </button>
+            <button
+              onClick={() => setTool((prev) => ({ ...prev, active: true }))}
+              aria-label={t('draw.toggle')}
+            >
+              <Icon name="pen" size={20} />
+            </button>
+            <button className="ghost live-exit" onClick={onClose} aria-label={t('live.exit')}>
+              ✕
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

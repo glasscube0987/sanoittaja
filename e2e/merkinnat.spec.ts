@@ -8,7 +8,16 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
-import { avaaLaulu, avaaMonta, laulu, lisaaLauluja, luoSetti } from './apu';
+import {
+  avaaLaulu,
+  avaaMonta,
+  avaaSaadot,
+  laulu,
+  lisaaLauluja,
+  lopetaPiirto,
+  luoSetti,
+  poistuLivesta,
+} from './apu';
 
 function piirrettavaLaulu() {
   return laulu({
@@ -140,7 +149,7 @@ test('merkintä säilyy ja palaa uudelleen avattaessa', async ({ page }) => {
   await veda(page.locator('.live-view .annot').first(), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
 
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   await expect.poll(() => vedot(page)).toBe(1);
 });
@@ -151,7 +160,7 @@ test('merkintä pysyy rivillään kun sen ylle lisätään rivi', async ({ page 
   // Veto toiselle riville, jotta yläpuolelle mahtuu uusi rivi.
   await veda(page.locator('.live-view .annot').nth(1), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
 
   // Uusi rivi ensimmäisen perään siirtää kaikkia alempia rivejä.
   await page.locator('.line input.text').first().click();
@@ -174,7 +183,9 @@ test('merkinnät seuraavat laulua setissä selattaessa', async ({ page }) => {
   await expect.poll(() => vedot(page)).toBe(1);
 
   // Merkintä kuuluu lauluun, ei esitysnäkymään: seuraavassa laulussa on puhdas
-  // lehti, ja takaisin palattaessa veto on paikallaan.
+  // lehti, ja takaisin palattaessa veto on paikallaan. Laulua vaihdetaan
+  // toistoriviltä; piirtotilassa settirivi on piilossa.
+  await lopetaPiirto(page);
   await page.getByLabel('Next song').click();
   await expect(page.locator('.live-view h1')).toHaveText('Toinen');
   await expect.poll(() => vedot(page)).toBe(0);
@@ -189,12 +200,13 @@ test('setin toiselle laululle piirretty jää sille laululle', async ({ page }) 
   await luoSetti(page, 'Keikka');
   await lisaaLauluja(page, ['Ensimmäinen', 'Toinen']);
   await page.locator('.button-row').getByRole('button', { name: 'Live' }).click();
-  await piirtoTila(page);
 
   await page.getByLabel('Next song').click();
+  await piirtoTila(page);
   await veda(page.locator('.live-view .annot').first(), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
 
+  await lopetaPiirto(page);
   await page.getByLabel('Previous song').click();
   await expect.poll(() => vedot(page)).toBe(0);
 });
@@ -567,7 +579,7 @@ test('kynän muistaminen säilyy live-tilan avaamisten yli', async ({ page }) =>
   await veda(page.locator('.live-view .annot').first(), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
 
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   await piirtoTila(page);
 
@@ -596,6 +608,7 @@ test('merkintä kasvaa tekstikoon mukana', async ({ page }) => {
   expect(ennen).toBeGreaterThan(0);
 
   // Kaksi askelta suuremmaksi: 20 → 24 pikseliä, eli kerroin 1.2.
+  await avaaSaadot(page);
   await page.getByLabel('Larger text').click();
   await page.getByLabel('Larger text').click();
   await expect.poll(async () => Math.round((await leveys()) / ennen * 100)).toBe(120);
@@ -611,7 +624,7 @@ test('sormi piirtää kun kynää ei ole käytetty', async ({ page }) => {
 
 test('vanhat leveyteen suhteutetut merkinnät poistuvat', async ({ page }) => {
   await avaaLive(page);
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
 
   // Ensimmäisen version veto: ei unit-kenttää, koordinaatit 0–1.
   await page.evaluate(
@@ -679,7 +692,7 @@ test('merkinnät tulevat mukaan tulostuslehdelle', async ({ page }) => {
   await veda(page.locator('.live-view .annot').first(), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
 
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
   await expect(page.locator('.live-view')).toHaveCount(0);
 
   await expect.poll(() => page.locator('.song-sheet .annot path').count()).toBe(1);
@@ -690,7 +703,7 @@ test('merkinnät katoavat laulun mukana', async ({ page }) => {
   await piirtoTila(page);
   await veda(page.locator('.live-view .annot').first(), 'pen');
   await expect.poll(() => vedot(page)).toBe(1);
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
 
   page.once('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Delete song' }).click();

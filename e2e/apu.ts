@@ -403,3 +403,28 @@ export function paketti(song: Song): string {
     annotations: [],
   });
 }
+
+/**
+ * Poistuu live-tilasta mistä tahansa sen tilasta.
+ *
+ * Piirtotilassa toistorivi – ja sen mukana poistumispainike – on piilossa,
+ * jotta työkalut eivät vie lehdeltä kolmea riviä. Sieltä palataan ensin
+ * «Valmis»-painikkeella.
+ */
+export async function poistuLivesta(page: Page): Promise<void> {
+  await lopetaPiirto(page);
+  await page.getByLabel('Exit live mode').click();
+}
+
+/** Palaa piirtotilasta toistoriville, jos piirtotila on päällä. */
+export async function lopetaPiirto(page: Page): Promise<void> {
+  const valmis = page.getByRole('button', { name: 'Done', exact: true });
+  if (await valmis.isVisible()) await valmis.click();
+}
+
+/** Avaa live-tilan säätörivin (tekstikoko ja sävellaji), jos se on kiinni. */
+export async function avaaSaadot(page: Page): Promise<void> {
+  await lopetaPiirto(page);
+  const painike = page.getByLabel('Text size and key');
+  if ((await painike.getAttribute('aria-expanded')) !== 'true') await painike.click();
+}

@@ -1417,6 +1417,12 @@ textarea.annot-text-body {
   gap: 4px;
 }
 
+/* Paluu piirtotilasta rivin oikeaan reunaan, erilleen työkaluista. */
+.draw-tools .draw-done {
+  margin-left: auto;
+  font-weight: 600;
+}
+
 .draw-modes button {
   min-width: 44px;
   justify-content: center;
@@ -1621,10 +1627,106 @@ textarea.annot-text-body {
 .live-nav button {
   flex: 0 0 auto;
   min-width: 46px;
-  min-height: 40px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/*
+ * Seuraava-painike kantaa seuraavan laulun nimen. Se saa enintään puolet
+ * rivistä: pitkä nimi katkeaa kolmeen pisteeseen eikä työnnä nykyisen laulun
+ * nimeä pois näkyvistä.
+ */
+.live-nav .live-next {
+  flex: 0 1 auto;
+  max-width: 55%;
+  gap: 4px;
+  padding: 4px 6px 4px 12px;
+}
+
+.live-next-title {
+  min-width: 0;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-next-title small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+/*
+ * Seuraava laulu lehden lopussa. Tavallisen sisällön osana eikä kiinnitettynä:
+ * se tulee näkyviin juuri silloin kun laulu loppuu, ja on tarpeeksi iso
+ * osuttavaksi kädellä joka on juuri irronnut soittimesta.
+ */
+.live-next-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 1.5em;
+  padding: 14px 16px;
+  min-height: 60px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  text-align: left;
+}
+
+.live-next-card small {
+  color: var(--text-dim);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.live-next-card strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-next-card span {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-weight: 700;
+}
+
+/*
+ * Säätörivi: tekstikoko ja sävellaji. Auki vain pyydettäessä, koska niihin
+ * kosketaan kerran laulua kohti – toistorivillä ne veivät tilan nopeudelta,
+ * jota säädetään kesken soiton.
+ */
+.live-settings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0 0;
+}
+
+.live-settings button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.live-settings .reset-key {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
 
 .live-nav button:disabled {
@@ -1650,10 +1752,11 @@ textarea.annot-text-body {
 }
 
 /*
- * Ohjainrivi. Kahdeksan säädintä ei mahdu 320 pikseliin yhdelle riville millään
- * koolla johon sormi osuu, joten rivi saa kiertyä: toinen rivi on parempi kuin
- * reunan yli valuva poistumispainike. 375 pikselistä ylöspäin kaikki mahtuu
- * yhdelle – välit ja vähimmäisleveys on mitoitettu sen mukaan.
+ * Toistorivi: vain se mitä painetaan kesken soiton – toisto, nopeus, säädöt,
+ * kynä ja poistuminen. Tekstikoko ja sävellaji ovat säätörivillä, piirtotyökalut
+ * omassa tilassaan. Rivi saa silti kiertyä: toinen rivi on parempi kuin reunan
+ * yli valuva poistumispainike, jos näyttö on kapeampi kuin mihin tämä on
+ * mitoitettu.
  */
 .live-controls {
   display: flex;
@@ -1697,13 +1800,29 @@ textarea.annot-text-body {
   background: transparent;
 }
 
-.live-stepper .live-speed {
-  /* Kaksi numeroa mahtuu aina: nopeus on 4–80. */
+.live-stepper .live-value {
+  /* Kaksi numeroa mahtuu aina: nopeus on 4–80 ja tekstikoko 14–40. */
   min-width: 2ch;
   text-align: center;
   font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+/* Sävellaji on sointu, joten se ladotaan kuin sointu; «F#m» on leveämpi kuin
+   luku, eikä säädin saa hypähtää leveydeltään sävellajin vaihtuessa. */
+.live-stepper .live-key {
+  min-width: 4ch;
+  font-family: var(--mono);
+  color: var(--accent);
+}
+
+/* Auki oleva säätörivi näkyy painikkeesta, samalla tavalla kuin valittu
+   järjestys laululistassa. */
+.live-controls button.current {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  font-weight: 600;
 }
 
 @media print {

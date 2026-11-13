@@ -1,5 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import { avaaLaulu, laulu, PITKA_RIVI } from './apu';
+import {
+  avaaLaulu,
+  avaaSaadot,
+  laulu,
+  PITKA_RIVI,
+  poistuLivesta,
+} from './apu';
 
 /** Riittävän pitkä laulu, jotta live-näkymässä on jotain vieritettävää. */
 function pitkaLaulu() {
@@ -98,12 +104,13 @@ test('tekstikoon muutos säilyy live-tilaan palatessa', async ({ page }) => {
     page.locator('.live-scroll').evaluate((el) => getComputedStyle(el).fontSize);
 
   const alku = await koko();
+  await avaaSaadot(page);
   await page.getByLabel('Larger text').click();
   await page.getByLabel('Larger text').click();
   const suurennettu = await koko();
   expect(parseFloat(suurennettu)).toBeGreaterThan(parseFloat(alku));
 
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
   await expect(page.locator('.live-view')).toHaveCount(0);
   await page.getByRole('button', { name: 'Live', exact: true }).click();
   expect(await koko()).toBe(suurennettu);
@@ -123,7 +130,7 @@ test('näkymän napautus pysäyttää ja jatkaa', async ({ page }) => {
 
 test('live-tilasta pääsee pois eikä editori jää taakse rikki', async ({ page }) => {
   await avaaLive(page);
-  await page.getByLabel('Exit live mode').click();
+  await poistuLivesta(page);
   await expect(page.locator('.live-view')).toHaveCount(0);
   await expect(page.locator('.lyrics')).toBeVisible();
 });
@@ -176,7 +183,15 @@ test('piirtotilassa ohjaimet pysyvät käytettävissä', async ({ page }) => {
   await page.waitForTimeout(4500);
 
   await expect(page.locator('.live-bar')).not.toHaveClass(/hidden/);
-  await expect(page.getByLabel('Exit live mode')).toBeVisible();
+  /* Piirtotilassa toistorivi on piilossa, jotta työkalut eivät vie lehdeltä
+     kolmea riviä. Tie takaisin on silloin «Valmis», ja sen on oltava näkyvissä
+     koko ajan – muuten piirtotilasta ei pääse pois mitenkään. */
+  const valmis = page.getByRole('button', { name: 'Done', exact: true });
+  await expect(valmis).toBeVisible();
+  await expect(page.locator('.live-controls')).toHaveCount(0);
+
+  await valmis.click();
+  await expect(page.locator('.draw-tools')).toHaveCount(0);
 
   // Ja ulos on päästävä.
   await page.getByLabel('Exit live mode').click();

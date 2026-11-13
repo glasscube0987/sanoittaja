@@ -47,7 +47,7 @@ for (const leveys of [393, 375, 320]) {
     }
 
     // 375 pikselistä ylöspäin kaikki on yhdellä rivillä; kapeammalla rivi saa
-    // kiertyä, koska kahdeksan säädintä ei mahdu sormenkokoisina 320 pikseliin.
+    // kiertyä mieluummin kuin valua reunan yli.
     if (leveys >= 375) {
       const ylareunat = await Promise.all(painikkeet.map(async (p) => (await p.boundingBox())!.y));
       expect(new Set(ylareunat.map(Math.round)).size).toBe(1);

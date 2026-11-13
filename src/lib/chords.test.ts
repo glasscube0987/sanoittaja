@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { isChordToken, parseChord, respellChord, transposeBar, transposeChord } from './chords';
+import {
+  isChordToken,
+  keyAccidental,
+  parseChord,
+  respellChord,
+  transposeBar,
+  transposeChord,
+} from './chords';
 
 describe('parseChord', () => {
   it('jäsentää perussoinnut', () => {
@@ -175,5 +182,54 @@ describe('isChordToken H:n kanssa', () => {
     for (const sana of ['Hei', 'Hän', 'Halloween', 'Huomenna', 'Hiljaa']) {
       expect(isChordToken(sana)).toBe(false);
     }
+  });
+});
+
+describe('keyAccidental', () => {
+  it('alennusmerkkiset duurit', () => {
+    for (const key of ['F', 'Bb', 'Eb', 'Ab', 'Db']) expect(keyAccidental(key), key).toBe('flat');
+  });
+
+  it('ristiduurit', () => {
+    for (const key of ['G', 'D', 'A', 'E', 'B', 'H']) expect(keyAccidental(key), key).toBe('sharp');
+  });
+
+  /* Molli luetaan rinnakkaisduurinsa kautta: Cm on Eb-duurin sävellaji. */
+  it('mollit rinnakkaisduurinsa mukaan', () => {
+    for (const key of ['Dm', 'Gm', 'Cm', 'Fm', 'Bbm']) expect(keyAccidental(key), key).toBe('flat');
+    for (const key of ['Em', 'Bm', 'F#m', 'C#m', 'G#m']) expect(keyAccidental(key), key).toBe('sharp');
+  });
+
+  it('etumerkittömissä sävellajeissa ei ole valittavaa', () => {
+    expect(keyAccidental('C')).toBeUndefined();
+    expect(keyAccidental('Am')).toBeUndefined();
+  });
+
+  /* Väärin kirjoitettu sävellaji korjautuu: A#-duurissa olisi kymmenen
+     ylennystä, joten se kirjoitetaan Bb:nä. */
+  it('enharmoninen kirjoitusasu ei ratkaise, sävelluokka ratkaisee', () => {
+    expect(keyAccidental('A#')).toBe('flat');
+    expect(keyAccidental('D#')).toBe('flat');
+    expect(keyAccidental('A#m')).toBe('flat');
+    expect(keyAccidental('Dbm')).toBe('sharp');
+  });
+
+  /* Fis- ja Ges-duurissa on kummassakin kuusi etumerkkiä. */
+  it('tasapelissä noudatetaan kirjoitettua asua', () => {
+    expect(keyAccidental('F#')).toBe('sharp');
+    expect(keyAccidental('Gb')).toBe('flat');
+    expect(keyAccidental('D#m')).toBe('sharp');
+    expect(keyAccidental('Ebm')).toBe('flat');
+  });
+
+  it('laatuosa ei sotke: maj7 on duuria, m7 mollia', () => {
+    expect(keyAccidental('Fmaj7')).toBe('flat');
+    expect(keyAccidental('Em7')).toBe('sharp');
+    expect(keyAccidental('Dmin')).toBe('flat');
+  });
+
+  it('tunnistamaton sävellaji ei valitse mitään', () => {
+    expect(keyAccidental('')).toBeUndefined();
+    expect(keyAccidental('mollissa')).toBeUndefined();
   });
 });
