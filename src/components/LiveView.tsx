@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useT } from '../lib/i18n';
 import { observeKeyboard } from '../lib/keyboard';
 import {
@@ -7,6 +7,7 @@ import {
   FONT_MIN,
   FONT_STEP,
   loadLiveSettings,
+  scrollProgress,
   scrollStep,
   SPEED_MAX,
   SPEED_MIN,
@@ -15,6 +16,7 @@ import {
 } from '../lib/live';
 import {
   COLORS,
+  inkColor,
   ERASER_RADII,
   isBlank,
   STROKE_WIDTHS,
@@ -79,6 +81,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose, onSongC
   const [saadot, setSaadot] = useState(false);
   const [poke, setPoke] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   /* Merkinnät luetaan laulukohtaisesti: setissä selattaessa vaihtuvat mukana. */
   const [notes, setNotes] = useAnnotations(song.id);
@@ -383,6 +386,18 @@ export default function LiveView({ songs, index, onIndexChange, onClose, onSongC
     return () => window.clearTimeout(id);
   }, [poke, tool.active]);
 
+  /* Viiva syntyy uudelleen piirtotilasta palatessa, ja lyhyt laulu ei vieri
+     lainkaan: kummassakaan ei tule vieritystapahtumaa, joten kohta luetaan
+     myös näissä. */
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    progressRef.current?.style.setProperty(
+      '--progress',
+      String(scrollProgress(el.scrollTop, el.scrollHeight, el.clientHeight)),
+    );
+  }, [tool.active, index]);
+
   /* Vieritys: murto-osapikselit kerätään talteen, jotta hidas nopeus liikkuu. */
   useEffect(() => {
     const el = scrollRef.current;
@@ -528,6 +543,16 @@ export default function LiveView({ songs, index, onIndexChange, onClose, onSongC
            Näin uusi tila, joka varaa napautuksen, ei voi vahingossa hukata
            ainoaa tietä takaisin ohjaimiin. */
         onPointerDown={wake}
+        /* Edistymisviiva päivitetään suoraan tyyliin eikä tilaan: vieritys
+           liikkuu joka ruudunpäivityksellä, ja jokainen siitä seuraava piirto
+           veisi aikaa juuri siltä vieritykseltä. */
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          progressRef.current?.style.setProperty(
+            '--progress',
+            String(scrollProgress(el.scrollTop, el.scrollHeight, el.clientHeight)),
+          );
+        }}
         style={{
           fontSize: `${fontSize}px`,
           /* Piirtotilassa vieritys on estettävä kokonaan. Myös Apple Pencil on
@@ -575,6 +600,14 @@ export default function LiveView({ songs, index, onIndexChange, onClose, onSongC
           opittu, eikä palkki saa syödä lehteä turhaan. */}
       {tool.active && tool.mode === 'text' && !editing && !notes.some(isText) && (
         <p className="text-hint">{t('text.hint')}</p>
+      )}
+
+      {/* Iltarusko: laulu kulkee oranssista turkoosiin. Palkin ulkopuolella,
+          jotta se ei himmene palkin mukana – se on juuri se mitä vilkaistaan. */}
+      {!tool.active && (
+        <div className="live-progress" ref={progressRef} aria-hidden="true">
+          <i />
+        </div>
       )}
 
       <div
@@ -727,7 +760,7 @@ export default function LiveView({ songs, index, onIndexChange, onClose, onSongC
                   <button
                     key={color}
                     className={tool.color === color ? 'swatch current' : 'swatch'}
-                    style={{ background: color }}
+                    style={{ background: inkColor(color) }}
                     aria-label={t('draw.color', { color })}
                     {...kohdistus}
                     onClick={() => asu({ color }, { color })}

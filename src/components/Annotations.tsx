@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useT } from '../lib/i18n';
 import type { Point } from '../lib/annotate';
-import { DRAG_SLOP, pathData, simplify, STROKE_WIDTHS, toAnchored, toFlat } from '../lib/annotate';
+import { DRAG_SLOP, inkColor, pathData, simplify, STROKE_WIDTHS, toAnchored, toFlat } from '../lib/annotate';
 import type { Annotation, TextAnnotation } from '../lib/types';
 import { isStroke, isText } from '../lib/types';
 import { placeStroke, pointToStrip, pointToWrapped, strokeToStrip } from '../lib/wrap';
@@ -386,7 +386,7 @@ export default function LineAnnotations({
           const paikka = naytolle(note);
           const asu = {
             fontSize: `${note.size}em`,
-            color: note.color,
+            color: inkColor(note.color),
             fontWeight: note.bold ? 700 : 400,
             fontStyle: note.italic ? 'italic' : 'normal',
           } as const;
@@ -455,7 +455,9 @@ export default function LineAnnotations({
             <path
               key={`${note.id}:${i}`}
               d={pathData(points, em)}
-              stroke={note.color}
+              /* Tyylinä eikä attribuuttina: muste on CSS-muuttuja (`inkColor`),
+                 eikä SVG:n esitysattribuutti luotettavasti ratkaise sitä. */
+              style={{ stroke: inkColor(note.color) }}
               strokeWidth={Math.max(1, note.width * em)}
               fill="none"
               strokeLinecap="round"
@@ -466,7 +468,7 @@ export default function LineAnnotations({
         {kesken && (
           <path
             d={pathData(toFlat(kesken), em)}
-            stroke={tool.color}
+            style={{ stroke: inkColor(tool.color) }}
             strokeWidth={Math.max(1, STROKE_WIDTHS[tool.strokeSize] * em)}
             fill="none"
             strokeLinecap="round"

@@ -3,10 +3,13 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import { applyIosZoomFix } from './lib/iosZoom';
+import { applyTheme, loadTheme } from './lib/theme';
 import { completeDropboxAuthIfReturning } from './lib/sync/dropbox';
+import './fonts/fonts.css';
 import './styles.css';
 
 async function boot() {
+  applyTheme(loadTheme());
   applyIosZoomFix();
   try {
     await completeDropboxAuthIfReturning();

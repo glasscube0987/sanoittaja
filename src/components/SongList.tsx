@@ -191,8 +191,11 @@ export default function SongList({
 
   return (
     <>
-      <header className="topbar">
-        <h1>Sanoittaja</h1>
+      {/* Kirjaston yläreunassa iltarusko: ainoa paikka sovelluksessa jossa
+          liukuväri on taustana. Se kertoo missä ollaan, eikä toistu muualla
+          ettei se kulu. */}
+      <header className="topbar home">
+        <h1 className="brand">Sanoittaja</h1>
         <button
           className="icon-button"
           onClick={() => setSettingsOpen(true)}
@@ -335,82 +338,90 @@ export default function SongList({
             {t('set.emptyHint')}
           </p>
         )}
-        {naytetyt.map(({ song, snippet }, i) => {
-          const kortti = (
-            <button className="song-card" onClick={() => onOpen(song.id)}>
-              <span className="song-card-text">
-                <span className="title">
-                  {setlist && <span className="song-number">{i + 1}.</span>}
-                  {song.title || t('app.untitled')}
-                </span>
-                <span className="meta">
-                  {song.songKey ? `${song.songKey} · ` : ''}
-                  {t('list.meta', {
-                    // Sointurivit lasketaan mukaan, jottei pelkistä tahdeista koostuva
-                    // laulu näytä tyhjältä.
-                    lines: song.lines.filter((l) => l.text.trim() || l.bars?.length).length,
-                    date: formatDate(song.updatedAt, lang),
-                  })}
-                </span>
-                {/* Tagit metarivin alle eivätkä sen sisään: ne ovat lyhyitä,
-                    mutta kolme tagia ja päiväys samalla rivillä kiertyisi
-                    kahdelle puhelimen leveydellä. */}
-                {song.tags && song.tags.length > 0 && (
-                  <span className="card-tags">
-                    {song.tags.map((tag) => (
-                      <span className="card-tag" key={tag}>
-                        {tag}
-                      </span>
-                    ))}
+        {/* Rivit yhdessä laatikossa eivätkä näkymän väleillä: hiusviivoin
+            erotettu lista luetaan yhtenä kokonaisuutena, ja näkymän välistys
+            olisi irrottanut rivit toisistaan kuin erilliset kortit. */}
+        <div className="song-list">
+          {naytetyt.map(({ song, snippet }, i) => {
+            const kortti = (
+              <button className="song-card" onClick={() => onOpen(song.id)}>
+                {/* Sävellaji omassa sarakkeessaan rivin alussa, kuten tekijän
+                    sivuston päivämäärät: se on se mitä etsitään kun bändi kysyy
+                    «missä sävellajissa?», ja sarakkeena sen löytää silmäilemällä. */}
+                <span className="song-key">{song.songKey}</span>
+                <span className="song-card-text">
+                  <span className="title">
+                    {setlist && <span className="song-number">{i + 1}.</span>}
+                    {song.title || t('app.untitled')}
                   </span>
-                )}
-                {/* Katkelma kertoo miksi laulu on listalla silloin kun syy ei
-                    ole otsikossa; ilman sitä suodatus näyttäisi satunnaiselta. */}
-                {snippet && <span className="snippet">{snippet}</span>}
-              </span>
-              <Icon name="chevronRight" size={18} />
-            </button>
-          );
+                  <span className="meta">
+                    {t('list.meta', {
+                      // Sointurivit lasketaan mukaan, jottei pelkistä tahdeista koostuva
+                      // laulu näytä tyhjältä.
+                      lines: song.lines.filter((l) => l.text.trim() || l.bars?.length).length,
+                      date: formatDate(song.updatedAt, lang),
+                    })}
+                  </span>
+                  {/* Tagit metarivin alle eivätkä sen sisään: ne ovat lyhyitä,
+                      mutta kolme tagia ja päiväys samalla rivillä kiertyisi
+                      kahdelle puhelimen leveydellä. */}
+                  {song.tags && song.tags.length > 0 && (
+                    <span className="card-tags">
+                      {song.tags.map((tag) => (
+                        <span className="card-tag" key={tag}>
+                          {tag}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                  {/* Katkelma kertoo miksi laulu on listalla silloin kun syy ei
+                      ole otsikossa; ilman sitä suodatus näyttäisi satunnaiselta. */}
+                  {snippet && <span className="snippet">{snippet}</span>}
+                </span>
+                <Icon name="chevronRight" size={18} />
+              </button>
+            );
 
-          if (!setlist) return <div className="song-row" key={song.id}>{kortti}</div>;
+            if (!setlist) return <div className="song-row" key={song.id}>{kortti}</div>;
 
-          /* Poisto on liu'utuksen takana eikä painikkeena: ✕ rivin reunassa oli
-             puhelimella liian helppo osua vahingossa. Vain setissä – «Kaikki
-             laulut» -näkymässä sama ele hävittäisi laulun kokonaan. */
-          return (
-            <div className="song-row" key={song.id}>
-              {/* Liu'utus koskee vain korttia: jos koko rivi liukuisi, ▲▼
-                  siirtyisivät sen mukana keskelle ruutua. */}
-              <SwipeRow
-                open={avoinId === song.id}
-                onOpenChange={(auki) => setAvoinId(auki ? song.id : null)}
-                actionLabel={t('set.removeAction')}
-                actionName={t('set.removeSong', { title: song.title || t('app.untitled') })}
-                onAction={() => onSetlistChange(removeSong(setlist, song.id))}
-              >
-                {kortti}
-              </SwipeRow>
-              <div className="song-order">
-                <button
-                  className="icon-button small"
-                  disabled={i === 0}
-                  aria-label={t('set.moveUp', { title: song.title || t('app.untitled') })}
-                  onClick={() => onSetlistChange(moveSong(setlist, song.id, -1))}
+            /* Poisto on liu'utuksen takana eikä painikkeena: ✕ rivin reunassa oli
+               puhelimella liian helppo osua vahingossa. Vain setissä – «Kaikki
+               laulut» -näkymässä sama ele hävittäisi laulun kokonaan. */
+            return (
+              <div className="song-row" key={song.id}>
+                {/* Liu'utus koskee vain korttia: jos koko rivi liukuisi, ▲▼
+                    siirtyisivät sen mukana keskelle ruutua. */}
+                <SwipeRow
+                  open={avoinId === song.id}
+                  onOpenChange={(auki) => setAvoinId(auki ? song.id : null)}
+                  actionLabel={t('set.removeAction')}
+                  actionName={t('set.removeSong', { title: song.title || t('app.untitled') })}
+                  onAction={() => onSetlistChange(removeSong(setlist, song.id))}
                 >
-                  <Icon name="chevronUp" size={18} />
-                </button>
-                <button
-                  className="icon-button small"
-                  disabled={i === naytetyt.length - 1}
-                  aria-label={t('set.moveDown', { title: song.title || t('app.untitled') })}
-                  onClick={() => onSetlistChange(moveSong(setlist, song.id, 1))}
-                >
-                  <Icon name="chevronDown" size={18} />
-                </button>
+                  {kortti}
+                </SwipeRow>
+                <div className="song-order">
+                  <button
+                    className="icon-button small"
+                    disabled={i === 0}
+                    aria-label={t('set.moveUp', { title: song.title || t('app.untitled') })}
+                    onClick={() => onSetlistChange(moveSong(setlist, song.id, -1))}
+                  >
+                    <Icon name="chevronUp" size={18} />
+                  </button>
+                  <button
+                    className="icon-button small"
+                    disabled={i === naytetyt.length - 1}
+                    aria-label={t('set.moveDown', { title: song.title || t('app.untitled') })}
+                    onClick={() => onSetlistChange(moveSong(setlist, song.id, 1))}
+                  >
+                    <Icon name="chevronDown" size={18} />
+                  </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
         {/* Varmuuskopiohuomautus jää listalle, koska se on muistutus eikä
             toiminto: valikon takana piilotettuna se ei muistuttaisi mistään.
             Toiminnot itse ovat asetuksissa. */}

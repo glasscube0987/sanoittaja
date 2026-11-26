@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  COLORS,
   DRAG_SLOP,
   eraseAlong,
   eraseAt,
   ERASER_RADII,
   ERASER_RADIUS,
   hitsStroke,
+  inkColor,
   isBlank,
   pathData,
   simplify,
@@ -334,5 +336,22 @@ describe('isBlank', () => {
   it('ei pidä tyhjänä kenttää jossa on merkkejä', () => {
     expect(isBlank('capo 3')).toBe(false);
     expect(isBlank(' 2x ')).toBe(false);
+  });
+});
+
+describe('inkColor', () => {
+  /* Valkoinen muste katosi vaalealla pohjalla ja paperilla, koska tallennettu
+     heksa piirrettiin sellaisenaan. */
+  it('tunnettu muste piirtyy teeman muuttujalla ja tallennettu väri varana', () => {
+    expect(inkColor('#eceef4')).toBe('var(--ink-white, #eceef4)');
+    expect(inkColor('#E0524F')).toBe('var(--ink-red, #E0524F)');
+  });
+
+  it('jokaisella valittavalla musteella on teemaväri', () => {
+    for (const color of COLORS) expect(inkColor(color)).toMatch(/^var\(--ink-/);
+  });
+
+  it('tuntematon väri sellaisenaan', () => {
+    expect(inkColor('#123456')).toBe('#123456');
   });
 });

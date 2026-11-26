@@ -64,7 +64,14 @@ test('ruudukon pisteet osuvat samoille sarakkeille kuin soinnut', async ({ page 
     const chord = el.querySelector('.chord') as HTMLElement;
     // Ruudukon merkki 8 alkaa hintin vasemmasta reunasta kahdeksan merkin päässä.
     const probe = document.createElement('span');
-    probe.style.cssText = `position:absolute;visibility:hidden;white-space:pre;font:${getComputedStyle(hint).font}`;
+    // Kirjasin kopioidaan ominaisuus kerrallaan eikä `font`-pikakirjoituksena:
+    // pikakirjoitus on tyhjä heti kun jokin sen osa (esim. numerotyyli) poikkeaa
+    // oletuksesta, ja silloin mittari mittasi käyttöliittymän kirjasimella.
+    const tyyli = getComputedStyle(hint);
+    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre';
+    for (const k of ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing'] as const) {
+      probe.style[k] = tyyli[k];
+    }
     probe.textContent = '        ';
     document.body.appendChild(probe);
     const leveys = probe.getBoundingClientRect().width;

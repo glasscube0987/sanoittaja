@@ -88,6 +88,20 @@ function luku(arvo: unknown, oletus: number, min: number, max: number): number {
   return Number.isFinite(n) ? clamp(n, min, max) : oletus;
 }
 
+/**
+ * Kuinka pitkällä laulussa ollaan, 0–1. Live-tilan edistymisviiva näyttää
+ * tämän: lavalla katse palaa lappuun otelaudalta, ja viiva kertoo yhdellä
+ * silmäyksellä onko menossa alku vai loppu.
+ *
+ * Lyhyt laulu, joka mahtuu kokonaan ruudulle, ei vieri lainkaan; se on
+ * alussa eikä jaa nollalla.
+ */
+export function scrollProgress(scrollTop: number, scrollHeight: number, clientHeight: number): number {
+  const matka = scrollHeight - clientHeight;
+  if (!(matka > 0)) return 0;
+  return clamp(scrollTop / matka, 0, 1);
+}
+
 export function loadLiveSettings(): LiveSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);

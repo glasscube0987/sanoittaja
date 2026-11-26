@@ -20,7 +20,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 
 const svg = await readFile(new URL('../public/icon.svg', import.meta.url), 'utf8');
-const taysi = svg.replace('rx="112"', 'rx="0"');
+// Kaikki pyöristykset: tausta ja iltarusko ovat kumpikin oma suorakulmionsa.
+const taysi = svg.replaceAll('rx="112"', 'rx="0"');
 if (taysi === svg) throw new Error('icon.svg:n taustasta ei löytynyt pyöristystä (rx="112")');
 
 const KUVAT = [

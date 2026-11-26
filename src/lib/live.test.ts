@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  scrollProgress,
   clamp,
   DEFAULT_LIVE,
   FONT_MAX,
@@ -123,5 +124,24 @@ describe('loadLiveSettings', () => {
     // Rikkinäinen asetus ei saa estää esiintymistä.
     muisti('{ ei json');
     expect(loadLiveSettings()).toEqual(DEFAULT_LIVE);
+  });
+});
+
+describe('scrollProgress', () => {
+  it('alku, puoliväli ja loppu', () => {
+    expect(scrollProgress(0, 1000, 400)).toBe(0);
+    expect(scrollProgress(300, 1000, 400)).toBe(0.5);
+    expect(scrollProgress(600, 1000, 400)).toBe(1);
+  });
+
+  /* iOS:n kuminauhavieritys vie hetkeksi yli reunojen. */
+  it('pysyy välillä 0–1', () => {
+    expect(scrollProgress(-40, 1000, 400)).toBe(0);
+    expect(scrollProgress(700, 1000, 400)).toBe(1);
+  });
+
+  it('ruudulle mahtuva laulu on alussa eikä jaa nollalla', () => {
+    expect(scrollProgress(0, 400, 400)).toBe(0);
+    expect(scrollProgress(0, 300, 400)).toBe(0);
   });
 });

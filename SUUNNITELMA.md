@@ -7,7 +7,7 @@ järjestys, avoimet päätökset ja tiedossa oleva velka.
 Tavoite on oikea tuote keikkailevalle muusikolle ja lauluntekijälle: sointu- ja
 sanoituslaput, jotka toimivat lavalla, ja omat laulut, jotka pysyvät tallessa.
 
-Päivitetty 13.11.2026: erä 2 (live-tila keikkakuntoon) tehty.
+Päivitetty 25.11.2026: erä 2 julkaistu; erän 3 visuaalinen järjestelmä (3a) tehty.
 
 ## Järjestys
 
@@ -15,7 +15,8 @@ Päivitetty 13.11.2026: erä 2 (live-tila keikkakuntoon) tehty.
 |---|-----|------|
 | 1 | Laatuerä | tehty |
 | 2 | Live-tila keikkakuntoon | tehty |
-| 3 | Käyttöliittymän suunnittelukierros | seuraava |
+| 3a | Visuaalinen järjestelmä «Iltarusko» | tehty |
+| 3b | Käytön rakenne: lista, soinnun lisäys, lakanat | seuraava |
 | 4 | Tabulatuuri, sitten nuotit | |
 | 5 | Beta oikeilla muusikoilla | |
 | 6 | Natiivikuori ja sovelluskauppa | |
@@ -99,8 +100,35 @@ Jäi tekemättä tai havaittiin matkalla:
 
 ## 3. Käyttöliittymän suunnittelukierros
 
-Yksi kierros, jossa sovitaan välit, tekstikoot, painikkeiden tärkeysjärjestys ja
-lakanoiden rakenne – ja sen jälkeen näkymät käydään läpi sitä vasten.
+Kierros jaettiin kahtia, koska ulkoasu ja käytön rakenne ovat eri riskejä:
+ulkoasu ei muuta sitä mitä painetaan, rakenne muuttaa.
+
+### 3a. Visuaalinen järjestelmä — tehty
+
+Suunta valittiin neljästä luonnoksesta (A Lavavalo, B Nuottivihko, C Rakenne,
+D Iltarusko); valinta oli **D**, tekijän sivuston ja työtilan perhe, ja
+otsikoihin hillitty kirjasin jonka lisenssiä ei tarvitse miettiä.
+
+- Väritokenit kahdelle teemalle, valinta asetuksissa (laitteen mukaan, vaalea,
+  tumma). Korostus = musiikki, oranssi = huomio.
+- Omat kirjasimet sovelluksen mukana (Space Grotesk, Raleway, Red Hat Mono;
+  SIL OFL). Lehden merkki 0,6 em ja rivikorkeus kiinteä, jotta merkinnät eivät
+  siirry.
+- Musteet teeman mukaan: valkoinen muste näkyy vaalealla ja paperilla.
+- Laululista viivoitettuna sivuna, sävellaji omassa sarakkeessaan; setit
+  välilehtinä. Kirjaston yläreunassa iltarusko.
+- Editorissa kirjoitettava rivi erottuu reunaviivalla.
+- Live-tilassa edistymisviiva oranssista turkoosiin, pyöreä toistopainike.
+- Korjattu: pitkän laulun rivin kohdistus vieritti rivin alun soinnut
+  asetuspainikkeen alle.
+
+Tarkistamatta: iPhonen tilapalkki vaalealla teemalla (`black-translucent`
+piirtää valkoisen tekstin sovelluksen päälle), ja Raleway oikealla laitteella.
+
+### 3b. Käytön rakenne — seuraava
+
+Luonnoksissa näkyivät jo: yksi ohjainrivi listassa, soinnun paikka tyhjänä
+lokerona kohdistetun rivin yllä ja laulun soinnut pikavalintoina.
 
 Arviossa löytyneet kohdat:
 
@@ -181,7 +209,9 @@ Vielä tekemättä:
 
 ## Avoimet tuotepäätökset
 
-- **Nimi** ennen 1.0:aa.
+- **Nimi** ennen 1.0:aa. Sovellus myydään tekijän omalla nimellä. Nimiehdokkaita
+  Ensounded-sanasta johdettuna kirjattu keskusteluun 25.11.2026; saatavuus
+  tarkistamatta.
 - **Hinnoittelu** ja se, mikä on maksullista.
 - **Synkronointi vai varmuuskopio.** Nyt laitteiden välillä on yhdistävä
   varmuuskopio, ei synkronointia. Joko se sanotaan suoraan, tai tehdään oikea

@@ -1,7 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#12121a"/>
-  <text x="96" y="200" font-family="Georgia, serif" font-size="120" fill="#f5b942">Am7</text>
-  <rect x="96" y="248" width="320" height="18" rx="9" fill="#e8e8f0"/>
-  <rect x="96" y="308" width="240" height="18" rx="9" fill="#e8e8f0" opacity="0.75"/>
-  <rect x="96" y="368" width="288" height="18" rx="9" fill="#e8e8f0" opacity="0.5"/>
+  <!-- Iltarusko: sovelluksen ja tekijän sivuston yhteinen kuva. Sointu on
+       ääriviivoina eikä tekstinä, jotta kuvake näyttää samalta koneesta
+       riippumatta (Red Hat Mono Bold, scripts/kuvakkeet.mjs). -->
+  <defs>
+    <linearGradient id="rusko" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d65d3e" stop-opacity="0.62"/>
+      <stop offset="0.42" stop-color="#4ac3bd" stop-opacity="0.16"/>
+      <stop offset="0.62" stop-color="#4ac3bd" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0d1b2b"/>
+  <rect width="512" height="512" rx="112" fill="url(#rusko)"/>
+  <path fill="#66fcf1" d="M96.15 210.0 126.3 105.0H155.7L185.85 210.0H160.2L154.95 189.45H126.15L120.75 210.0ZM131.4 169.5H149.85L140.7 133.65ZM190.8 210.0V132.60000000000002H210.6V139.05Q213.3 135.3 216.525 133.35000000000002Q219.75 131.4 223.65 131.4Q228.45 131.4 232.27499999999998 133.8Q236.1 136.2 238.2 140.55Q241.2 136.05 245.175 133.72500000000002Q249.15 131.4 254.1 131.4Q261.6 131.4 266.4 136.875Q271.2 142.35000000000002 271.2 151.05V210.0H251.39999999999998V157.5Q251.39999999999998 153.6 249.75 151.27499999999998Q248.1 148.95 245.1 148.95Q243.9 148.95 242.85000000000002 149.325Q241.8 149.7 240.9 150.45Q240.9 150.9 240.9 151.425Q240.9 151.95 240.9 152.55V210.0H221.1V157.5Q221.1 153.6 219.45 151.27499999999998Q217.8 148.95 214.8 148.95Q213.75 148.95 212.7 149.25Q211.65 149.55 210.6 150.3V210.0ZM291.9 210.0 336.9 125.4H279.9V105.0H361.95V122.25L319.65 210.0Z"/>
+  <rect x="96" y="262" width="320" height="18" rx="9" fill="#e3e8ec"/>
+  <rect x="96" y="322" width="240" height="18" rx="9" fill="#e3e8ec" opacity="0.75"/>
+  <rect x="96" y="382" width="288" height="18" rx="9" fill="#e3e8ec" opacity="0.5"/>
 </svg>

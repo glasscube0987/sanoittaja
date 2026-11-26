@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LANG_NAMES, LANGS, useI18n } from '../lib/i18n';
 import { loadNotation, NOTATIONS, storeNotation } from '../lib/notation';
+import { applyTheme, loadTheme, storeTheme, THEMES } from '../lib/theme';
 import { autoBackupEnabled, setAutoBackupEnabled } from '../lib/sync/autoBackup';
 import { DEFAULT_CLIENT_ID, getDropboxClientIdOverride, setDropboxClientId } from '../lib/sync/dropbox';
 import { getGdriveClientId, setGdriveClientId } from '../lib/sync/gdrive';
@@ -35,6 +36,7 @@ export default function SettingsSheet({
   /* Merkintätapa tallentuu heti valittaessa, kuten kielikin: se ei ole osa
      tallenna-painikkeen takana olevaa lomaketta vaan välitön valinta. */
   const [notation, setNotation] = useState(loadNotation);
+  const [theme, setTheme] = useState(loadTheme);
 
   function save() {
     setDropboxClientId(dropboxId);
@@ -80,6 +82,29 @@ export default function SettingsSheet({
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="field">
+          <label>{t('settings.theme')}</label>
+          {/* Vaihtuu heti, jotta valinnan näkee ennen kuin lakana suljetaan. */}
+          <div className="chip-row">
+            {THEMES.map((option) => (
+              <button
+                type="button"
+                key={option}
+                className={option === theme ? 'primary' : ''}
+                aria-pressed={option === theme}
+                onClick={() => {
+                  setTheme(option);
+                  storeTheme(option);
+                  applyTheme(option);
+                }}
+              >
+                {t(`settings.theme.${option}`)}
+              </button>
+            ))}
+          </div>
+          <small>{t('settings.themeHelp')}</small>
         </div>
 
         <div className="field">

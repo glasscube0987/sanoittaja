@@ -109,9 +109,44 @@ raidan *vähimmäis*koko on `max-content`), koska tarttuva elementti pysyy vain
 oman vanhempansa sisällä; ja tarttumiskohta mitataan laatikon sisältöreunasta,
 joten laatikon täytettä ei lasketa siihen mukaan.
 
-**Tasalevyinen fontti kuuluu vain nuottikuvalle** – soinnuille, tahtilajeille ja
-kertausmerkeille (`.chip-row.notation`). Muu käyttöliittymä on yhdellä fontilla;
-sama vika on korjattu erikseen sekä tagi- että rivilakanasta.
+**Tasalevyinen fontti kuuluu vain nuottikuvalle** – soinnuille, sävellajille,
+tahtilajeille ja kertausmerkeille (`.chip-row.notation`, `.song-key`). Muu
+käyttöliittymä on yhdellä fontilla; sama vika on korjattu erikseen sekä tagi-
+että rivilakanasta.
+
+**Ulkoasu on suunta «Iltarusko»**, samaa perhettä kuin tekijän sivusto ja
+työtila. Värit ovat vain tokeneina `styles.css`:n alussa, ja jokaisella on yksi
+merkitys: `--accent` (sinivihreä) on **aina musiikkia** – soinnut, osiot,
+pääpainike – ja `--danger` (iltaruskon oranssi) kaikki mikä vaatii huomiota:
+nauhoitus, poisto, varoitus, virhe. Kirkkain turkoosi `--accent-strong` on vain
+isoissa otsikoissa, koska pienessä koossa se hehkuu ja sumentaa kirjaimet.
+Liukuväri esiintyy kahdessa kohdassa (kirjaston yläreuna, live-tilan
+edistymisviiva), ei muualla. Teemoja on kaksi, ja vaalean arvot ovat tiedostossa
+**kahdesti** – mediakyselyssä ja `[data-theme='light']`-valinnassa – jotta
+käyttäjän valinta (`lib/theme.ts`) voittaa laitteen asetuksen kumpaankin
+suuntaan. Uusi väri lisätään tokeniksi kaikkiin kolmeen lohkoon, ei
+literaalina sääntöön.
+
+**Kynän muste on tunniste, ei näyttöväri.** Merkintään tallentuu `COLORS`in
+heksa, ja näytöllä väri tulee teemasta (`inkColor` → `--ink-*`): valkoinen
+muste katosi vaalealla pohjalla ja paperilla. SVG:n väri annetaan tyylinä eikä
+`stroke`-attribuuttina, koska attribuutti ei luotettavasti ratkaise
+CSS-muuttujaa.
+
+**Kirjasimet kulkevat sovelluksen mukana** (`src/fonts/`, SIL OFL – lisenssit
+mukana, upottaminen myytävään sovellukseen on sallittu). Lehden kirjasin on
+osa merkintöjen koordinaatistoa, joten kaksi sääntöä: sen merkin on oltava
+**0,6 em** (kuten SF Monolla, jolla nykyiset merkinnät on piirretty), ja lehden
+rivikorkeus on **kiinteä 1,2** eikä selaimen `normal`, joka vaihteli
+kirjasimen mukana. Kirjasin latautuu vasta käytettäessä, joten rivityksen mitta
+otetaan uudelleen kun se latautuu (`observeWidth`) – lehden leveys ei muutu,
+eikä pelkkä koon seuranta huomaisi mitään.
+
+**Tarttuva sarake tarvitsee vierityksen täytteen.** Pitkän laulun rivin
+kohdistus vieritti sanoituslaatikkoa niin, että kentän alku osui laatikon
+reunaan – tarttuvan asetuspainikkeen alle, ja rivin alun soinnut katosivat.
+`.lyrics`in `scroll-padding-inline-start` kertoo selaimelle, että sarake on
+varattu. Jos rivin alun mitat muuttuvat, laskelma muuttuu mukana.
 
 **Rivin toiminnot asuvat `LineSheet`issä**, eivät kohdistetun rivin
 työkalurivissä: sointurivi on painike ilman tekstikenttää, joten se ei voi

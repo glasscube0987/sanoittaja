@@ -266,11 +266,35 @@ export function hitsStroke(flat: number[], at: Point, radius: number): boolean {
 /**
  * Käytettävissä olevat värit. Vähän ja erottuvia, myös tummalla pinnalla.
  *
- * Ensimmäinen on oletus, ja siksi se ei ole lehden korostusväri: kullalla
- * piirretty merkintä näyttäisi soinnulta tai osion otsikolta. Kulta on silti
- * valittavissa, jos merkinnän on tarkoitus sulautua.
+ * Ensimmäinen on oletus, ja siksi se ei ole lehden korostusväri: korostusvärillä
+ * piirretty merkintä näyttäisi soinnulta tai osion otsikolta.
+ *
+ * Nämä ovat musteiden **tunnisteita**, jotka tallentuvat merkintään. Näytöllä
+ * väri tulee teemasta (`inkColor`): sama heksa ei kelpaa kaikkialle, koska
+ * valkoinen muste katoaa vaalealla pohjalla ja paperilla.
  */
 export const COLORS = ['#e0524f', '#4f9de0', '#5fc07a', '#eceef4', '#e5b45f'];
+
+const INKS: Record<string, string> = {
+  '#e0524f': '--ink-red',
+  '#4f9de0': '--ink-blue',
+  '#5fc07a': '--ink-green',
+  '#eceef4': '--ink-white',
+  '#e5b45f': '--ink-amber',
+};
+
+/**
+ * Musteen näyttöväri CSS-arvona. Tunnettu muste piirtyy teeman omalla
+ * sävyllään (tyylitiedoston `--ink-*`); tuntematon väri – vaikkapa uudemman
+ * version muste varmuuskopiosta – sellaisenaan, ja muuttujan varana on aina
+ * tallennettu väri, jotta merkintä näkyy vaikka muuttuja puuttuisi.
+ *
+ * Tallennettuun tietoon ei kosketa: teema on näyttömuunnos kuten rivityskin.
+ */
+export function inkColor(stored: string): string {
+  const name = INKS[stored.toLowerCase()];
+  return name ? `var(${name}, ${stored})` : stored;
+}
 
 /**
  * Viivan paksuudet em-yksiköissä. Keskimmäinen on oletus ja vastaa noin kahta

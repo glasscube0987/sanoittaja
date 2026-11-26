@@ -58,7 +58,14 @@ test('tuotu sointu osuu oikean merkin kohdalle', async ({ page }) => {
     const line = document.querySelector('.line')!;
     const input = line.querySelector('input.text') as HTMLInputElement;
     const probe = document.createElement('span');
-    probe.style.cssText = `position:absolute;visibility:hidden;white-space:pre;font:${getComputedStyle(input).font}`;
+    // Kirjasin kopioidaan ominaisuus kerrallaan eikä `font`-pikakirjoituksena:
+    // pikakirjoitus on tyhjä heti kun jokin sen osa (esim. numerotyyli) poikkeaa
+    // oletuksesta, ja silloin mittari mittasi käyttöliittymän kirjasimella.
+    const tyyli = getComputedStyle(input);
+    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre';
+    for (const k of ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing'] as const) {
+      probe.style[k] = tyyli[k];
+    }
     document.body.appendChild(probe);
     const odotetut: Record<string, number> = { Am: 0, F: 13 };
     const tulos = [...line.querySelectorAll<HTMLElement>('.chord')].map((chord) => {

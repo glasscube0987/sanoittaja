@@ -1,24 +1,109 @@
 :root {
   /*
-   * Tumma, matala kontrasti pintojen välillä ja yksi lämmin korostusväri.
-   * Korostusta käytetään vain soinnuille, osioille ja aktiiviselle tilalle,
-   * jotta se säilyy merkityksellisenä eikä muutu koristeeksi.
+   * Suunta «Iltarusko»: sama perhe kuin tekijän sivusto ja työtila. Yönsininen
+   * pohja, yksi sinivihreä korostus joka tarkoittaa aina musiikkia (soinnut,
+   * osiot, pääpainike) ja iltaruskon oranssi kaikelle mikä vaatii huomiota
+   * (nauhoitus, poisto, omat merkinnät, virhe).
+   *
+   * Kirkkain turkoosi (`--accent-strong`) on vain isoissa otsikoissa: täysin
+   * kylläinen syaani tummalla hehkuu, ja pienessä koossa kirjainten reunat
+   * sumenevat. Soinnut ovat himmeämpää sävyä, jonka kontrasti on silti yli 8:1.
+   *
+   * Tumma on oletus, koska lava on se paikka jossa sovellus ei saa pettää.
+   * Vaalea teema tulee laitteen asetuksesta tai asetuksista (`lib/theme.ts`),
+   * ja sen arvot ovat alla kahdessa paikassa – mediakyselyssä ja valinnassa –
+   * jotta valinta voittaa laitteen asetuksen kumpaankin suuntaan.
    */
-  --bg: #0f0f14;
-  --surface: #17171f;
-  --surface-2: #21212c;
-  --border: #2c2c39;
-  --border-strong: #3a3a4b;
-  --text: #eceef4;
-  --text-dim: #9295a8;
-  --accent: #e5b45f;
-  --accent-dim: #8a6c33;
-  --accent-text: #171103;
-  --danger: #dd6b6b;
+  --bg: #0d1b2b;
+  --surface: #142538;
+  --surface-2: #1b3047;
+  --border: #24405a;
+  --border-strong: #335675;
+  --text: #e3e8ec;
+  --text-dim: #94a5b5;
+  --accent: #4ac3bd;
+  --accent-strong: #66fcf1;
+  --accent-text: #0d1b2b;
+  --danger: #e0704f;
+  --danger-text: #1b0c06;
+  /* Iltarusko: kirjaston yläreunan ja live-tilan edistymisviivan liuku. */
+  --dusk-warm: color-mix(in srgb, #d65d3e 30%, transparent);
+  --dusk-cool: color-mix(in srgb, #4ac3bd 12%, transparent);
+  /*
+   * Kynän musteet. Merkinnän väri on tallessa heksana, ja tämä on sen
+   * näyttöväri tässä teemassa (`inkColor`, lib/annotate.ts). Ilman tätä
+   * valkoinen veto katoaisi vaalealla pohjalla ja paperilla.
+   */
+  --ink-red: #ef7a5f;
+  --ink-blue: #6fa8ec;
+  --ink-green: #6fcf8a;
+  --ink-white: #eef2f5;
+  --ink-amber: #e8b45a;
   --radius: 12px;
   --radius-sm: 10px;
-  --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-  --mono: 'SF Mono', ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+  --shadow: 0 10px 30px rgba(2, 8, 16, 0.5);
+  --sans: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --display: 'Space Grotesk', 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /*
+   * Lehden kirjasin. Varakirjasimet ovat samaa 0,6 em leveyttä (SF Mono,
+   * Menlo), jotta merkinnät eivät siirry vaikka oma kirjasin ei vielä olisi
+   * latautunut.
+   */
+  --mono: 'Red Hat Mono', 'SF Mono', ui-monospace, Menlo, 'Cascadia Mono', Consolas, monospace;
+  /* Käyttäjän tekstimerkintöjen «sans» on laitteen oma eikä sovelluksen:
+     merkintä on käyttäjän sisältöä, eikä ulkoasun uudistus saa muuttaa sitä. */
+  --annot-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg: #f2f5f6;
+    --surface: #ffffff;
+    --surface-2: #e6edef;
+    --border: #cfdcdf;
+    --border-strong: #a9bcc2;
+    --text: #102131;
+    --text-dim: #55636f;
+    --accent: #0d7570;
+    --accent-strong: #0b5e5a;
+    --accent-text: #ffffff;
+    --danger: #b8462a;
+    --danger-text: #ffffff;
+    --dusk-warm: color-mix(in srgb, #d65d3e 18%, transparent);
+    --dusk-cool: color-mix(in srgb, #12807a 10%, transparent);
+    --ink-red: #c43d2b;
+    --ink-blue: #2a63b8;
+    --ink-green: #237a3e;
+    --ink-white: #102131;
+    --ink-amber: #9a6a10;
+    --shadow: 0 10px 30px rgba(16, 33, 49, 0.16);
+    color-scheme: light;
+  }
+}
+
+:root[data-theme='light'] {
+  --bg: #f2f5f6;
+  --surface: #ffffff;
+  --surface-2: #e6edef;
+  --border: #cfdcdf;
+  --border-strong: #a9bcc2;
+  --text: #102131;
+  --text-dim: #55636f;
+  --accent: #0d7570;
+  --accent-strong: #0b5e5a;
+  --accent-text: #ffffff;
+  --danger: #b8462a;
+  --danger-text: #ffffff;
+  --dusk-warm: color-mix(in srgb, #d65d3e 18%, transparent);
+  --dusk-cool: color-mix(in srgb, #12807a 10%, transparent);
+  --ink-red: #c43d2b;
+  --ink-blue: #2a63b8;
+  --ink-green: #237a3e;
+  --ink-white: #102131;
+  --ink-amber: #9a6a10;
+  --shadow: 0 10px 30px rgba(16, 33, 49, 0.16);
+  color-scheme: light;
 }
 
 * {
@@ -30,7 +115,10 @@ html,
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--sans);
+  /* Ralewayn oletusnumerot ovat vanhanaikaisia (1 kuin pieni i); päiväykset,
+     osioiden numerot ja nopeus tarvitsevat tasakorkeat. */
+  font-variant-numeric: lining-nums;
   -webkit-text-size-adjust: 100%;
   /*
    * Sivu ei saa koskaan levitä näyttöä leveämmäksi: pitkä rivi kuuluu
@@ -181,6 +269,7 @@ textarea:focus {
 }
 
 .topbar h1 {
+  font-family: var(--display);
   font-size: 19px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -190,6 +279,29 @@ textarea:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/*
+ * Sovelluksen nimi kirjaston yläpalkissa. Kirkkain turkoosi on varattu tälle ja
+ * live-tilan laulun nimelle: isossa koossa se on sovelluksen tunnusmerkki,
+ * pienessä se hehkuisi ja sumentaisi kirjaimet.
+ */
+.topbar h1.brand {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+
+/*
+ * Iltarusko kirjaston yläreunassa: tekijän sivuston kansikuvan sävyt hiipuvat
+ * pohjaan. Liukuväri vain tässä ja live-tilan edistymisviivassa, jottei se kulu.
+ * Pohjaväri alla, koska palkki on tarttuva ja lista vierii sen alta.
+ */
+.topbar.home {
+  background:
+    linear-gradient(180deg, var(--dusk-warm), var(--dusk-cool) 65%, transparent),
+    color-mix(in srgb, var(--bg) 88%, transparent);
+  padding-bottom: 14px;
 }
 
 /* Kapea mutta korostettu, jottei se vie tilaa laulun nimeltä yläpalkissa. */
@@ -246,19 +358,43 @@ textarea:focus {
 }
 
 /* --- Laululista --- */
+/*
+ * Lista on viivoitettu sivu eikä korttipino: rivit erottaa hiusviiva, kuten
+ * tekijän sivuston tulevien töiden listassa. Kortit olivat jokainen oma
+ * esineensä, ja neljä laulua täytti puhelimen ruudun.
+ */
+.song-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+
 .song-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   width: 100%;
   text-align: left;
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 14px 14px 14px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 14px 6px 14px 2px;
 }
 
 .song-card:active {
-  background: var(--surface-2);
+  background: var(--surface);
+}
+
+/* Sävellaji kuuluu nuottikuvaan, joten se ladotaan lehden kirjasimella. Leveys
+   on vakio, jotta nimet alkavat samasta kohdasta myös ilman sävellajia. */
+.song-key {
+  flex: 0 0 3.2em;
+  padding-top: 2px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent);
 }
 
 .song-card-text {
@@ -271,7 +407,7 @@ textarea:focus {
 
 .song-card .title {
   font-weight: 600;
-  font-size: 17px;
+  font-size: 16.5px;
   letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -297,6 +433,39 @@ textarea:focus {
 .setlist-bar button {
   min-height: 40px;
   padding: 6px 14px;
+  font-size: 14px;
+}
+
+/*
+ * Kokoelmat ovat välilehtiä eivätkä painikkeita: valittu alleviivataan, kuten
+ * tekijän sivuston navigaatiossa. Täytetty korostusväri oli listan raskain
+ * elementti, vaikka se vain kertoi missä ollaan.
+ */
+.setlist-bar {
+  gap: 2px 18px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.setlist-bar button:not(.ghost) {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 6px 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.setlist-bar button.primary {
+  color: var(--accent-strong);
+  box-shadow: inset 0 -2px 0 var(--accent-strong);
+}
+
+.setlist-bar button.ghost {
+  padding: 6px 0;
   font-size: 14px;
 }
 
@@ -374,6 +543,11 @@ button.small {
   font-weight: 600;
 }
 
+.sort-bar button,
+.tag-bar button.tag {
+  border-radius: 999px;
+}
+
 /*
  * Tagichip näyttää painikkeelta myös valitsematta.
  *
@@ -421,7 +595,8 @@ button.small {
   line-height: 1.6;
   padding: 0 7px;
   border-radius: 999px;
-  background: var(--surface-2);
+  background: transparent;
+  border: 1px solid var(--border);
   color: var(--text-dim);
   white-space: nowrap;
 }
@@ -452,7 +627,6 @@ button.small {
 .swipe-row {
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius);
   /* Kortin paikalla rivissä: nuolet jäävät oman leveytensä verran oikealle. */
   flex: 1;
   min-width: 0;
@@ -476,7 +650,7 @@ button.small {
   padding: 0 20px;
   font-weight: 600;
   background: var(--danger);
-  color: #1a1113;
+  color: var(--danger-text);
 }
 
 .swipe-content {
@@ -571,8 +745,9 @@ button.small {
   font-size: 13px;
 }
 
-/* Nuoli kertoo että kortti avautuu; himmeänä se ei kilpaile nimen kanssa. */
+/* Nuoli kertoo että rivi avautuu; himmeänä se ei kilpaile nimen kanssa. */
 .song-card .icon {
+  align-self: center;
   color: var(--text-dim);
   opacity: 0.7;
 }
@@ -734,6 +909,14 @@ button.small {
      vaikuttaisi mitenkään: raita kasvaa enimmäiskokoonsa vain jos laatikossa on
      vapaata tilaa, ja vierivässä laatikossa sitä ei ole. */
   grid-template-columns: minmax(max-content, 1fr);
+  /*
+   * Kohdistettaessa selain vierittää kentän näkyviin. Rivin kenttä on leveämpi
+   * kuin laatikko, joten selain tasasi sen alun laatikon reunaan – ja rivin
+   * alun soinnut jäivät tarttuvan asetuspainikkeen alle. Vierityksen täyte
+   * kertoo selaimelle, että painikkeen sarake on varattu: kenttä jää
+   * lepokohtaansa. Summa on `.line`n täyte, painike ja väli.
+   */
+  scroll-padding-inline-start: calc(var(--lyrics-pad) + 4px + 26px + 2px);
 }
 
 .section + .section {
@@ -766,7 +949,7 @@ button.small {
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
 }
 
 .line {
@@ -780,6 +963,46 @@ button.small {
 .line-body {
   flex: 1;
   min-width: 0;
+}
+
+/*
+ * Kirjoitettava rivi erottuu sävytyksellä ja reunaviivalla, kuten tila
+ * merkitään tekijän työtilassa. Pelkkä kohdistin hukkui pitkässä laulussa:
+ * piti etsiä missä vilkkuu.
+ */
+.line:focus-within {
+  --line-bg: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  background: var(--line-bg);
+}
+
+/*
+ * Reunaviiva on oma tarttuva palansa eikä rivin varjo: sivuvierityksessä rivin
+ * reuna vierii pois näkyvistä, ja asetuspainikkeen peitto maalasi sen yli.
+ * Negatiivinen marginaali pitää sen poissa ladonnasta, jottei kohdistettu rivi
+ * siirry kolmea pikseliä.
+ */
+/*
+ * Kohdistetulla rivillä peitto kahdessa osassa: rivin oma täyte rivin
+ * sävyllä ja laatikon täyte laatikon värillä. Yksi rivin sävyinen peitto
+ * maalasi laatikon täytteeseen pyöristetyn laikun reunaviivan vasemmalle
+ * puolelle.
+ */
+.line:focus-within .section-mark {
+  box-shadow:
+    calc(-1 * var(--line-pad)) 0 0 var(--line-bg),
+    calc(-1 * (var(--lyrics-pad) + var(--line-pad))) 0 0 var(--surface);
+}
+
+.line:focus-within::before {
+  content: '';
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  align-self: stretch;
+  flex: 0 0 3px;
+  /* Vasemmalle rivin reunaan; oikealla takaisin leveys ja flex-väli. */
+  margin: -2px calc(var(--line-pad) - 3px - 2px) -2px calc(-1 * var(--line-pad));
+  background: var(--accent);
 }
 
 /*
@@ -808,9 +1031,11 @@ button.small {
   position: sticky;
   left: var(--line-pad);
   z-index: 1;
-  background: var(--surface);
-  box-shadow: calc(-1 * (var(--lyrics-pad) + var(--line-pad))) 0 0 var(--surface);
+  background: var(--line-bg, var(--surface));
+  box-shadow: calc(-1 * (var(--lyrics-pad) + var(--line-pad))) 0 0 var(--line-bg, var(--surface));
 }
+
+
 
 /* Himmeä mutta ei näkymätön: kontrasti pinnan kanssa pysyy yli 3:1. Himmennys
    on kuvakkeessa eikä painikkeessa, koska läpikuultava painike ei peittäisi
@@ -1244,6 +1469,15 @@ button.small {
 .song-sheet pre {
   font-family: var(--mono);
   font-size: inherit;
+  /*
+   * Kiinteä rivikorkeus eikä selaimen `normal`. Normaali korkeus tulee
+   * kirjasimen omista mitoista, joten se vaihteli laitteittain (SF Mono,
+   * Menlo, Cascadia) ja siirsi em-yksiköin tallennettuja merkintöjä hiukan
+   * pystysuunnassa laitteelta toiselle – ja olisi siirtänyt niitä uudelleen
+   * kun lehti sai oman kirjasimensa. 1,2 on lähellä SF Monon omaa, jolla
+   * nykyiset merkinnät on enimmäkseen piirretty.
+   */
+  line-height: 1.2;
   white-space: pre;
   margin: 0;
 }
@@ -1261,9 +1495,10 @@ button.small {
 }
 
 .song-sheet .sheet-section h2 {
-  font-size: 0.85em;
+  font-size: 0.8em;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   color: var(--accent);
   margin-bottom: 0.2em;
 }
@@ -1361,7 +1596,7 @@ button.small {
 }
 
 .annot-text-body[data-font='sans'] {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--annot-sans);
 }
 
 .annot-text-body[data-font='mono'] {
@@ -1457,7 +1692,7 @@ textarea.annot-text-body {
 }
 
 .draw-font[data-font='sans'] {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--annot-sans);
 }
 
 .draw-font[data-font='mono'] {
@@ -1548,6 +1783,14 @@ textarea.annot-text-body {
   color: var(--text-dim);
 }
 
+/* Live-tilassa sävellaji on nuottikuvaa kuten soinnut. Tulosteessa se jää
+   harmaaksi: paperilla väri ei erotu, eikä sävellaji ole laulun otsikko. */
+.live-view .song-sheet .sheet-key {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+}
+
 /* --- Live-tila --- */
 .live-view {
   position: fixed;
@@ -1587,7 +1830,30 @@ textarea.annot-text-body {
 }
 
 .live-view .song-sheet h1 {
+  font-family: var(--display);
   font-size: 1.3em;
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+/*
+ * Edistymisviiva lehden ja palkin välissä: iltarusko oranssista turkoosiin.
+ * Täyttö kasvaa skaalaamalla eikä leveyttä muuttamalla, jottei jokainen
+ * vieritysaskel laske asettelua uudelleen.
+ */
+.live-progress {
+  position: relative;
+  flex: none;
+  height: 2px;
+  background: var(--border);
+}
+
+.live-progress i {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--danger), var(--accent));
+  transform-origin: left center;
+  transform: scaleX(var(--progress, 0));
 }
 
 /* Loppuun ruudullinen tilaa, jotta viimeinenkin rivi nousee luettavalle korkeudelle. */
@@ -1600,7 +1866,6 @@ textarea.annot-text-body {
   padding: 0 calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom))
     calc(8px + env(safe-area-inset-left));
   background: color-mix(in srgb, var(--surface) 92%, transparent);
-  border-top: 1px solid var(--border);
   transition: opacity 0.25s;
 }
 
@@ -1676,7 +1941,7 @@ textarea.annot-text-body {
   margin-top: 1.5em;
   padding: 14px 16px;
   min-height: 60px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--sans);
   font-size: 16px;
   text-align: left;
 }
@@ -1774,6 +2039,17 @@ textarea.annot-text-body {
   padding: 8px 10px;
   min-width: 44px;
   min-height: 46px;
+}
+
+/* Toisto on palkin tärkein painike ja se jota haetaan sokkona: pyöreä ja
+   täytetty, eikä samannäköinen kuin säätimet sen vieressä. */
+.live-controls button.primary {
+  /* Samankorkuinen kuin rivin muut, jotta rivi pysyy yhtenä linjana. */
+  width: 46px;
+  min-width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  padding: 0;
 }
 
 /* Poistuminen omaan reunaansa, erilleen säätimistä joita painellaan kesken
@@ -1876,6 +2152,16 @@ textarea.annot-text-body {
   .annot-text-body.boxed {
     background: #fff;
   }
+
+  /* Paperille musteet sellaisina kuin ne erottuvat valkoisella; valkoinen
+     muste mustaksi, muuten se katoaisi. */
+  :root {
+    --ink-red: #c43d2b;
+    --ink-blue: #2a63b8;
+    --ink-green: #237a3e;
+    --ink-white: #000;
+    --ink-amber: #9a6a10;
+  }
 }
 
 /* --- Nauhoitteet --- */
@@ -1959,7 +2245,8 @@ textarea.annot-text-body {
 
 /* Huomautus varmuuskopiosta ei estä mitään, joten se korostuu vasta vanhentuessaan. */
 .backup-note.stale {
-  color: var(--accent);
+  /* Varoitus eikä musiikkia: huomioväri, ei korostusväri. */
+  color: var(--danger);
 }
 
 /* Nauhoituslakanan kello. Numerot ovat suuret, koska ne ovat ainoa merkki
