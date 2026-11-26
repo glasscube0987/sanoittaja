@@ -187,18 +187,29 @@ test.describe('kirjasimet', () => {
     expect(await ylivuoto()).toBeLessThanOrEqual(0);
     const ennen = await page.locator('.live-view [data-seg]').count();
 
+    /*
+     * Koekirjasin CSS:n `@font-face`-säännöllä eikä `FontFace`-rajapinnalla:
+     * WebKit ei leventänyt rajapinnan kautta annettua kirjasinta, jolloin
+     * testi kaatui vaikka sovellus toimi. Leveys mitataan ennen väitettä, jotta
+     * testin oma rajoite ja sovelluksen vika erottuvat toisistaan.
+     */
+    const merkki = () =>
+      page.evaluate(() => document.querySelector('.live-view .sheet-measure')!.getBoundingClientRect().width / 10);
+    const kapea = await merkki();
     await page.evaluate(async () => {
       const url = performance
         .getEntriesByType('resource')
         .map((r) => r.name)
         .find((n) => /red-hat-mono-latin-400/.test(n))!;
-      const leveä = new FontFace('Leveä koe', `url(${url})`, { sizeAdjust: '150%' } as FontFaceDescriptors);
       const tyyli = document.createElement('style');
-      tyyli.textContent = '.live-view .song-sheet { --mono: "Leveä koe", monospace; }';
+      tyyli.textContent = `
+        @font-face { font-family: 'Leveä koe'; src: url(${url}) format('woff2'); size-adjust: 150%; }
+        .live-view .song-sheet { --mono: 'Leveä koe', monospace; }`;
       document.head.appendChild(tyyli);
-      document.fonts.add(leveä);
-      await leveä.load();
+      await document.fonts.load('16px "Leveä koe"');
+      await document.fonts.ready;
     });
+    expect(await merkki(), 'koekirjasin ei levennyt – testi ei koe mitään').toBeGreaterThan(kapea * 1.4);
 
     await expect.poll(() => page.locator('.live-view [data-seg]').count()).toBeGreaterThan(ennen);
     expect(await ylivuoto()).toBeLessThanOrEqual(0);
