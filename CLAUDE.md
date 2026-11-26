@@ -139,8 +139,10 @@ osa merkintöjen koordinaatistoa, joten kaksi sääntöä: sen merkin on oltava
 **0,6 em** (kuten SF Monolla, jolla nykyiset merkinnät on piirretty), ja lehden
 rivikorkeus on **kiinteä 1,2** eikä selaimen `normal`, joka vaihteli
 kirjasimen mukana. Kirjasin latautuu vasta käytettäessä, joten rivityksen mitta
-otetaan uudelleen kun se latautuu (`observeWidth`) – lehden leveys ei muutu,
-eikä pelkkä koon seuranta huomaisi mitään.
+otetaan uudelleen kun se latautuu: `observeWidth` seuraa lehden lisäksi sen
+merkkimittaria, jonka leveys muuttuu kirjasimen mukana. Lehden oma leveys ei
+muutu, eikä selaimen `loadingdone`-tapahtumaan voinut luottaa – WebKitissä
+rivitys jäi laskemaan vanhalla merkillä.
 
 **Tarttuva sarake tarvitsee vierityksen täytteen.** Pitkän laulun rivin
 kohdistus vieritti sanoituslaatikkoa niin, että kentän alku osui laatikon

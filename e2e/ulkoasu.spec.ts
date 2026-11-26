@@ -174,8 +174,8 @@ test.describe('kirjasimet', () => {
     await avaaLaulu(page, pitkaLaulu());
     await avaaLive(page);
     /* Kaikille lehden riveille kiinteä korkeus, jottei lehden koko muutu
-       kirjasimen vaihtuessa: kokoa seuraava mittaus huomaisi muuten muutoksen
-       itse, ja testi menisi läpi ilman kirjasimen kuuntelua. Oikeassa
+       kirjasimen vaihtuessa: lehden koon seuranta huomaisi muuten muutoksen
+       itse, ja testi menisi läpi ilman merkkimittarin seurantaa. Oikeassa
        vaihdossa (varakirjasin → oma) koko ei muutu, koska lehden rivikorkeus
        on kiinteä. */
     await page.addStyleTag({ content: '.live-view .song-sheet * { line-height: 1.2 !important; }' });

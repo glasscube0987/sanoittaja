@@ -91,7 +91,10 @@ export default function SongSheet({
       setTila(EI_RIVITYSTA);
       return;
     }
-    return observeWidth(lehti, () => {
+    /* Mittari mukaan seurantaan: kirjasimen latautuessa vain sen leveys
+       muuttuu; ks. `observeWidth`. */
+    const seurattavat = mitta.current ? [lehti, mitta.current] : [lehti];
+    return observeWidth(seurattavat, () => {
       const chPx = (mitta.current?.getBoundingClientRect().width ?? 0) / 10;
       const emPx = parseFloat(getComputedStyle(lehti).fontSize) || 16;
       const cols = columnsThatFit(lehti.clientWidth, chPx);
