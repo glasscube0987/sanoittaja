@@ -4,8 +4,15 @@
  * välimuistista (nimi vaihtuu kun sisältö muuttuu), muut samasta originista
  * välimuistista mutta taustalla revalidoiden.
  */
-const CACHE = 'sanoittaja-v2';
-const KUORI = ['./', './manifest.webmanifest', './icon.svg'];
+/*
+ * Versio nousee kun välimuistissa voi olla vanhentunutta, jota ei muuten
+ * korvattaisi: v3 tyhjensi vanhan kuvakkeen, joka jäi tarjolle uuden
+ * julkaisun jälkeen. Aktivoituessa kaikki muut versiot poistetaan.
+ * Kuvakkeet eivät ole kuoressa: niiden osoitteissa on versio
+ * (scripts/kuvakkeet.mjs), ja ne tallentuvat käytettäessä.
+ */
+const CACHE = 'sanoittaja-v3';
+const KUORI = ['./', './manifest.webmanifest'];
 
 /*
  * Vite kirjoittaa buildatut assetit assets/-kansioon sisältöhashatulla nimellä,

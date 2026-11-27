@@ -16,6 +16,7 @@
  *  - täysi neliö iOS:lle ja maskattavaksi – kumpikin leikkaa kulmat itse, ja
  *    läpinäkyvät kulmat näkyisivät niissä mustina.
  */
+import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 
@@ -43,3 +44,21 @@ for (const { nimi, koko, lahde } of KUVAT) {
   console.log(nimi, `${koko}×${koko}`);
 }
 await browser.close();
+
+/*
+ * Kuvakkeiden osoitteisiin versio sisällön tiivisteestä. Tiedostojen nimet
+ * eivät muutu, joten ilman tätä service worker ja selain tarjosivat vanhaa
+ * kuvaketta välimuistista uuden julkaisun jälkeenkin. Sama tiiviste kaikkiin
+ * viittauksiin; `e2e/laatu.spec.ts` tarkistaa että se vastaa icon.svg:tä.
+ */
+const versio = createHash('sha1').update(svg).digest('hex').slice(0, 8);
+for (const tiedosto of ['../index.html', '../public/manifest.webmanifest']) {
+  const url = new URL(tiedosto, import.meta.url);
+  const sisalto = await readFile(url, 'utf8');
+  const uusi = sisalto.replace(
+    /((?:\.\/)?(?:icon[\w-]*|apple-touch-icon)\.(?:svg|png))(?:\?v=[0-9a-f]+)?"/g,
+    `$1?v=${versio}"`,
+  );
+  await writeFile(url, uusi);
+}
+console.log('kuvakeversio', versio);

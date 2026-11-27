@@ -331,6 +331,14 @@ Kuvakaappaukset ovat löytäneet toistuvasti vikoja, joita testit eivät näe
 riville kiertyvä työkalurivi). Käyttöliittymää muuttaessa kannattaa ottaa
 kuvakaappaus puhelimen koolla.
 
+**Kuvakkeen osoitteissa on versio.** Kuvaketiedostojen nimet eivät muutu,
+joten uusi kuvake jäi julkaisun jälkeen service workerin ja selaimen
+välimuistin taakse. `scripts/kuvakkeet.mjs` kirjoittaa `icon.svg`:n
+tiivisteen `?v=`-parametriksi kaikkiin kuvakeosoitteisiin (`index.html`,
+manifesti), ja `laatu.spec.ts` kaatuu jos versio ei vastaa kuvaketta. Kun
+kuvake muuttuu, aja skripti. iOS:n kotivalikko ei silti päivitä kerran
+lisättyä kuvaketta – se vaatii sovelluksen lisäämisen uudelleen.
+
 ## Julkaisu
 
 Push `main`-haaraan ajaa testit ja julkaisee GitHub Pagesiin

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 import {
@@ -243,11 +244,32 @@ test('rikkinäinen tietue johtaa kaatumisnäkymään, josta saa varmuuskopion', 
  * manifestiin rasterikoot. Testi hakee tiedostot oikeasti: väärä polku
  * manifestissa ei kaada mitään, se vain jättää kuvakkeen pois.
  */
+/*
+ * Kuvakkeiden nimet eivät muutu, joten uusi kuvake jäi julkaisun jälkeen
+ * välimuistin taakse. Osoitteissa on versio icon.svg:n tiivisteestä
+ * (scripts/kuvakkeet.mjs); jos kuvaketta muutetaan ajamatta skriptiä, versio
+ * ei enää vastaa sisältöä ja tämä kaatuu.
+ */
+test('kuvakkeiden osoitteissa on kuvakkeen sisällön versio', async ({ page, request, baseURL }) => {
+  await page.goto('/');
+  const svg = await (await request.get(`${baseURL}/icon.svg`)).body();
+  const odotettu = createHash('sha1').update(svg).digest('hex').slice(0, 8);
+
+  const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
+  const manifest = await (await request.get(new URL(manifestHref!, `${baseURL}/`).href)).json();
+  const osoitteet = [
+    await page.locator('link[rel="icon"]').getAttribute('href'),
+    await page.locator('link[rel="apple-touch-icon"]').getAttribute('href'),
+    ...(manifest.icons as { src: string }[]).map((icon) => icon.src),
+  ];
+  for (const osoite of osoitteet) expect(osoite, String(osoite)).toMatch(new RegExp(`\\?v=${odotettu}$`));
+});
+
 test('kotiruutukuvakkeet ovat PNG-tiedostoja jotka latautuvat', async ({ page, request, baseURL }) => {
   await page.goto('/');
 
   const apple = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
-  expect(apple).toMatch(/\.png$/);
+  expect(apple).toMatch(/\.png\?v=[0-9a-f]{8}$/);
 
   const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
   const manifest = await (await request.get(new URL(manifestHref!, `${baseURL}/`).href)).json();
