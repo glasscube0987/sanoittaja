@@ -1,7 +1,8 @@
 /**
  * Google Drive -synkronointi. Access token haetaan Google Identity Services
  * -kirjastolla (ladataan dynaamisesti); käyttäjä syöttää oman OAuth client
- * id:nsä asetuksissa. Tiedostot viedään Driveen kansioon "Sanoittaja".
+ * id:nsä asetuksissa. Tiedostot viedään Driveen kansioon "Enchorded" – tai
+ * aiemman nimen kansioon "Sanoittaja", jos se on jo olemassa.
  */
 import type { CloudProvider } from './provider';
 
@@ -60,7 +61,7 @@ async function driveFetch(token: string, url: string, init: RequestInit): Promis
   return res.json();
 }
 
-async function findOrCreateFolder(token: string, name: string, parentId?: string): Promise<string> {
+async function findFolder(token: string, name: string, parentId?: string): Promise<string | null> {
   const q = encodeURIComponent(
     `name='${name.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.folder' and trashed=false` +
       (parentId ? ` and '${parentId}' in parents` : ''),
@@ -68,7 +69,12 @@ async function findOrCreateFolder(token: string, name: string, parentId?: string
   const found = await driveFetch(token, `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`, {
     method: 'GET',
   });
-  if (found.files?.length) return found.files[0].id;
+  return found.files?.[0]?.id ?? null;
+}
+
+async function findOrCreateFolder(token: string, name: string, parentId?: string): Promise<string> {
+  const existing = await findFolder(token, name, parentId);
+  if (existing) return existing;
   const created = await driveFetch(token, 'https://www.googleapis.com/drive/v3/files?fields=id', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -138,7 +144,14 @@ export const gdriveProvider: CloudProvider = {
     // drive.file-oikeus näkee vain tämän sovelluksen luomat tiedostot, joten
     // kansio ja kopiot ovat käyttäjän omassa Drivessa mutta muu sisältö pysyy
     // sovelluksen ulottumattomissa.
-    const folderId = await findOrCreateFolder(token, 'Sanoittaja');
+    /* Sovelluksen nimi vaihtui. Uudella nimellä luotu kansio ensin; jos sitä
+       ei ole mutta aiemman nimen kansio on, kopiot jatkavat siellä eivätkä
+       hajoa kahteen kansioon. Kansion voi nimetä Drivessa uudelleen, jolloin
+       se löytyy ensimmäisellä haulla. */
+    const folderId =
+      (await findFolder(token, 'Enchorded')) ??
+      (await findFolder(token, 'Sanoittaja')) ??
+      (await findOrCreateFolder(token, 'Enchorded'));
     await uploadFile(token, folderId, filename, blob);
   },
 };

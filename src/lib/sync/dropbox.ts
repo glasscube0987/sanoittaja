@@ -9,6 +9,7 @@
  * eikä automaattinen varmuuskopiointi toimisi käytännössä lainkaan.
  */
 import type { CloudProvider } from './provider';
+import { isBackupFileName } from './exportFile';
 
 /**
  * Sovelluksen oma Dropbox-sovellus. PKCE-kulussa client id on tarkoitettu
@@ -192,8 +193,6 @@ async function dropboxUpload(token: string, path: string, content: Blob | string
   }
 }
 
-/** Varmuuskopioiden nimeämiskäytäntö; muut tiedostot jätetään listaamatta. */
-const BACKUP_PREFIX = 'sanoittaja-varmuuskopio-';
 
 interface DropboxEntry {
   '.tag': string;
@@ -255,7 +254,8 @@ export const dropboxProvider: CloudProvider = {
 
     const data = (await res.json()) as { entries?: DropboxEntry[] };
     return (data.entries ?? [])
-      .filter((e) => e['.tag'] === 'file' && e.name.startsWith(BACKUP_PREFIX))
+      // Vain varmuuskopiot, myös sovelluksen aiemmalla nimellä tehdyt.
+      .filter((e) => e['.tag'] === 'file' && isBackupFileName(e.name))
       .map((e) => ({
         path: e.path_lower ?? `/${e.name}`,
         name: e.name,

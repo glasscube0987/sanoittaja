@@ -286,3 +286,18 @@ test('kotiruutukuvakkeet ovat PNG-tiedostoja jotka latautuvat', async ({ page, r
     expect(vastaus.headers()['content-type'], src).toContain('image/png');
   }
 });
+
+/*
+ * Sovelluksen nimi on Enchorded. Nimenvaihto koski vain näkyvää nimeä: kanta,
+ * asetukset ja varmuuskopion tiedostomuoto ovat ennallaan, joten olemassa
+ * oleva kirjasto avautuu – sen kylvävät kaikki muutkin testit vanhalla
+ * kannan nimellä.
+ */
+test('sovelluksen nimi näkyy kaikkialla samana', async ({ page, request, baseURL }) => {
+  await avaaLista(page);
+  await expect(page).toHaveTitle('Enchorded');
+  await expect(page.locator('.topbar h1.brand')).toHaveText('Enchorded');
+  const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
+  const manifest = await (await request.get(new URL(manifestHref!, `${baseURL}/`).href)).json();
+  expect([manifest.name, manifest.short_name]).toEqual(['Enchorded', 'Enchorded']);
+});

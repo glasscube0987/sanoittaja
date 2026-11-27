@@ -1,6 +1,6 @@
 {
-  "name": "Sanoittaja",
-  "short_name": "Sanoittaja",
+  "name": "Enchorded",
+  "short_name": "Enchorded",
   "description": "Sanoitukset, sointumerkit, transponointi ja nauhoitteet lauluntekijälle",
   "lang": "fi",
   "start_url": "./",

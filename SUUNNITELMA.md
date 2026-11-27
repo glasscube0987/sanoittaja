@@ -219,9 +219,12 @@ Vielä tekemättä:
 
 ## Avoimet tuotepäätökset
 
-- **Nimi** ennen 1.0:aa. Sovellus myydään tekijän omalla nimellä. Nimiehdokkaita
-  Ensounded-sanasta johdettuna kirjattu keskusteluun 25.11.2026; saatavuus
-  tarkistamatta.
+- **Nimi: Enchorded** (päätetty 27.11.2026; samaa perhettä kuin Ensounded
+  Studio). Tarkistamatta: sovelluskaupat, verkkotunnukset (.com/.app/.fi),
+  tavaramerkit (PRH, EUIPO) ja some-tunnukset; yleinen verkkohaku ei löytänyt
+  samannimistä. Lähin on «enChord»-niminen iPad-sovellus. Osoite on yhä
+  /sanoittaja; sen vaihto kannattaa tehdä kerralla oman verkkotunnuksen
+  kanssa, koska se vaatii sovelluksen asentamisen uudelleen.
 - **Hinnoittelu** ja se, mikä on maksullista.
 - **Synkronointi vai varmuuskopio.** Nyt laitteiden välillä on yhdistävä
   varmuuskopio, ei synkronointia. Joko se sanotaan suoraan, tai tehdään oikea

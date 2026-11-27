@@ -5,6 +5,7 @@ import {
   backupIsStale,
   daysSinceBackup,
   formatSize,
+  isBackupFileName,
   lastBackupAt,
   markBackupTaken,
 } from './exportFile';
@@ -59,12 +60,12 @@ describe('backupFileName', () => {
   it('päivää paikallisen kalenterin mukaan', () => {
     // Ilta Suomessa on jo eilinen UTC:ssä; nimen pitää seurata käyttäjän päivää.
     const ilta = new Date(2026, 7, 3, 23, 30);
-    expect(backupFileName(ilta, LAITE)).toBe('sanoittaja-varmuuskopio-2026-08-03-iPad-a3f1.json');
+    expect(backupFileName(ilta, LAITE)).toBe('enchorded-varmuuskopio-2026-08-03-iPad-a3f1.json');
   });
 
   it('nollaa kuukauden ja päivän kaksinumeroisiksi', () => {
     expect(backupFileName(new Date(2026, 0, 9, 12, 0), LAITE)).toBe(
-      'sanoittaja-varmuuskopio-2026-01-09-iPad-a3f1.json',
+      'enchorded-varmuuskopio-2026-01-09-iPad-a3f1.json',
     );
   });
 
@@ -115,5 +116,22 @@ describe('paketin koon esitys', () => {
   it('putoaa kilotavuihin pienellä kirjastolla', () => {
     expect(formatSize(30 * 1024)).toBe('30 kB');
     expect(formatSize(30 * 1024, 'fi')).toBe('30 kt');
+  });
+});
+
+describe('isBackupFileName', () => {
+  it('tunnistaa nykyisen nimen kopiot', () => {
+    expect(isBackupFileName(backupFileName(new Date(2026, 10, 27), 'iPad-a3f1'))).toBe(true);
+  });
+
+  /* Pilvessä on jo kopioita sovelluksen aiemmalla nimellä. Ne olisivat
+     kadonneet pilvihaun listalta nimen vaihtuessa. */
+  it('tunnistaa sovelluksen aiemman nimen kopiot', () => {
+    expect(isBackupFileName('sanoittaja-varmuuskopio-2026-10-20-iPad-a3f1.json')).toBe(true);
+  });
+
+  it('jättää muut tiedostot pois', () => {
+    expect(isBackupFileName('muistiinpanot.json')).toBe(false);
+    expect(isBackupFileName('enchorded-varmuuskopio-2026-10-20.txt')).toBe(false);
   });
 });

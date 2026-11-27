@@ -95,7 +95,10 @@ export async function exportLibrary(): Promise<Blob> {
  */
 export async function importLibrary(file: Blob): Promise<ImportResult> {
   const bundle = JSON.parse(await file.text()) as ExportBundle;
-  if (bundle.app !== 'sanoittaja') throw new Error('Tiedosto ei ole Sanoittaja-varmuuskopio');
+  /* `app` on tiedostomuodon tunniste eikä sovelluksen nimi: se pysyy
+     «sanoittaja», jotta vanhemmassa versiossa oleva laite lukee myös
+     nimenvaihdon jälkeen tehdyt kopiot. */
+  if (bundle.app !== 'sanoittaja') throw new Error('Tiedosto ei ole Enchorded-varmuuskopio');
 
   /*
    * Uudempi paketti torjutaan, vanhempi kelpaa.
@@ -192,7 +195,23 @@ export function backupFileName(at: number | Date = Date.now(), device = deviceNa
   const d = at instanceof Date ? at : new Date(at);
   const pad = (n: number) => String(n).padStart(2, '0');
   const paiva = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  return `sanoittaja-varmuuskopio-${paiva}-${device}.json`;
+  return `${BACKUP_PREFIX}${paiva}-${device}.json`;
+}
+
+/** Varmuuskopion tiedostonimen alku. Seuraa sovelluksen nimeä. */
+export const BACKUP_PREFIX = 'enchorded-varmuuskopio-';
+
+/*
+ * Sovelluksen aiemman nimen kopiot. Pilvessä on jo kopioita vanhalla nimellä,
+ * ja pilvihaku listaa varmuuskopiot nimen alun perusteella: ilman tätä ne
+ * olisivat kadonneet listalta nimen vaihtuessa, vaikka tiedostot ovat
+ * ennallaan ja kelpaavat tuontiin.
+ */
+const AIEMMAT_ETULIITTEET = ['sanoittaja-varmuuskopio-'];
+
+/** Onko tiedosto tämän sovelluksen varmuuskopio – nykyisellä tai aiemmalla nimellä. */
+export function isBackupFileName(name: string): boolean {
+  return [BACKUP_PREFIX, ...AIEMMAT_ETULIITTEET].some((alku) => name.startsWith(alku)) && name.endsWith('.json');
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {

@@ -56,7 +56,7 @@ test('varmuuskopio ladataan kun jakamista ei tueta', async ({ page }) => {
   // Nimessä on päiväys ja laite: kaksi laitetta ei saa kirjoittaa samaan
   // tiedostoon samana päivänä.
   expect(tiedosto.suggestedFilename()).toMatch(
-    /^sanoittaja-varmuuskopio-\d{4}-\d{2}-\d{2}-[A-Za-z0-9-]+\.json$/,
+    /^enchorded-varmuuskopio-\d{4}-\d{2}-\d{2}-[A-Za-z0-9-]+\.json$/,
   );
 });
 
@@ -97,7 +97,7 @@ test('pilveen viety paketti on sama palautuva varmuuskopio', async ({ page }) =>
 
   const [vienti] = await dropboxViennit(page);
   expect(JSON.parse(vienti.arg).path).toMatch(
-    /^\/sanoittaja-varmuuskopio-\d{4}-\d{2}-\d{2}-[A-Za-z0-9-]+\.json$/,
+    /^\/enchorded-varmuuskopio-\d{4}-\d{2}-\d{2}-[A-Za-z0-9-]+\.json$/,
   );
   // Ratkaiseva kohta: aiemmin pilveen meni paljas Song, jonka tuonti hylkäsi.
   const paketti = JSON.parse(vienti.body);

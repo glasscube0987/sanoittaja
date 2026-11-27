@@ -17,6 +17,7 @@ const STORAGE_KEY = 'sanoittaja.lang';
 const DATE_LOCALE: Record<Lang, string> = { en: 'en-GB', fi: 'fi-FI' };
 
 const en = {
+  'app.name': 'Enchorded',
   'app.untitled': 'Untitled',
   'common.save': 'Save',
   'common.cancel': 'Cancel',
@@ -299,6 +300,7 @@ export type Key = keyof typeof en;
 export const KEYS = Object.keys(en) as Key[];
 
 const fi: Record<Key, string> = {
+  'app.name': 'Enchorded',
   'app.untitled': 'Nimetön',
   'common.save': 'Tallenna',
   'common.cancel': 'Peruuta',

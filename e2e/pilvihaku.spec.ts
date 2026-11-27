@@ -80,3 +80,32 @@ test('puuttuva lukuoikeus kerrotaan selvästi', async ({ page }) => {
   await expect(page.locator('.sheet .status').last()).toContainText('Kirjaudu uudelleen');
   await expect(page.locator('.cloud-files')).toHaveCount(0);
 });
+
+/*
+ * Sovelluksen nimi vaihtui (Sanoittaja → Enchorded), ja varmuuskopioiden
+ * tiedostonimi sen mukana. Pilvessä on jo kopioita vanhalla nimellä, ja haku
+ * listaa kopiot nimen alun perusteella: vanhat eivät saa kadota listalta.
+ */
+test('pilvihaku listaa kopiot sekä nykyisellä että aiemmalla nimellä', async ({ page }) => {
+  await vaarennaPilvikopiot(page, [
+    {
+      name: 'sanoittaja-varmuuskopio-2026-10-20-iPad-a3f1.json',
+      sisalto: paketti(versio('vanha nimi', 3)),
+      modifiedAt: Date.parse('2026-10-20T10:00:00Z'),
+    },
+    {
+      name: 'enchorded-varmuuskopio-2026-11-27-iPad-a3f1.json',
+      sisalto: paketti(versio('uusi nimi', 9)),
+      modifiedAt: Date.parse('2026-11-27T10:00:00Z'),
+    },
+    { name: 'muistiinpanot.json', sisalto: '{}' },
+  ]);
+  await avaaLista(page, versio('puhelimesta', 1));
+  await avaaPilvi(page);
+
+  await page.getByRole('button', { name: 'Fetch from cloud' }).click();
+  // Uusin ensin; muu tiedosto jää pois.
+  await expect(page.locator('.cloud-file-name')).toHaveCount(2);
+  await expect(page.locator('.cloud-file-name').first()).toContainText('2026-11-27');
+  await expect(page.locator('.cloud-file-name').last()).toContainText('2026-10-20');
+});

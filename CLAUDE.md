@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Sanoittaja on mobiilipainotteinen PWA lauluntekijöille: sanoitukset,
+**Enchorded** (aiemmin Sanoittaja) on mobiilipainotteinen PWA lauluntekijöille: sanoitukset,
 merkkipositioon ankkuroidut sointumerkit, transponointi, nauhoitteet,
 esitystila ja varmuuskopiot. Vite 8 + React 18 + TypeScript, ei ajonaikaisia
 riippuvuuksia Reactin lisäksi.
@@ -330,6 +330,15 @@ Kuvakaappaukset ovat löytäneet toistuvasti vikoja, joita testit eivät näe
 (päällekkäinen väri­hierarkia, ruudun ulkopuolelle valuva painike, kahdelle
 riville kiertyvä työkalurivi). Käyttöliittymää muuttaessa kannattaa ottaa
 kuvakaappaus puhelimen koolla.
+
+**Nimi vaihtui, tallennus ei.** Sovellus on käyttäjälle Enchorded
+(`app.name`, `index.html`, manifesti, varmuuskopion tiedostonimi), mutta
+kannan nimi, localStorage-avaimet (`sanoittaja.*`), repo, osoite ja
+varmuuskopion tiedostomuodon tunniste (`app: 'sanoittaja'`) ovat ennallaan.
+Kannan tai avainten nimen vaihto hävittäisi laitteelta kirjaston ja
+asetukset, ja tunnisteen vaihto saisi vanhemman version torjumaan uudet
+kopiot. Pilvihaku tunnistaa myös aiemman nimen kopiot (`isBackupFileName`),
+ja Google Drive jatkaa aiemman nimen kansiossa, jos uutta ei ole.
 
 **Kuvakkeen osoitteissa on versio.** Kuvaketiedostojen nimet eivät muutu,
 joten uusi kuvake jäi julkaisun jälkeen service workerin ja selaimen

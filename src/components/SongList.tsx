@@ -215,7 +215,7 @@ export default function SongList({
           liukuväri on taustana. Se kertoo missä ollaan, eikä toistu muualla
           ettei se kulu. */}
       <header className="topbar home">
-        <h1 className="brand">Sanoittaja</h1>
+        <h1 className="brand">{t('app.name')}</h1>
         <button
           className="icon-button"
           onClick={() => setSettingsOpen(true)}
