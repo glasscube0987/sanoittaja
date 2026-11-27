@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { chordSpan, columnGuide } from '../lib/anchors';
 import { barRowOf } from '../lib/bars';
 import { useT } from '../lib/i18n';
@@ -25,6 +25,8 @@ interface Props {
   onActive: (active: boolean) => void;
   /** Työkalurivi, joka piirretään rivin alle kun se on kohdistettuna. */
   tools?: React.ReactNode;
+  /** Kohdistimen sarake kirjoitettaessa; pikasoinnut asettuvat siihen. */
+  onCaret?: (pos: number) => void;
 }
 
 export default function LineEditor({
@@ -41,10 +43,25 @@ export default function LineEditor({
   repeatGutter,
   onActive,
   tools,
+  onCaret,
 }: Props) {
   const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
+  /*
+   * Kohdistimen sarake, kun rivi on kohdistettuna. Sen yllä näkyy soinnun
+   * paikka tyhjänä lokerona: soinnun lisäys tehtiin napauttamalla tyhjää
+   * tilaa tekstin yllä, eikä sitä löytänyt kukaan jolle sitä ei näytetty.
+   */
+  const [caret, setCaret] = useState<number | null>(null);
+
+  function lueKohdistin() {
+    const el = inputRef.current;
+    if (!el || document.activeElement !== el) return;
+    const pos = el.selectionStart ?? el.value.length;
+    setCaret(pos);
+    onCaret?.(pos);
+  }
 
   useEffect(() => {
     if (autoFocus !== null && inputRef.current) {
@@ -119,6 +136,22 @@ export default function LineEditor({
               {columnGuide(chordSpan(line.text))}
             </span>
           )}
+          {/* Lokero vain jos kohdassa ei jo ole sointua: olemassa olevaa
+              sointua napautetaan sen omasta merkistä. */}
+          {tools && caret !== null && !line.chords.some((c) => c.pos === caret) && (
+            <button
+              type="button"
+              className="chord-slot"
+              style={{ left: `calc(${caret}ch + 2px)` }}
+              aria-label={t('line.addChordAtCaret')}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChordTap(caret, '');
+              }}
+            >
+              +
+            </button>
+          )}
           {line.chords.map((chord) => (
             <button
               key={chord.id}
@@ -146,9 +179,16 @@ export default function LineEditor({
           autoCapitalize="sentences"
           autoComplete="off"
           spellCheck={false}
-          onChange={(e) => onTextChange(e.target.value)}
+          onChange={(e) => {
+            onTextChange(e.target.value);
+            lueKohdistin();
+          }}
           onKeyDown={handleKeyDown}
-          onFocus={() => onActive(true)}
+          onSelect={lueKohdistin}
+          onFocus={() => {
+            onActive(true);
+            lueKohdistin();
+          }}
           onBlur={() => onActive(false)}
         />
           </>

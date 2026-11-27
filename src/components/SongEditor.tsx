@@ -17,6 +17,7 @@ import {
   respellSong,
   setLineBarRow,
   setLineBars,
+  setChord,
   setLineSection,
   setSongTags,
   splitLine,
@@ -116,6 +117,10 @@ export default function SongEditor({
     autoFocusFirstLine && song.lines[0] ? { id: song.lines[0].id, caret: 0 } : null,
   );
   const blurTimer = useRef<number | null>(null);
+  /* Kohdistetun rivin kohdistimen sarake. Ref eikä tila: pikasointua
+     napautettaessa kohdistus on jo lähtenyt kentältä, mutta viimeisin kohta
+     on se johon sointu kuuluu. */
+  const caretRef = useRef<{ lineId: string; pos: number } | null>(null);
   /* Vain tulostuslehteä varten: merkinnät piirretään live-tilassa. */
   const [notes] = useAnnotations(song.id);
 
@@ -191,8 +196,29 @@ export default function SongEditor({
       if (line && !line.bars) focusLineId.current = { id: lineId, caret: line.text.length };
     };
 
+    const line = song.lines.find((l) => l.id === lineId);
     return (
       <div className="line-tools">
+        {/* Laulun soinnut pikavalintoina: napautus asettaa soinnun suoraan
+            kohdistimen kohdalle. Sointuponnahdus avautuu vain uudelle
+            soinnulle tai siirrettäessä. */}
+        {line && !line.bars && usedChords.length > 0 && (
+          <div className="quick-chords chip-row notation" role="group" aria-label={t('line.quickChords')}>
+            {usedChords.map((symbol) => (
+              <button
+                type="button"
+                key={symbol}
+                onClick={() => {
+                  const pos = caretRef.current?.lineId === lineId ? caretRef.current.pos : line.text.length;
+                  focusLineId.current = { id: lineId, caret: pos };
+                  onChange(setChord(song, lineId, pos, symbol));
+                }}
+              >
+                {symbol}
+              </button>
+            ))}
+          </div>
+        )}
         <button
           type="button"
           onClick={() => {
@@ -424,6 +450,7 @@ export default function SongEditor({
                   meterGutter={gutter}
                   repeatGutter={kertaus}
                   onActive={(active) => setActive(line.id, active)}
+                  onCaret={(pos) => (caretRef.current = { lineId: line.id, pos })}
                   tools={activeLineId === line.id ? lineTools(line.id) : undefined}
                 />
               ))}

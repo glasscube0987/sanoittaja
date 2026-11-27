@@ -140,6 +140,8 @@ const en = {
   'editor.confirmDeleteSong': 'Delete the song “{title}” and its recordings?',
 
   'line.addChordHere': 'Tap to add a chord here',
+  'line.addChordAtCaret': 'Add a chord above the cursor',
+  'line.quickChords': 'Chords in this song',
   'line.editSection': 'Line settings',
   'line.startSection': 'Line settings',
   'line.title': 'Line',
@@ -418,6 +420,8 @@ const fi: Record<Key, string> = {
   'editor.confirmDeleteSong': 'Poistetaanko laulu ”{title}” ja sen nauhoitteet?',
 
   'line.addChordHere': 'Napauta lisätäksesi soinnun tähän kohtaan',
+  'line.addChordAtCaret': 'Lisää sointu kohdistimen kohdalle',
+  'line.quickChords': 'Laulun soinnut',
   'line.editSection': 'Rivin asetukset',
   'line.startSection': 'Rivin asetukset',
   'line.title': 'Rivi',
