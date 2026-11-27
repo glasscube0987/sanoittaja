@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { matchExisting, normalizeTag, sameTag, uniqueTags } from '../lib/tags';
+import { useDialog } from './useDialog';
 
 interface Props {
   /** Laulun nykyiset tagit. */
@@ -25,6 +26,9 @@ interface Props {
  */
 export default function TagSheet({ tags, known, onSave, onClose }: Props) {
   const { t, lang } = useI18n();
+  const dialogi = useRef<HTMLFormElement>(null);
+  const otsikko = useId();
+  useDialog(dialogi, onClose);
   const [valitut, setValitut] = useState<string[]>(tags);
   const [uusi, setUusi] = useState('');
 
@@ -69,6 +73,10 @@ export default function TagSheet({ tags, known, onSave, onClose }: Props) {
   return (
     <div className="overlay" onClick={onClose}>
       <form
+        ref={dialogi}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={otsikko}
         className="sheet"
         onClick={(e) => e.stopPropagation()}
         onSubmit={(e) => {
@@ -78,7 +86,7 @@ export default function TagSheet({ tags, known, onSave, onClose }: Props) {
           onSave(lisatty(valitut));
         }}
       >
-        <h2>{t('tags.sheetTitle')}</h2>
+        <h2 id={otsikko}>{t('tags.sheetTitle')}</h2>
 
         {kaikki.length === 0 ? (
           <p className="empty-note">{t('tags.none')}</p>

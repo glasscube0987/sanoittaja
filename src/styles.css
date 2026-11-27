@@ -183,6 +183,20 @@ button.danger {
   background: transparent;
 }
 
+/* Peruuttamaton vahvistus: täytetty huomioväri, ei reunallinen `danger`,
+   koska vahvistuslakanassa se on se painike jota haetaan. */
+button.danger-solid {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
+.confirm-message {
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
 button.ghost {
   background: transparent;
   border-color: transparent;

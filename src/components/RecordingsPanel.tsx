@@ -5,6 +5,8 @@ import { formatDateTime, useI18n, type T } from '../lib/i18n';
 import { formatDuration, startRecording, type ActiveRecording } from '../lib/recorder';
 import type { Recording } from '../lib/types';
 import { uid } from '../lib/types';
+import ConfirmSheet from './ConfirmSheet';
+import Icon from './Icon';
 
 interface Props {
   songId: string;
@@ -16,6 +18,7 @@ export default function RecordingsPanel({ songId }: Props) {
   const [active, setActive] = useState<ActiveRecording | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [status, setStatus] = useState('');
+  const [poistettava, setPoistettava] = useState<Recording | null>(null);
   const timer = useRef<number>();
 
   useEffect(() => {
@@ -68,8 +71,8 @@ export default function RecordingsPanel({ songId }: Props) {
     guard('save', saveRecording(updated));
   }
 
-  async function remove(rec: Recording) {
-    if (!confirm(t('rec.confirmDelete', { name: rec.name }))) return;
+  function remove(rec: Recording) {
+    setPoistettava(null);
     setRecordings((prev) => prev.filter((r) => r.id !== rec.id));
     guard('delete', deleteRecording(rec.id));
   }
@@ -91,10 +94,19 @@ export default function RecordingsPanel({ songId }: Props) {
             rec={rec}
             t={t}
             onRename={(name) => rename(rec, name)}
-            onDelete={() => remove(rec)}
+            onDelete={() => setPoistettava(rec)}
           />
         ))}
       </div>
+      {poistettava && (
+        <ConfirmSheet
+          title={t('rec.confirmDelete', { name: poistettava.name })}
+          confirmLabel={t('rec.deleteConfirm')}
+          danger
+          onConfirm={() => remove(poistettava)}
+          onCancel={() => setPoistettava(null)}
+        />
+      )}
     </section>
   );
 }
@@ -123,8 +135,10 @@ function RecordingCard({
       <div className="rec-head">
         <input value={rec.name} onChange={(e) => onRename(e.target.value)} />
         <span className="status">{formatDuration(rec.durationMs)}</span>
-        <button className="ghost" onClick={onDelete} aria-label={t('rec.deleteLabel')}>
-          🗑
+        {/* Piirretty kuvake eikä emoji: emoji on eri laitteilla eri näköinen
+            eikä noudata teeman värejä. */}
+        <button className="icon-button" onClick={onDelete} aria-label={t('rec.deleteLabel')}>
+          <Icon name="trash" size={20} />
         </button>
       </div>
       {url && <audio controls preload="metadata" src={url} />}

@@ -137,11 +137,18 @@ export async function kirjastoToiminto(page: Page, nimi: string): Promise<void> 
   await page.getByRole('button', { name: nimi, exact: true }).click();
 }
 
-/** Luo setin nimellä; nimi kysytään selaimen kyselyllä. */
+/** Luo setin nimellä; nimi kysytään sovelluksen omassa lakanassa. */
 export async function luoSetti(page: Page, nimi: string): Promise<void> {
-  page.once('dialog', (d) => d.accept(nimi));
   await page.getByRole('button', { name: '+ New set' }).click();
+  const lakana = page.getByRole('dialog', { name: 'New set' });
+  await lakana.getByLabel('Name of the set').fill(nimi);
+  await lakana.getByRole('button', { name: 'Save', exact: true }).click();
   await page.getByRole('button', { name: nimi, exact: true }).waitFor();
+}
+
+/** Vahvistaa avoimen vahvistuslakanan annetulla painikkeella. */
+export async function vahvista(page: Page, painike: string): Promise<void> {
+  await page.getByRole('alertdialog').getByRole('button', { name: painike, exact: true }).click();
 }
 
 /** Lisää nimetyt laulut avoinna olevaan settiin valintanäkymästä. */

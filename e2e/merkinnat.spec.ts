@@ -17,6 +17,7 @@ import {
   lopetaPiirto,
   luoSetti,
   poistuLivesta,
+  vahvista,
 } from './apu';
 
 function piirrettavaLaulu() {
@@ -705,8 +706,8 @@ test('merkinnät katoavat laulun mukana', async ({ page }) => {
   await expect.poll(() => vedot(page)).toBe(1);
   await poistuLivesta(page);
 
-  page.once('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Delete song' }).click();
+  await vahvista(page, 'Delete song');
 
   const jaljella = await page.evaluate(
     () =>

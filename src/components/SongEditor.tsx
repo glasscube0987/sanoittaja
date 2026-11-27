@@ -41,6 +41,7 @@ import { barRowOf } from '../lib/bars';
 import { printSheet } from '../lib/print';
 import { useAnnotations } from '../lib/useAnnotations';
 import { isBlankLine, meterGutter, repeatGutter } from '../lib/render';
+import ConfirmSheet from './ConfirmSheet';
 import ChordSheet from './ChordSheet';
 import Icon from './Icon';
 import ImportSheet from './ImportSheet';
@@ -105,6 +106,7 @@ export default function SongEditor({
   const [lineTargetId, setLineTargetId] = useState<string | null>(null);
   const [barsTargetId, setBarsTargetId] = useState<string | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [poistoAuki, setPoistoAuki] = useState(false);
   // null = tuonti laulun loppuun, muuten rivin id jonka perään rivit menevät.
   const [importAfterId, setImportAfterId] = useState<string | null | undefined>(undefined);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
@@ -467,10 +469,7 @@ export default function SongEditor({
           <button onClick={() => printSheet()}>{t('editor.exportPdf')}</button>
           <button
             className="danger"
-            onClick={() => {
-              const title = song.title || t('app.untitled');
-              if (confirm(t('editor.confirmDeleteSong', { title }))) onDelete();
-            }}
+            onClick={() => setPoistoAuki(true)}
           >
             {t('editor.deleteSong')}
           </button>
@@ -483,6 +482,18 @@ export default function SongEditor({
         <SongSheet song={song} annotations={notes} />
       </main>
 
+      {poistoAuki && (
+        <ConfirmSheet
+          title={t('editor.confirmDeleteSong', { title: song.title || t('app.untitled') })}
+          confirmLabel={t('editor.deleteSong')}
+          danger
+          onConfirm={() => {
+            setPoistoAuki(false);
+            onDelete();
+          }}
+          onCancel={() => setPoistoAuki(false)}
+        />
+      )}
       {tagsOpen && (
         <TagSheet
           tags={song.tags ?? []}

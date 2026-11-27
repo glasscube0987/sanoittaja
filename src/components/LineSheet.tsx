@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useT } from '../lib/i18n';
 import { SECTION_KINDS, sectionName } from '../lib/sections';
 import type { LyricLine, SectionKind, SectionMark } from '../lib/types';
+import { useDialog } from './useDialog';
 
 /**
  * Rivitoiminnot asuvat täällä eivätkä kohdistetun rivin työkalurivissä, koska
@@ -47,6 +48,9 @@ export default function LineSheet({
   onClose,
 }: Props) {
   const t = useT();
+  const dialogi = useRef<HTMLFormElement>(null);
+  const otsikko = useId();
+  useDialog(dialogi, onClose);
   const [bars, setBars] = useState(Boolean(line.bars));
   const [kind, setKind] = useState<SectionKind | null>(line.section?.kind ?? null);
   const [label, setLabel] = useState(line.section?.label ?? '');
@@ -65,6 +69,10 @@ export default function LineSheet({
   return (
     <div className="overlay" onClick={onClose}>
       <form
+        ref={dialogi}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={otsikko}
         className="sheet"
         onClick={(e) => e.stopPropagation()}
         onSubmit={(e) => {
@@ -72,7 +80,7 @@ export default function LineSheet({
           save();
         }}
       >
-        <h2>{t('line.title')}</h2>
+        <h2 id={otsikko}>{t('line.title')}</h2>
 
         <div className="field">
           <label>{t('line.type')}</label>

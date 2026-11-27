@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { useT } from '../lib/i18n';
 import type { ImportKind, ImportResult } from '../lib/importText';
 import { buildLines, classifyLines, IMPORT_KINDS, splitLines } from '../lib/importText';
 import type { Key } from '../lib/i18n';
+import { useDialog } from './useDialog';
 
 interface Props {
   /** 'new' luo uuden laulun, 'append' lisää rivit avoinna olevan perään. */
@@ -29,6 +30,9 @@ const KIND_LABELS: Record<ImportKind, Key> = {
  */
 export default function ImportSheet({ mode, onImport, onClose }: Props) {
   const t = useT();
+  const dialogi = useRef<HTMLFormElement>(null);
+  const otsikko = useId();
+  useDialog(dialogi, onClose);
   const [text, setText] = useState('');
   const [overrides, setOverrides] = useState<Record<number, ImportKind>>({});
   const [title, setTitle] = useState('');
@@ -66,6 +70,10 @@ export default function ImportSheet({ mode, onImport, onClose }: Props) {
   return (
     <div className="overlay" onClick={onClose}>
       <form
+        ref={dialogi}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={otsikko}
         className="sheet import-sheet"
         onClick={(e) => e.stopPropagation()}
         onSubmit={(e) => {
@@ -73,7 +81,7 @@ export default function ImportSheet({ mode, onImport, onClose }: Props) {
           submit();
         }}
       >
-        <h2>{t(mode === 'new' ? 'import.title' : 'import.appendTitle')}</h2>
+        <h2 id={otsikko}>{t(mode === 'new' ? 'import.title' : 'import.appendTitle')}</h2>
 
         <div className="field">
           <textarea

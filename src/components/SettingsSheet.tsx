@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { LANG_NAMES, LANGS, useI18n } from '../lib/i18n';
 import { loadNotation, NOTATIONS, storeNotation } from '../lib/notation';
 import { applyTheme, loadTheme, storeTheme, THEMES } from '../lib/theme';
 import { autoBackupEnabled, setAutoBackupEnabled } from '../lib/sync/autoBackup';
 import { DEFAULT_CLIENT_ID, getDropboxClientIdOverride, setDropboxClientId } from '../lib/sync/dropbox';
 import { getGdriveClientId, setGdriveClientId } from '../lib/sync/gdrive';
+import { useDialog } from './useDialog';
 
 interface Props {
   onClose: () => void;
@@ -30,6 +31,9 @@ export default function SettingsSheet({
   onImportText,
 }: Props) {
   const { t, lang, setLang } = useI18n();
+  const dialogi = useRef<HTMLDivElement>(null);
+  const otsikko = useId();
+  useDialog(dialogi, onClose);
   const [dropboxId, setDropboxId] = useState(getDropboxClientIdOverride());
   const [gdriveId, setGdriveId] = useState(getGdriveClientId());
   const [autoBackup, setAutoBackup] = useState(autoBackupEnabled());
@@ -47,8 +51,15 @@ export default function SettingsSheet({
 
   return (
     <div className="overlay" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('settings.title')}</h2>
+      <div
+        ref={dialogi}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={otsikko}
+        className="sheet"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={otsikko}>{t('settings.title')}</h2>
 
         {/* Pilvinäkymästä avattuna asetuksissa on vain tunnukset: kirjaston
             toiminnot kuuluvat laululistalle eivätkä pilvivalikon sisään. */}

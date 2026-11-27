@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useI18n } from '../lib/i18n';
 import { formatDuration, startRecording, type ActiveRecording } from '../lib/recorder';
+import { useDialog } from './useDialog';
 
 export interface IdeaRecording {
   blob: Blob;
@@ -27,6 +28,9 @@ interface Props {
  */
 export default function IdeaSheet({ onDone, onCancel }: Props) {
   const { t } = useI18n();
+  const dialogi = useRef<HTMLDivElement>(null);
+  const otsikko = useId();
+  useDialog(dialogi, onCancel);
   const [elapsed, setElapsed] = useState(0);
   const [status, setStatus] = useState('');
   const active = useRef<ActiveRecording | null>(null);
@@ -71,8 +75,15 @@ export default function IdeaSheet({ onDone, onCancel }: Props) {
     /* Lakana ei sulkeudu ulkopuolelta napauttamalla, toisin kuin muut: kesken
        oleva nauhoitus katoaisi vahingossa osuneesta sormesta. */
     <div className="overlay">
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('idea.title')}</h2>
+      <div
+        ref={dialogi}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={otsikko}
+        className="sheet"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={otsikko}>{t('idea.title')}</h2>
         {status ? (
           <>
             <p className="idea-status">{status}</p>

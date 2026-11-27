@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useT } from '../lib/i18n';
 import { dropboxProvider } from '../lib/sync/dropbox';
 import { gdriveProvider } from '../lib/sync/gdrive';
@@ -8,6 +8,7 @@ import { importLibrary } from '../lib/sync/exportFile';
 import { formatSize } from '../lib/sync/exportFile';
 import type { CloudFile, CloudProvider } from '../lib/sync/provider';
 import SettingsSheet from './SettingsSheet';
+import { useDialog } from './useDialog';
 
 interface Props {
   onClose: () => void;
@@ -19,6 +20,9 @@ interface Props {
 
 export default function CloudSheet({ onClose, onBackedUp, onImported }: Props) {
   const t = useT();
+  const dialogi = useRef<HTMLDivElement>(null);
+  const otsikko = useId();
+  useDialog(dialogi, onClose);
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -105,8 +109,15 @@ export default function CloudSheet({ onClose, onBackedUp, onImported }: Props) {
 
   return (
     <div className="overlay" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <h2>{t('cloud.title')}</h2>
+      <div
+        ref={dialogi}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={otsikko}
+        className="sheet"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={otsikko}>{t('cloud.title')}</h2>
         <p className="status">{t('cloud.description')}</p>
         <div className="button-row">
           <button disabled={busy} onClick={() => upload(dropboxProvider)}>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { BarRow } from '../lib/bars';
 import {
   insertBarAfter,
@@ -12,6 +12,7 @@ import {
 import { useT } from '../lib/i18n';
 import type { BarRepeat } from '../lib/types';
 import Icon from './Icon';
+import { useDialog } from './useDialog';
 
 interface Props {
   row: BarRow;
@@ -46,6 +47,8 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
   );
   const [index, setIndex] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
+  const otsikko = useId();
+  useDialog(formRef, onClose);
   const chips = suggestions.length > 0 ? suggestions : DEFAULT_SUGGESTIONS;
 
   const bar = row.bars[index] ?? '';
@@ -123,6 +126,9 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
   return (
     <div className="overlay" onClick={onClose}>
       <form
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={otsikko}
         className="sheet"
         ref={formRef}
         tabIndex={-1}
@@ -133,7 +139,7 @@ export default function BarSheet({ row: initial, suggestions, onSave, onClose }:
           onSave(row);
         }}
       >
-        <h2>{t('bars.title')}</h2>
+        <h2 id={otsikko}>{t('bars.title')}</h2>
 
         <div className="context bar-preview">
           {row.bars.map((content, i) => (

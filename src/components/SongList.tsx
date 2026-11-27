@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { formatDate, useI18n } from '../lib/i18n';
 import type { Setlist, Song } from '../lib/types';
 import { addSongs, moveSong, newSetlist, removeSong, renameSetlist, setlistSongs } from '../lib/setlists';
@@ -20,13 +20,16 @@ import {
 } from '../lib/sync/exportFile';
 import type { ImportResult } from '../lib/importText';
 import CloudSheet from './CloudSheet';
+import ConfirmSheet from './ConfirmSheet';
 import Icon from './Icon';
 import IdeaSheet from './IdeaSheet';
 import type { IdeaRecording } from './IdeaSheet';
 import ImportSheet from './ImportSheet';
+import NameSheet from './NameSheet';
 import SetlistPicker from './SetlistPicker';
 import SettingsSheet from './SettingsSheet';
 import SwipeRow from './SwipeRow';
+import { useDialog } from './useDialog';
 
 interface Props {
   songs: Song[];
@@ -76,6 +79,10 @@ export default function SongList({
      ohjainriviä ennen ensimmäistä laulua vei puhelimen ruudusta puolet, ja
      niistä kahteen kosketaan harvoin. */
   const [suodattimet, setSuodattimet] = useState(false);
+  /* Setin nimeäminen ja poisto omina lakanoinaan selaimen kyselyikkunoiden
+     sijaan; ks. NameSheet ja ConfirmSheet. */
+  const [nimeys, setNimeys] = useState<'new' | 'rename' | null>(null);
+  const [poistaSettiAuki, setPoistaSettiAuki] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [ideaOpen, setIdeaOpen] = useState(false);
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
@@ -172,25 +179,34 @@ export default function SongList({
   }
 
   function luoSetti() {
-    const name = prompt(t('set.namePrompt'))?.trim();
-    if (!name) return;
-    const list = newSetlist(name);
-    onSetlistChange(list);
-    setSetlistId(list.id);
+    setNimeys('new');
   }
 
   function nimeaSetti() {
-    if (!setlist) return;
-    const name = prompt(t('set.namePrompt'), setlist.name)?.trim();
-    if (!name) return;
-    onSetlistChange(renameSetlist(setlist, name));
+    if (setlist) setNimeys('rename');
+  }
+
+  function tallennaNimi(name: string) {
+    if (nimeys === 'rename' && setlist) {
+      onSetlistChange(renameSetlist(setlist, name));
+    } else {
+      const list = newSetlist(name);
+      onSetlistChange(list);
+      setSetlistId(list.id);
+    }
+    setNimeys(null);
   }
 
   function poistaSetti() {
-    if (!setlist) return;
-    if (!confirm(t('set.confirmDelete', { name: setlist.name }))) return;
-    onSetlistDelete(setlist.id);
-    setSetlistId(null);
+    if (setlist) setPoistaSettiAuki(true);
+  }
+
+  function vahvistaSetinPoisto() {
+    if (setlist) {
+      onSetlistDelete(setlist.id);
+      setSetlistId(null);
+    }
+    setPoistaSettiAuki(false);
   }
 
   return (
@@ -500,41 +516,21 @@ export default function SongList({
       )}
 
       {newOpen && (
-        <div className="overlay" onClick={() => setNewOpen(false)}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <h2>{t('list.newTitle')}</h2>
-            <div className="button-row">
-              <button
-                className="primary"
-                onClick={() => {
-                  setNewOpen(false);
-                  onCreate();
-                }}
-              >
-                {t('list.newBlank')}
-              </button>
-              <button
-                onClick={() => {
-                  setNewOpen(false);
-                  setImportOpen(true);
-                }}
-              >
-                {t('list.newFromText')}
-              </button>
-              <button
-                onClick={() => {
-                  setNewOpen(false);
-                  setIdeaOpen(true);
-                }}
-              >
-                {t('list.newIdea')}
-              </button>
-              <button className="ghost" onClick={() => setNewOpen(false)}>
-                {t('common.cancel')}
-              </button>
-            </div>
-          </div>
-        </div>
+        <NewSongSheet
+          onClose={() => setNewOpen(false)}
+          onBlank={() => {
+            setNewOpen(false);
+            onCreate();
+          }}
+          onFromText={() => {
+            setNewOpen(false);
+            setImportOpen(true);
+          }}
+          onIdea={() => {
+            setNewOpen(false);
+            setIdeaOpen(true);
+          }}
+        />
       )}
       {ideaOpen && (
         <IdeaSheet
@@ -573,6 +569,66 @@ export default function SongList({
           onImported={onLibraryChanged}
         />
       )}
+      {nimeys && (
+        <NameSheet
+          title={t(nimeys === 'rename' ? 'set.renameTitle' : 'set.newTitle')}
+          label={t('set.namePrompt')}
+          initial={nimeys === 'rename' ? setlist?.name ?? '' : ''}
+          onSave={tallennaNimi}
+          onCancel={() => setNimeys(null)}
+        />
+      )}
+      {poistaSettiAuki && setlist && (
+        <ConfirmSheet
+          title={t('set.confirmDelete', { name: setlist.name })}
+          confirmLabel={t('set.deleteConfirm')}
+          danger
+          onConfirm={vahvistaSetinPoisto}
+          onCancel={() => setPoistaSettiAuki(false)}
+        />
+      )}
     </>
+  );
+}
+
+/** Uuden laulun valinta: tyhjä, tekstistä vai nauhoitettu idea. */
+function NewSongSheet({
+  onClose,
+  onBlank,
+  onFromText,
+  onIdea,
+}: {
+  onClose: () => void;
+  onBlank: () => void;
+  onFromText: () => void;
+  onIdea: () => void;
+}) {
+  const { t } = useI18n();
+  const dialogi = useRef<HTMLDivElement>(null);
+  const otsikko = useId();
+  useDialog(dialogi, onClose);
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div
+        ref={dialogi}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={otsikko}
+        className="sheet"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id={otsikko}>{t('list.newTitle')}</h2>
+        <div className="button-row">
+          <button className="primary" onClick={onBlank}>
+            {t('list.newBlank')}
+          </button>
+          <button onClick={onFromText}>{t('list.newFromText')}</button>
+          <button onClick={onIdea}>{t('list.newIdea')}</button>
+          <button className="ghost" onClick={onClose}>
+            {t('common.cancel')}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

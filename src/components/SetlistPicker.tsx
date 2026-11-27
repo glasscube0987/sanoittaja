@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useT } from '../lib/i18n';
 import type { Setlist, Song } from '../lib/types';
+import { useDialog } from './useDialog';
 
 interface Props {
   setlist: Setlist;
@@ -18,6 +19,9 @@ interface Props {
  */
 export default function SetlistPicker({ setlist, songs, onAdd, onClose }: Props) {
   const t = useT();
+  const dialogi = useRef<HTMLFormElement>(null);
+  const otsikko = useId();
+  useDialog(dialogi, onClose);
   const [valitut, setValitut] = useState<string[]>([]);
 
   function toggle(songId: string) {
@@ -29,6 +33,10 @@ export default function SetlistPicker({ setlist, songs, onAdd, onClose }: Props)
   return (
     <div className="overlay" onClick={onClose}>
       <form
+        ref={dialogi}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={otsikko}
         className="sheet"
         onClick={(e) => e.stopPropagation()}
         onSubmit={(e) => {
@@ -36,7 +44,7 @@ export default function SetlistPicker({ setlist, songs, onAdd, onClose }: Props)
           onAdd(valitut);
         }}
       >
-        <h2>{t('set.addTitle', { name: setlist.name })}</h2>
+        <h2 id={otsikko}>{t('set.addTitle', { name: setlist.name })}</h2>
 
         <div className="picker-list">
           {songs.map((song) => {

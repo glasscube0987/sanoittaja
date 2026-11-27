@@ -198,6 +198,9 @@ const en = {
   'set.rename': 'Rename',
   'set.delete': 'Delete',
   'set.confirmDelete': 'Delete the set “{name}”? The songs themselves stay.',
+  'set.newTitle': 'New set',
+  'set.renameTitle': 'Rename set',
+  'set.deleteConfirm': 'Delete set',
   'set.addSongs': 'Add songs',
   'set.addTitle': 'Add songs to “{name}”',
   'set.empty': 'No songs in this set yet.',
@@ -286,6 +289,7 @@ const en = {
   'rec.defaultName': 'Recording {date}',
   'rec.micFailed': 'Could not access the microphone: {message}',
   'rec.confirmDelete': 'Delete the recording “{name}”?',
+  'rec.deleteConfirm': 'Delete recording',
   'rec.deleteLabel': 'Delete recording',
 } as const;
 
@@ -479,6 +483,9 @@ const fi: Record<Key, string> = {
   'set.rename': 'Nimeä',
   'set.delete': 'Poista',
   'set.confirmDelete': 'Poistetaanko setti ”{name}”? Laulut itsessään säilyvät.',
+  'set.newTitle': 'Uusi setti',
+  'set.renameTitle': 'Nimeä setti',
+  'set.deleteConfirm': 'Poista setti',
   'set.addSongs': 'Lisää lauluja',
   'set.addTitle': 'Lisää lauluja settiin ”{name}”',
   'set.empty': 'Setissä ei ole vielä lauluja.',
@@ -567,6 +574,7 @@ const fi: Record<Key, string> = {
   'rec.defaultName': 'Nauhoite {date}',
   'rec.micFailed': 'Mikrofonia ei saatu käyttöön: {message}',
   'rec.confirmDelete': 'Poistetaanko nauhoite ”{name}”?',
+  'rec.deleteConfirm': 'Poista nauhoite',
   'rec.deleteLabel': 'Poista nauhoite',
 };
 

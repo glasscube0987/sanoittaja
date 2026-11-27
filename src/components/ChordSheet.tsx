@@ -1,9 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { chordSpan, columnGuide } from '../lib/anchors';
 import { useT } from '../lib/i18n';
 import type { LyricLine } from '../lib/types';
 import type { ChordTarget } from './SongEditor';
 import Icon from './Icon';
+import { useDialog } from './useDialog';
 
 interface Props {
   target: ChordTarget;
@@ -24,6 +25,8 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
   const contextRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLSpanElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const otsikko = useId();
+  useDialog(formRef, onClose);
 
   /*
    * Kohdistetaan lomakkeeseen, ei symbolikenttään. Tekstikenttään kohdistaminen
@@ -72,6 +75,9 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
   return (
     <div className="overlay" onClick={onClose}>
       <form
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={otsikko}
         className="sheet"
         ref={formRef}
         tabIndex={-1}
@@ -82,7 +88,7 @@ export default function ChordSheet({ target, line, suggestions, onSave, onClose 
           onSave(symbol, pos);
         }}
       >
-        <h2>{t(target.symbol ? 'chord.edit' : 'chord.add')}</h2>
+        <h2 id={otsikko}>{t(target.symbol ? 'chord.edit' : 'chord.add')}</h2>
 
         <div className="context" ref={contextRef}>
           <div className="mark">

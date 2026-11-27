@@ -6,7 +6,7 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { avaaMonta, avaaSuodattimet } from './apu';
+import { avaaMonta, avaaSuodattimet, luoSetti } from './apu';
 
 const BIISIT = ['Sade', 'Aamu', 'Kuu'];
 
@@ -52,8 +52,7 @@ test('setissä ei ole lajittelua', async ({ page }) => {
   // Setin järjestys on käyttäjän asettama esitysjärjestys; sitä ei saa
   // lajitella pois alta.
   await avaaMonta(page, BIISIT);
-  page.once('dialog', (d) => d.accept('Keikka'));
-  await page.getByRole('button', { name: '+ New set' }).click();
+  await luoSetti(page, 'Keikka');
 
   await expect(page.locator('.sort-bar')).toHaveCount(0);
 });

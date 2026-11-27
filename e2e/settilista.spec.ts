@@ -4,7 +4,7 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { avaaMonta, lisaaLauluja, luoSetti } from './apu';
+import { avaaMonta, lisaaLauluja, luoSetti, vahvista } from './apu';
 
 const BIISIT = ['Ensimmäinen', 'Toinen', 'Kolmas'];
 
@@ -189,8 +189,8 @@ test('setin poisto ei koske lauluihin', async ({ page }) => {
   await luoSetti(page, 'Keikka');
   await lisaaLauluja(page, BIISIT);
 
-  page.once('dialog', (d) => d.accept());
   await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await vahvista(page, 'Delete set');
 
   await expect(page.getByRole('button', { name: 'Keikka', exact: true })).toHaveCount(0);
   expect(await nimet(page)).toEqual(BIISIT);
