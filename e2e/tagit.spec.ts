@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import {
   avaaKirjasto,
   avaaLaulu,
+  avaaSuodattimet,
   kirjastoToiminto,
   kirjauduDropboxiin,
   laulu,
@@ -122,6 +123,7 @@ test('yksi tagi suodattaa listan', async ({ page }) => {
       { title: 'Gamma' },
     ]),
   );
+  await avaaSuodattimet(page);
   expect(await nimet(page)).toEqual(['Alfa', 'Beeta', 'Gamma']);
 
   await suodatin(page).getByRole('button', { name: 'cover', exact: true }).click();
@@ -143,6 +145,7 @@ test('kaksi tagia kaventaa eikä laajenna', async ({ page }) => {
       { title: 'Gamma', tags: ['keikkakunto'] },
     ]),
   );
+  await avaaSuodattimet(page);
 
   await suodatin(page).getByRole('button', { name: 'cover', exact: true }).click();
   expect(await nimet(page)).toEqual(['Alfa', 'Beeta']);
@@ -156,6 +159,7 @@ test('valinnan purku palauttaa listan', async ({ page }) => {
     page,
     kirjasto([{ title: 'Alfa', tags: ['cover'] }, { title: 'Beeta' }]),
   );
+  await avaaSuodattimet(page);
 
   const chip = suodatin(page).getByRole('button', { name: 'cover', exact: true });
   await chip.click();
@@ -174,6 +178,7 @@ test('haku ja tagi vaikuttavat yhdessä', async ({ page }) => {
       { title: 'Alfa muu', tags: ['kesken'] },
     ]),
   );
+  await avaaSuodattimet(page);
 
   await suodatin(page).getByRole('button', { name: 'cover', exact: true }).click();
   expect(await nimet(page)).toEqual(['Alfa laulu', 'Beeta laulu']);
@@ -193,6 +198,7 @@ test('Cover ja cover ovat sama suodatin', async ({ page }) => {
       { title: 'Gamma', tags: ['kesken'] },
     ]),
   );
+  await avaaSuodattimet(page);
 
   // Yksi chip kahdesta kirjoitusasusta, ensin kirjoitettu asu näkyvissä.
   await expect(suodatin(page).getByRole('button')).toHaveText(['Cover', 'kesken']);
@@ -209,6 +215,7 @@ test('osumaton tagivalinta kertoo syyn', async ({ page }) => {
       { title: 'Beeta', tags: ['kesken'] },
     ]),
   );
+  await avaaSuodattimet(page);
 
   await suodatin(page).getByRole('button', { name: 'cover', exact: true }).click();
   await suodatin(page).getByRole('button', { name: 'kesken', exact: true }).click();
@@ -227,6 +234,7 @@ test('tagisuodatin ei näy setissä', async ({ page }) => {
     page,
     kirjasto([{ title: 'Alfa', tags: ['cover'] }, { title: 'Beeta' }]),
   );
+  await avaaSuodattimet(page);
   await expect(suodatin(page)).toBeVisible();
 
   await luoSetti(page, 'Keikka');
@@ -255,6 +263,7 @@ test('kadonnut tagi ei jätä suodatinta päälle', async ({ page }) => {
     page,
     kirjasto([{ title: 'Alfa', tags: ['cover'] }, { title: 'Beeta' }]),
   );
+  await avaaSuodattimet(page);
 
   await suodatin(page).getByRole('button', { name: 'cover', exact: true }).click();
   expect(await nimet(page)).toEqual(['Alfa']);
@@ -273,5 +282,36 @@ test('kadonnut tagi ei jätä suodatinta päälle', async ({ page }) => {
    tageja käytä. */
 test('tagisuodatin ei näy tagittomassa kirjastossa', async ({ page }) => {
   await avaaKirjasto(page, kirjasto([{ title: 'Alfa' }, { title: 'Beeta' }]));
+  await avaaSuodattimet(page);
   await expect(suodatin(page)).toHaveCount(0);
+});
+
+/* --- Suodatinpaneeli --- */
+
+/*
+ * Tagit ja järjestys ovat hakukentän vieressä olevan painikkeen takana. Kiinni
+ * olevan paneelin takana ei saa olla näkymätöntä suodatusta: valitut tagit
+ * näkyvät hakurivin alla ja ne voi purkaa suoraan, ja painike kertoo määrän.
+ */
+test('kiinni oleva paneeli näyttää valitut tagit ja ne voi purkaa', async ({ page }) => {
+  await avaaKirjasto(
+    page,
+    kirjasto([{ title: 'Alfa', tags: ['cover'] }, { title: 'Beeta', tags: ['kesken'] }]),
+  );
+  // Oletuksena kiinni: vain haku ja painike.
+  await expect(suodatin(page)).toHaveCount(0);
+  await expect(page.locator('.sort-bar')).toHaveCount(0);
+
+  await avaaSuodattimet(page);
+  await suodatin(page).getByRole('button', { name: 'cover', exact: true }).click();
+  await page.getByRole('button', { name: 'Filter and sort' }).click();
+
+  await expect(suodatin(page)).toHaveCount(0);
+  expect(await nimet(page)).toEqual(['Alfa']);
+  await expect(page.locator('.filter-count')).toHaveText('1');
+
+  await page.getByRole('button', { name: 'Remove filter cover' }).click();
+  expect(await nimet(page)).toEqual(['Alfa', 'Beeta']);
+  await expect(page.locator('.filter-count')).toHaveCount(0);
+  await expect(page.locator('.active-filters')).toHaveCount(0);
 });

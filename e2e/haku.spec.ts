@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { avaaLista, avaaMonta, DB_VERSION, laulu, luoSetti, lisaaLauluja } from './apu';
+import { avaaLista, avaaMonta, avaaSuodattimet, DB_VERSION, laulu, luoSetti, lisaaLauluja } from './apu';
 
 /**
  * Laululistan haku.
@@ -100,6 +100,7 @@ test('lajittelu koskee suodatettua listaa', async ({ page }) => {
   await avaaMonta(page, ['Alfa laulu', 'Beeta laulu', 'Muu']);
 
   await page.getByLabel('Search songs').fill('laulu');
+  await avaaSuodattimet(page);
   await page.getByRole('button', { name: 'Z–A', exact: true }).click();
 
   expect(await nimet(page)).toEqual(['Beeta laulu', 'Alfa laulu']);

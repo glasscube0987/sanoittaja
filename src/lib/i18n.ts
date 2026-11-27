@@ -42,6 +42,7 @@ const en = {
   'list.newIdea': 'Record an idea',
   'list.search': 'Search songs',
   'list.searchPlaceholder': 'Search by title or lyrics',
+  'list.filters': 'Filter and sort',
   'list.noMatches': 'No songs match “{query}”.',
   'list.emptyTitle': 'No songs yet.',
   'list.emptyHint': 'Tap “New song” to start — lyrics, chords and recordings are stored on your device.',
@@ -61,6 +62,8 @@ const en = {
 
   'tags.label': 'Tags',
   'tags.filter': 'Filter by tag',
+  'tags.active': 'Active tag filters',
+  'tags.removeFilter': 'Remove filter {tag}',
   'tags.add': '+ Tag',
   'tags.sheetTitle': 'Song tags',
   'tags.hint': 'Pick an existing tag or write a new one. A tag is the same whether you write it “Cover” or “cover”.',
@@ -315,6 +318,7 @@ const fi: Record<Key, string> = {
   'list.newIdea': 'Nauhoita idea',
   'list.search': 'Hae lauluja',
   'list.searchPlaceholder': 'Hae nimellä tai sanoituksesta',
+  'list.filters': 'Suodata ja järjestä',
   'list.noMatches': 'Haulla ”{query}” ei löytynyt lauluja.',
   'list.emptyTitle': 'Ei vielä lauluja.',
   'list.emptyHint':
@@ -335,6 +339,8 @@ const fi: Record<Key, string> = {
 
   'tags.label': 'Tagit',
   'tags.filter': 'Suodata tagilla',
+  'tags.active': 'Päällä olevat tagisuodattimet',
+  'tags.removeFilter': 'Poista suodatin {tag}',
   'tags.add': '+ Tagi',
   'tags.sheetTitle': 'Laulun tagit',
   'tags.hint':

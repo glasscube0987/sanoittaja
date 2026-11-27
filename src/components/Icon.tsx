@@ -27,7 +27,8 @@ export type IconName =
   | 'text'
   | 'trash'
   | 'check'
-  | 'mic';
+  | 'mic'
+  | 'filter';
 
 interface Props {
   name: IconName;
@@ -65,6 +66,9 @@ const PATHS: Record<IconName, string> = {
   check: 'M5 12.5l4.5 4.5L19 7.5',
   // Mikrofonin kapseli, kaari sen ympärillä ja jalka: idean talteenotto.
   mic: 'M12 3.2a2.8 2.8 0 0 1 2.8 2.8v5.5a2.8 2.8 0 0 1-5.6 0V6A2.8 2.8 0 0 1 12 3.2M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6',
+  /* Kolme liukusäädintä: suodatus ja järjestys. Kuvake eikä sana, koska
+     hakukentän vieressä sana veisi tilan joka kuuluu haulle. */
+  filter: 'M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1M15 5v4M9 10v4M17 15v4',
   play: '',
   pause: '',
 };

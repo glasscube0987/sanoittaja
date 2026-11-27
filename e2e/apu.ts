@@ -428,3 +428,13 @@ export async function avaaSaadot(page: Page): Promise<void> {
   const painike = page.getByLabel('Text size and key');
   if ((await painike.getAttribute('aria-expanded')) !== 'true') await painike.click();
 }
+
+/**
+ * Avaa laululistan suodatinpaneelin (tagit ja järjestys), jos se on kiinni.
+ * Paneeli on hakukentän vieressä olevan painikkeen takana, koska neljä
+ * ohjainriviä ennen ensimmäistä laulua vei puhelimen ruudusta puolet.
+ */
+export async function avaaSuodattimet(page: Page): Promise<void> {
+  const nappi = page.getByRole('button', { name: 'Filter and sort' });
+  if ((await nappi.getAttribute('aria-expanded')) !== 'true') await nappi.click();
+}

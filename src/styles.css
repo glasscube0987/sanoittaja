@@ -500,6 +500,76 @@ button.small {
   margin-bottom: 6px;
 }
 
+/* Haku ja suodatinpainike samalla rivillä: ne ovat sama asia, listan
+   kaventamista. */
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search-row .search {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.filter-toggle {
+  position: relative;
+  color: var(--text-dim);
+}
+
+/* Auki tai päällä: painike kertoo, että lista on kavennettu tai paneeli auki. */
+.filter-toggle.current {
+  color: var(--accent);
+  background: var(--surface);
+}
+
+.filter-count {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.filter-panel .tag-bar,
+.filter-panel .sort-bar {
+  padding-bottom: 0;
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.active-filters .tag {
+  border-radius: 999px;
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  font-weight: 600;
+}
+
 /*
  * Osuman rivi kortilla. Yksi rivi riittää: se kertoo miksi laulu on listalla,
  * eikä saa kasvattaa korttia niin että lista lakkaa olemasta silmäiltävä.

@@ -72,6 +72,10 @@ export default function SongList({
      palatessa lista on taas kokonaisena, eikä kirjasto näytä tyhjältä siksi
      että viime viikon suodatin on yhä päällä. */
   const [valitutTagit, setValitutTagit] = useState<string[]>([]);
+  /* Tagit ja järjestys ovat suodatinpaneelissa hakukentän takana. Neljä
+     ohjainriviä ennen ensimmäistä laulua vei puhelimen ruudusta puolet, ja
+     niistä kahteen kosketaan harvoin. */
+  const [suodattimet, setSuodattimet] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [ideaOpen, setIdeaOpen] = useState(false);
   const [backupDays, setBackupDays] = useState(daysSinceBackup);
@@ -244,54 +248,86 @@ export default function SongList({
         </div>
 
         {/* Haku vain koko kirjastolle, samoin kuin lajittelu: setti on lyhyt ja
-            sen järjestys on esitysjärjestys. */}
+            sen järjestys on esitysjärjestys. Suodattimet hakukentän vieressä
+            samalla rivillä, koska ne ovat sama asia – listan kaventamista. */}
         {!setlist && songs.length > 1 && (
-          <input
-            className="search"
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('list.searchPlaceholder')}
-            aria-label={t('list.search')}
-            autoCapitalize="off"
-            autoComplete="off"
-            spellCheck={false}
-          />
-        )}
-
-        {/* Tagisuodatin hakukentän alle, samalla ehdolla kuin haku ja lajittelu
-            – ja vain jos tageja on olemassa: tyhjä valitsinrivi olisi pelkkä
-            selittämätön otsikko niille jotka eivät tageja käytä. */}
-        {!setlist && songs.length > 1 && kirjastonTagit.length > 0 && (
-          <div className="tag-bar" role="group" aria-label={t('tags.filter')}>
-            <span className="label">{t('tags.label')}</span>
-            {kirjastonTagit.map((tag) => {
-              const paalla = aktiiviset.some((v) => sameTag(v, tag));
-              return (
-                <button
-                  key={tag}
-                  className={paalla ? 'tag small current' : 'tag small'}
-                  aria-pressed={paalla}
-                  onClick={() => vaihdaTagi(tag)}
-                >
-                  {tag}
-                </button>
-              );
-            })}
+          <div className="search-row">
+            <input
+              className="search"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('list.searchPlaceholder')}
+              aria-label={t('list.search')}
+              autoCapitalize="off"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <button
+              className={suodattimet || aktiiviset.length > 0 ? 'icon-button filter-toggle current' : 'icon-button filter-toggle'}
+              aria-label={t('list.filters')}
+              aria-expanded={suodattimet}
+              onClick={() => setSuodattimet((auki) => !auki)}
+            >
+              <Icon name="filter" />
+              {/* Määrä näkyy myös paneelin ollessa kiinni: kavennettu lista ei
+                  saa näyttää koko kirjastolta. */}
+              {aktiiviset.length > 0 && <span className="filter-count">{aktiiviset.length}</span>}
+            </button>
           </div>
         )}
 
-        {/* Lajittelu vain koko kirjastolle; setissä järjestys on esitysjärjestys. */}
-        {!setlist && songs.length > 1 && (
-          <div className="sort-bar">
-            <span className="sort-label">{t('sort.label')}</span>
-            {SORT_ORDERS.map((order) => (
+        {!setlist && songs.length > 1 && suodattimet && (
+          <div className="filter-panel">
+            {/* Tagivalitsin vain jos tageja on olemassa: tyhjä valitsinrivi
+                olisi pelkkä selittämätön otsikko niille jotka eivät tageja
+                käytä. */}
+            {kirjastonTagit.length > 0 && (
+              <div className="tag-bar" role="group" aria-label={t('tags.filter')}>
+                <span className="label">{t('tags.label')}</span>
+                {kirjastonTagit.map((tag) => {
+                  const paalla = aktiiviset.some((v) => sameTag(v, tag));
+                  return (
+                    <button
+                      key={tag}
+                      className={paalla ? 'tag small current' : 'tag small'}
+                      aria-pressed={paalla}
+                      onClick={() => vaihdaTagi(tag)}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <div className="sort-bar">
+              <span className="sort-label">{t('sort.label')}</span>
+              {SORT_ORDERS.map((order) => (
+                <button
+                  key={order}
+                  className={order === sort ? 'small current' : 'ghost small'}
+                  onClick={() => vaihdaJarjestys(order)}
+                >
+                  {t(`sort.${order}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Paneelin ollessa kiinni valitut tagit näkyvät hakurivin alla ja ne
+            voi purkaa suoraan: päällä oleva suodatin ei saa jäädä näkymättömiin
+            paneelin taakse. */}
+        {!setlist && !suodattimet && aktiiviset.length > 0 && (
+          <div className="active-filters" role="group" aria-label={t('tags.active')}>
+            {aktiiviset.map((tag) => (
               <button
-                key={order}
-                className={order === sort ? 'small current' : 'ghost small'}
-                onClick={() => vaihdaJarjestys(order)}
+                key={tag}
+                className="tag small current"
+                aria-label={t('tags.removeFilter', { tag })}
+                onClick={() => vaihdaTagi(tag)}
               >
-                {t(`sort.${order}`)}
+                {tag} ×
               </button>
             ))}
           </div>

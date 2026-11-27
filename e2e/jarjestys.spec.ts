@@ -6,7 +6,7 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { avaaMonta } from './apu';
+import { avaaMonta, avaaSuodattimet } from './apu';
 
 const BIISIT = ['Sade', 'Aamu', 'Kuu'];
 
@@ -26,6 +26,7 @@ test('laulut ovat oletuksena muokkausjärjestyksessä', async ({ page }) => {
 
 test('aakkosjärjestys ja käänteinen aakkosjärjestys', async ({ page }) => {
   await avaaMonta(page, BIISIT);
+  await avaaSuodattimet(page);
 
   await page.locator('.sort-bar').getByRole('button', { name: 'A–Z' }).click();
   expect(await nimet(page)).toEqual(['Aamu', 'Kuu', 'Sade']);
@@ -39,6 +40,7 @@ test('aakkosjärjestys ja käänteinen aakkosjärjestys', async ({ page }) => {
 
 test('valittu järjestys säilyy uudelleenlatauksen yli', async ({ page }) => {
   await avaaMonta(page, BIISIT);
+  await avaaSuodattimet(page);
   await page.locator('.sort-bar').getByRole('button', { name: 'A–Z' }).click();
 
   await page.reload();
