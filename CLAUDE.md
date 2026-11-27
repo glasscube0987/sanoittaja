@@ -151,6 +151,23 @@ reunaan – tarttuvan asetuspainikkeen alle, ja rivin alun soinnut katosivat.
 `.lyrics`in `scroll-padding-inline-start` kertoo selaimelle, että sarake on
 varattu. Jos rivin alun mitat muuttuvat, laskelma muuttuu mukana.
 
+**Soinnun lisäys näkyy kirjoitettaessa.** Kohdistetun rivin yllä on
+kohdistimen kohdalla katkoviivainen lokero (`.chord-slot`), ja laulun soinnut
+ovat rivin työkaluissa pikavalintoina, jotka asettavat soinnun suoraan
+kohdistimen kohdalle. Kohdistimen sarake kulkee refissä eikä tilassa: kun
+pikasointua napautetaan, kohdistus on jo lähtenyt kentältä. Lokero perii
+rivin kirjasinkoon kuten soinnut – omalla koolla sen `ch` oli eri kuin rivin
+ja se osui väärään sarakkeeseen.
+
+**Lakanat ovat dialogeja** (`components/useDialog.ts`): Esc sulkee vain
+päällimmäisen, Tab kiertää lakanan sisällä, ja kohdistus palaa avanneeseen
+**painikkeeseen** – ei tekstikenttään, koska iOS avaisi näppäimistön
+pyytämättä. Koukku sidotaan lakanan omaan komponenttiin, ei ehdollisesti
+näytettävään JSX:ään toisen komponentin sisällä: efekti ajetaan
+kiinnitettäessä, ja ehdollisesti näkyvän lakanan ref on silloin tyhjä.
+Selaimen `prompt`/`confirm` ei kuulu sovellukseen; nimeäminen ja vahvistus
+ovat `NameSheet` ja `ConfirmSheet`, ja vahvistuspainike kertoo mitä tapahtuu.
+
 **Rivin toiminnot asuvat `LineSheet`issä**, eivät kohdistetun rivin
 työkalurivissä: sointurivi on painike ilman tekstikenttää, joten se ei voi
 saada kohdistusta, eikä keskellä olevaan pelkistä sointuriveistä koostuvaan

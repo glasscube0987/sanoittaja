@@ -24,6 +24,7 @@ import {
   transposeOffset,
   transposeSong,
 } from '../lib/songOps';
+import { observeVisible } from '../lib/measure';
 import { useI18n } from '../lib/i18n';
 import { loadLine, storeLine } from '../lib/lineClipboard';
 import { loadNotation } from '../lib/notation';
@@ -107,6 +108,15 @@ export default function SongEditor({
   const [barsTargetId, setBarsTargetId] = useState<string | null>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [poistoAuki, setPoistoAuki] = useState(false);
+  const nimirivi = useRef<HTMLDivElement>(null);
+  const [nimiNakyvissa, setNimiNakyvissa] = useState(true);
+
+  useEffect(() => {
+    const el = nimirivi.current;
+    if (!el) return;
+    const palkki = document.querySelector('.topbar');
+    return observeVisible(el, palkki?.getBoundingClientRect().height ?? 0, setNimiNakyvissa);
+  }, []);
   // null = tuonti laulun loppuun, muuten rivin id jonka perään rivit menevät.
   const [importAfterId, setImportAfterId] = useState<string | null | undefined>(undefined);
   const [activeLineId, setActiveLineId] = useState<string | null>(null);
@@ -272,7 +282,12 @@ export default function SongEditor({
         <button className="icon-button" onClick={onBack} aria-label={t('editor.backLabel')}>
           <Icon name="back" />
         </button>
-        <h1>{song.title || t('app.untitled')}</h1>
+        {/* Nimi näkyy palkissa vasta kun nimikenttä on vierinyt sen alle: ennen
+            sitä sama nimi oli ruudulla kahdesti. Elementti on aina paikallaan,
+            jotta palkin painikkeet eivät hyppää. */}
+        <h1 className={nimiNakyvissa ? 'topbar-title hidden' : 'topbar-title'} aria-hidden={nimiNakyvissa}>
+          {song.title || t('app.untitled')}
+        </h1>
         {/* Peruutus on turhaa jos sen luo pitää rullata: vahinko huomataan heti. */}
         <button
           className="icon-button"
@@ -309,7 +324,7 @@ export default function SongEditor({
         </button>
       </header>
       <main className="screen">
-        <div className="title-row">
+        <div className="title-row" ref={nimirivi}>
           <input
             value={song.title}
             placeholder={t('editor.titlePlaceholder')}

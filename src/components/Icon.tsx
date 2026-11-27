@@ -19,7 +19,6 @@ export type IconName =
   | 'chevronDown'
   | 'chevronLeft'
   | 'chevronRight'
-  | 'lineSettings'
   | 'play'
   | 'pause'
   | 'pen'
@@ -28,7 +27,8 @@ export type IconName =
   | 'trash'
   | 'check'
   | 'mic'
-  | 'filter';
+  | 'filter'
+  | 'more';
 
 interface Props {
   name: IconName;
@@ -52,8 +52,6 @@ const PATHS: Record<IconName, string> = {
   chevronDown: 'M5 9l7 7 7-7',
   chevronLeft: 'M15 4 7 12l8 8',
   chevronRight: 'M9 4l8 8-8 8',
-  // Tekstirivit ja niiden edessä merkintäpalkki: rivin asetukset.
-  lineSettings: 'M4 5v14M9 6.5h11M9 12h8M9 17.5h10',
   // Kynä kärki alaviistoon: piirtotila.
   pen: 'M4 20l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L8 18.5 4 20M13.5 7l3 3',
   /* Vinossa oleva pyyhekumi ja sen alla pöydän pinta. Kulmikas muoto erottaa
@@ -69,6 +67,7 @@ const PATHS: Record<IconName, string> = {
   /* Kolme liukusäädintä: suodatus ja järjestys. Kuvake eikä sana, koska
      hakukentän vieressä sana veisi tilan joka kuuluu haulle. */
   filter: 'M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1M15 5v4M9 10v4M17 15v4',
+  more: '',
   play: '',
   pause: '',
 };
@@ -93,6 +92,15 @@ export default function Icon({ name, size = 22 }: Props) {
         <>
           <rect x="6.5" y="5" width="4" height="14" rx="1.4" fill="currentColor" stroke="none" />
           <rect x="13.5" y="5" width="4" height="14" rx="1.4" fill="currentColor" stroke="none" />
+        </>
+      )}
+      {/* Kolme pistettä pystyssä: kohteen toiminnot. Yleisesti tunnettu merkki,
+          toisin kuin aiempi rivikuvake, jonka merkitystä ei arvannut. */}
+      {name === 'more' && (
+        <>
+          <circle cx="12" cy="5.5" r="1.6" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="18.5" r="1.6" fill="currentColor" stroke="none" />
         </>
       )}
       {name === 'settings' && (

@@ -127,7 +127,20 @@ export default function LineSheet({
           </div>
         )}
 
-        <div className="field">
+        {/* Asetukset tallennetaan, toiminnot tapahtuvat heti. Ne olivat samassa
+            jonossa, ja tallennuspainike oli toimintojen alla, joten ei näkynyt
+            kumpi tarvitsee tallennuksen. Nyt tallennus on heti asetusten alla
+            ja toiminnot viivan takana omana ryhmänään. */}
+        <div className="button-row">
+          <button type="submit" className="primary">
+            {t('common.save')}
+          </button>
+          <button type="button" className="ghost" onClick={onClose}>
+            {t('common.cancel')}
+          </button>
+        </div>
+
+        <div className="field sheet-actions">
           <label>{t('line.actions')}</label>
           <div className="chip-row">
             <button type="button" onClick={() => save('addBelow')}>
@@ -142,21 +155,12 @@ export default function LineSheet({
             <button type="button" disabled={!canPaste} onClick={() => save('pasteBelow')}>
               {t('line.pasteBelow')}
             </button>
+            {/* Rivin asetukset on ainoa paikka, joka on kaikilla rivityypeillä:
+                sointuriviltä puuttuu tekstikenttä eikä sitä saanut muuten pois. */}
+            <button type="button" className="danger" disabled={!canDelete} onClick={onDelete}>
+              {t('line.delete')}
+            </button>
           </div>
-        </div>
-
-        <div className="button-row">
-          <button type="submit" className="primary">
-            {t('common.save')}
-          </button>
-          {/* Rivin asetukset on ainoa paikka, joka on kaikilla rivityypeillä:
-              sointuriviltä puuttuu tekstikenttä eikä sitä saanut muuten pois. */}
-          <button type="button" className="danger" disabled={!canDelete} onClick={onDelete}>
-            {t('line.delete')}
-          </button>
-          <button type="button" className="ghost" onClick={onClose}>
-            {t('common.cancel')}
-          </button>
         </div>
       </form>
     </div>

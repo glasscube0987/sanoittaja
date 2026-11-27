@@ -103,7 +103,7 @@ export default function LineEditor({
         aria-label={t(line.section ? 'line.editSection' : 'line.startSection')}
         title={t(line.section ? 'line.editSection' : 'line.startSection')}
       >
-        <Icon name="lineSettings" size={16} />
+        <Icon name="more" size={18} />
       </button>
       <div className="line-body">
         {line.bars ? (

@@ -16,7 +16,7 @@ Päivitetty 25.11.2026: erä 2 julkaistu; erän 3 visuaalinen järjestelmä (3a)
 | 1 | Laatuerä | tehty |
 | 2 | Live-tila keikkakuntoon | tehty |
 | 3a | Visuaalinen järjestelmä «Iltarusko» | tehty |
-| 3b | Käytön rakenne: lista, soinnun lisäys, lakanat | seuraava |
+| 3b | Käytön rakenne: lista, soinnun lisäys, lakanat | tehty |
 | 4 | Tabulatuuri, sitten nuotit | |
 | 5 | Beta oikeilla muusikoilla | |
 | 6 | Natiivikuori ja sovelluskauppa | |
@@ -125,12 +125,22 @@ otsikoihin hillitty kirjasin jonka lisenssiä ei tarvitse miettiä.
 Tarkistamatta: iPhonen tilapalkki vaalealla teemalla (`black-translucent`
 piirtää valkoisen tekstin sovelluksen päälle), ja Raleway oikealla laitteella.
 
-### 3b. Käytön rakenne — seuraava
+### 3b. Käytön rakenne — tehty
 
-Luonnoksissa näkyivät jo: yksi ohjainrivi listassa, soinnun paikka tyhjänä
-lokerona kohdistetun rivin yllä ja laulun soinnut pikavalintoina.
+- Laululistassa on ennen ensimmäistä laulua kaksi riviä neljän sijaan:
+  setit välilehtinä ja haku, jonka vieressä suodatinpainike avaa tagit ja
+  järjestyksen. Valitut tagit näkyvät myös paneelin ollessa kiinni.
+- Soinnun paikka näkyy kohdistetun rivin yllä lokerona, ja laulun soinnut
+  ovat rivin työkaluissa pikavalintoina.
+- Rivilakanassa tallennus on asetusten alla ja heti tapahtuvat toiminnot
+  omana ryhmänään. Rivin kuvake on kolme pistettä.
+- Laulun nimi näkyy yläpalkissa vasta kun nimikenttä on vierinyt sen alle.
+- Selaimen `prompt`/`confirm` korvattu omilla lakanoilla; kaikki lakanat ovat
+  dialogeja (Esc, Tab, kohdistuksen palautus).
+- Kirjaston yläpalkin iltarusko on ohut horisonttiviiva, ja tekstipainikkeet
+  ovat 40 px (palaute iPhonelta).
 
-Arviossa löytyneet kohdat:
+Arviossa löytyneet kohdat (kaikki käsitelty yllä):
 
 - **Laululistassa on neljä ohjainriviä** ennen ensimmäistä laulua (setit, haku,
   tagit, järjestys).

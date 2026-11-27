@@ -192,6 +192,18 @@ button.danger-solid {
   font-weight: 600;
 }
 
+/* Vahvistuksen otsikko on kysymys, joten se ladotaan lauseena eikä lakanoiden
+   pieninä versaaleina – versaalein kysymys näytti huutavan. Kaksi luokkaa,
+   jotta sääntö voittaa `.sheet h2`:n riippumatta järjestyksestä tiedostossa. */
+.sheet.confirm-sheet h2 {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+}
+
 .confirm-message {
   color: var(--text-dim);
   line-height: 1.5;
@@ -295,6 +307,15 @@ textarea:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Editorin palkin nimi ilmestyy kun nimikenttä vierii sen alle. */
+.topbar .topbar-title {
+  transition: opacity 0.18s ease;
+}
+
+.topbar .topbar-title.hidden {
+  opacity: 0;
 }
 
 /*
@@ -1473,6 +1494,12 @@ button.small {
   opacity: 0.75;
 }
 
+/* Heti tapahtuvat toiminnot erillään tallennettavista asetuksista. */
+.sheet-actions {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
 .chip-row {
   display: flex;
   gap: 6px;
@@ -2421,6 +2448,10 @@ textarea.annot-text-body {
 @media (prefers-reduced-motion: reduce) {
   .idea-dot {
     animation: none;
+  }
+
+  .topbar .topbar-title {
+    transition: none;
   }
 }
 

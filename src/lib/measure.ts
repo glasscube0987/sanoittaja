@@ -40,3 +40,23 @@ export function observeWidth(els: Element | Element[], onChange: () => void): ()
   for (const el of Array.isArray(els) ? els : [els]) observer.observe(el);
   return () => observer.disconnect();
 }
+
+/**
+ * Ilmoittaa onko elementti näkyvissä tarttuvan yläpalkin alapuolella.
+ * Palauttaa lopetusfunktion. `topInset` on palkin korkeus: sen alle jäävä osa
+ * ei ole näkyvissä, vaikka se olisi ikkunan sisällä.
+ *
+ * Ilman `IntersectionObserver`ia (vanha selain) elementti on aina näkyvissä,
+ * jolloin otsikkoa ei piiloteta mistään – varma suunta.
+ */
+export function observeVisible(el: Element, topInset: number, onChange: (visible: boolean) => void): () => void {
+  if (typeof IntersectionObserver === 'undefined') {
+    onChange(true);
+    return () => {};
+  }
+  const observer = new IntersectionObserver(([entry]) => onChange(entry.isIntersecting), {
+    rootMargin: `-${Math.max(0, Math.round(topInset))}px 0px 0px 0px`,
+  });
+  observer.observe(el);
+  return () => observer.disconnect();
+}
