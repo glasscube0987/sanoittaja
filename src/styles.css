@@ -26,9 +26,6 @@
   --accent-text: #0d1b2b;
   --danger: #e0704f;
   --danger-text: #1b0c06;
-  /* Iltarusko: kirjaston yläreunan ja live-tilan edistymisviivan liuku. */
-  --dusk-warm: color-mix(in srgb, #d65d3e 30%, transparent);
-  --dusk-cool: color-mix(in srgb, #4ac3bd 12%, transparent);
   /*
    * Kynän musteet. Merkinnän väri on tallessa heksana, ja tämä on sen
    * näyttöväri tässä teemassa (`inkColor`, lib/annotate.ts). Ilman tätä
@@ -70,8 +67,6 @@
     --accent-text: #ffffff;
     --danger: #b8462a;
     --danger-text: #ffffff;
-    --dusk-warm: color-mix(in srgb, #d65d3e 18%, transparent);
-    --dusk-cool: color-mix(in srgb, #12807a 10%, transparent);
     --ink-red: #c43d2b;
     --ink-blue: #2a63b8;
     --ink-green: #237a3e;
@@ -95,8 +90,6 @@
   --accent-text: #ffffff;
   --danger: #b8462a;
   --danger-text: #ffffff;
-  --dusk-warm: color-mix(in srgb, #d65d3e 18%, transparent);
-  --dusk-cool: color-mix(in srgb, #12807a 10%, transparent);
   --ink-red: #c43d2b;
   --ink-blue: #2a63b8;
   --ink-green: #237a3e;
@@ -143,14 +136,21 @@ body {
   overflow-x: clip;
 }
 
+/*
+ * Tekstipainike on 40 pikseliä ja tekstiltään 15: puhelimella 44 ja 16 olivat
+ * raskaampia kuin sanoitus jota niillä muokataan. Kuvakepainikkeet pysyvät
+ * 44:ssä (`.icon-button`), ja live-tilan painikkeet ovat omissa mitoissaan,
+ * koska niihin osutaan kesken soiton.
+ */
 button {
   font: inherit;
+  font-size: 15px;
   color: inherit;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  min-height: 44px;
+  padding: 8px 13px;
+  min-height: 40px;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
@@ -244,7 +244,9 @@ textarea {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px 12px;
+  /* Samankorkuinen kuin tekstipainike (40 px), jotta otsikkorivin kenttä ja
+     sen vieressä olevat painikkeet ovat yhtä linjaa. */
+  padding: 8px 12px;
 }
 
 input:focus,
@@ -293,15 +295,24 @@ textarea:focus {
 }
 
 /*
- * Iltarusko kirjaston yläreunassa: tekijän sivuston kansikuvan sävyt hiipuvat
- * pohjaan. Liukuväri vain tässä ja live-tilan edistymisviivassa, jottei se kulu.
- * Pohjaväri alla, koska palkki on tarttuva ja lista vierii sen alta.
+ * Iltarusko kirjaston yläpalkin alareunassa: ohut horisontti oranssista
+ * turkoosiin, sama aihe kuin live-tilan edistymisviiva. Ensin se oli koko
+ * palkin taustana, mutta puhelimessa häivytys valui otsikon ja kuvakkeiden
+ * taakse ja näytti sotkulta. Liukuväri vain näissä kahdessa viivassa.
  */
 .topbar.home {
-  background:
-    linear-gradient(180deg, var(--dusk-warm), var(--dusk-cool) 65%, transparent),
-    color-mix(in srgb, var(--bg) 88%, transparent);
-  padding-bottom: 14px;
+  padding-bottom: 12px;
+}
+
+.topbar.home::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--danger), var(--accent));
+  opacity: 0.85;
 }
 
 /* Kapea mutta korostettu, jottei se vie tilaa laulun nimeltä yläpalkissa. */
@@ -837,7 +848,7 @@ button.small {
 .title-row input {
   flex: 1;
   min-width: 0;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -845,7 +856,7 @@ button.small {
 .title-row input.key {
   flex: 0 0 64px;
   text-align: center;
-  padding: 10px 4px;
+  padding: 8px 4px;
 }
 
 .transpose-bar {
@@ -868,8 +879,8 @@ button.small {
 }
 
 .transpose-bar button {
-  min-width: 52px;
-  padding: 10px 12px;
+  min-width: 48px;
+  padding: 8px 10px;
 }
 
 .transpose-bar .reset-key {
@@ -1177,9 +1188,9 @@ button.small {
 }
 
 .line-tools button {
-  min-height: 36px;
-  padding: 4px 12px;
-  font-size: 14px;
+  min-height: 34px;
+  padding: 4px 11px;
+  font-size: 13.5px;
   color: var(--text-dim);
   background: var(--surface-2);
   border-color: transparent;

@@ -120,8 +120,9 @@ merkitys: `--accent` (sinivihreä) on **aina musiikkia** – soinnut, osiot,
 pääpainike – ja `--danger` (iltaruskon oranssi) kaikki mikä vaatii huomiota:
 nauhoitus, poisto, varoitus, virhe. Kirkkain turkoosi `--accent-strong` on vain
 isoissa otsikoissa, koska pienessä koossa se hehkuu ja sumentaa kirjaimet.
-Liukuväri esiintyy kahdessa kohdassa (kirjaston yläreuna, live-tilan
-edistymisviiva), ei muualla. Teemoja on kaksi, ja vaalean arvot ovat tiedostossa
+Liukuväri esiintyy vain kahtena ohuena viivana (kirjaston yläpalkin
+horisontti, live-tilan edistymisviiva): palkin taustana se valui puhelimessa
+otsikon taakse. Teemoja on kaksi, ja vaalean arvot ovat tiedostossa
 **kahdesti** – mediakyselyssä ja `[data-theme='light']`-valinnassa – jotta
 käyttäjän valinta (`lib/theme.ts`) voittaa laitteen asetuksen kumpaankin
 suuntaan. Uusi väri lisätään tokeniksi kaikkiin kolmeen lohkoon, ei
